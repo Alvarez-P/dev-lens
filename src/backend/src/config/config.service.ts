@@ -22,6 +22,14 @@ export class ConfigService {
     return this.configService.getOrThrow<number>('port');
   }
 
+  get frontendUrl(): string {
+    return this.configService.getOrThrow<string>('frontendUrl');
+  }
+
+  get apiBaseUrl(): string | undefined {
+    return this.configService.get<string>('apiBaseUrl');
+  }
+
   get database(): DatabaseConfig {
     return this.configService.getOrThrow<DatabaseConfig>('database');
   }

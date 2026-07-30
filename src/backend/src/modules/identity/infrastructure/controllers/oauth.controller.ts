@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { OAuthService } from '../../application/oauth.service';
 import { OAuthStateService } from '../auth/oauth-state.service';
 import { ProviderRegistry } from '../auth/provider-registry';
+import { TokenEncryptionService } from '../encryption/token-encryption.service';
 import { ConfigService } from '../../../../config/config.service';
 import { Public } from '../../../../shared/infrastructure/decorators/public.decorator';
 import { InvalidOAuthState } from '../../domain/identity-errors';
@@ -12,7 +13,6 @@ import {
   OAUTH_ROUTES,
   OAUTH_BASE_PATH,
   HTTP_STATUS,
-  TOKEN_TTL_MS,
   ENV_KEYS,
   DEFAULT_FRONTEND_URL,
   DEFAULT_PORT,
@@ -23,21 +23,14 @@ interface TokenExchangeResponse {
   refreshToken: string;
 }
 
-interface PendingToken {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: number;
-}
-
 @ApiTags('Auth - OAuth')
 @Controller({ path: OAUTH_BASE_PATH, version: '1' })
 export class OAuthController {
-  private readonly pendingTokens = new Map<string, PendingToken>();
-
   constructor(
     private readonly oauthService: OAuthService,
     private readonly oauthStateService: OAuthStateService,
     private readonly providerRegistry: ProviderRegistry,
+    private readonly tokenEncryption: TokenEncryptionService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -93,15 +86,14 @@ export class OAuthController {
     const redirectUri = this.buildRedirectUri(provider);
     const result = await this.oauthService.authenticateWithProvider(provider, code, redirectUri);
 
-    const tempToken = randomUUID();
-    this.pendingTokens.set(tempToken, {
+    const payload = JSON.stringify({
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
-      expiresAt: Date.now() + TOKEN_TTL_MS,
     });
+    const tempToken = this.tokenEncryption.encrypt(payload);
 
-    const frontendUrl = process.env[ENV_KEYS.FRONTEND_URL] ?? DEFAULT_FRONTEND_URL;
-    res.redirect(`${frontendUrl}/auth/callback?code=${tempToken}`);
+    const frontendUrl = this.configService.frontendUrl ?? DEFAULT_FRONTEND_URL;
+    res.redirect(`${frontendUrl}/auth/callback?code=${encodeURIComponent(tempToken)}`);
   }
 
   @Post(OAUTH_ROUTES.TOKEN_EXCHANGE)
@@ -115,23 +107,23 @@ export class OAuthController {
       throw new InvalidOAuthState();
     }
 
-    const entry = this.pendingTokens.get(tempToken);
-    if (!entry || Date.now() > entry.expiresAt) {
-      this.pendingTokens.delete(tempToken);
+    try {
+      const decrypted = this.tokenEncryption.decrypt(tempToken);
+      const payload: TokenExchangeResponse = JSON.parse(decrypted);
+
+      if (!payload.accessToken || !payload.refreshToken) {
+        throw new InvalidOAuthState();
+      }
+
+      return payload;
+    } catch {
       throw new InvalidOAuthState();
     }
-
-    this.pendingTokens.delete(tempToken);
-
-    return {
-      accessToken: entry.accessToken,
-      refreshToken: entry.refreshToken,
-    };
   }
 
   private buildRedirectUri(provider: string): string {
-    const port = process.env[ENV_KEYS.PORT] ?? DEFAULT_PORT;
-    const baseUrl = process.env[ENV_KEYS.API_BASE_URL] ?? `http://localhost:${port}`;
+    const port = this.configService.port?.toString() ?? DEFAULT_PORT;
+    const baseUrl = this.configService.apiBaseUrl ?? `http://localhost:${port}`;
     return `${baseUrl}/api/v1/${OAUTH_BASE_PATH}/${provider}/callback`;
   }
 }

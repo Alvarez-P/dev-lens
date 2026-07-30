@@ -5,6 +5,7 @@ import { OAuthController } from './oauth.controller';
 import { OAuthService } from '../../application/oauth.service';
 import { OAuthStateService } from '../auth/oauth-state.service';
 import { ProviderRegistry } from '../auth/provider-registry';
+import { TokenEncryptionService } from '../encryption/token-encryption.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '../../../../config/config.service';
 import {
@@ -63,6 +64,18 @@ describe('OAuthController', () => {
 
     oauthStateService = new OAuthStateService(new JwtService({ secret: 'test-state-secret' }));
 
+    const tokenEncryption = {
+      encrypt: jest.fn().mockReturnValue('encrypted_temp_token'),
+      decrypt: jest
+        .fn()
+        .mockReturnValue(
+          JSON.stringify({
+            accessToken: 'jwt_access_token_value',
+            refreshToken: 'jwt_refresh_token_value',
+          }),
+        ),
+    };
+
     const configService = {
       oauth: {
         github: {
@@ -72,6 +85,9 @@ describe('OAuthController', () => {
         },
         tokenEncryptionKey: 'test-encryption-key',
       },
+      frontendUrl: 'http://localhost:3000',
+      apiBaseUrl: undefined,
+      port: 3001,
     } as unknown as ConfigService;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -80,6 +96,7 @@ describe('OAuthController', () => {
         { provide: OAuthService, useValue: oauthService },
         { provide: OAuthStateService, useValue: oauthStateService },
         { provide: ProviderRegistry, useValue: providerRegistry },
+        { provide: TokenEncryptionService, useValue: tokenEncryption },
         { provide: ConfigService, useValue: configService },
         { provide: 'APP_PIPE', useValue: { transform: (v: any) => v } },
       ],

@@ -16,6 +16,20 @@ interface OAuth2Internal {
   get(url: string, accessToken: string, callback: (err: Error | null, body: string) => void): void;
 }
 
+interface GitHubUserResponse {
+  id: number;
+  login: string;
+  email: string | null;
+  name: string | null;
+  avatar_url: string;
+}
+
+interface GitHubEmail {
+  email: string;
+  primary: boolean;
+  verified: boolean;
+}
+
 type GitHubStrategyInternal = Strategy & { _oauth2: OAuth2Internal };
 
 function createStrategy(config: OAuthProviderConfig): GitHubStrategyInternal {
@@ -55,14 +69,20 @@ export class GithubOAuthProvider implements ExternalIdentityProvider {
 
   async exchangeCode(code: string, redirectUri: string): Promise<ExternalUserProfile> {
     const { accessToken, refreshToken } = await this.getAccessToken(code, redirectUri);
-    const profile = await this.getUserProfile(accessToken);
+    const userProfile = await this.getUserProfile(accessToken);
+    const email = userProfile.email ?? (await this.getPrimaryEmail(accessToken));
+
+    if (!email) {
+      throw new Error(
+        'GitHub account has no public email. Set email visibility to public in GitHub settings.',
+      );
+    }
 
     return {
-      externalId: String(profile.id),
-      email:
-        Array.isArray(profile.emails) && profile.emails.length > 0 ? profile.emails[0].value : '',
-      displayName: profile.displayName || profile.username || '',
-      avatarUrl: profile._json?.avatar_url,
+      externalId: String(userProfile.id),
+      email,
+      displayName: userProfile.name || userProfile.login,
+      avatarUrl: userProfile.avatar_url,
       accessToken,
       refreshToken: refreshToken || undefined,
     };
@@ -87,15 +107,7 @@ export class GithubOAuthProvider implements ExternalIdentityProvider {
     });
   }
 
-  private getUserProfile(
-    accessToken: string,
-  ): Promise<{
-    id: number | string;
-    emails?: { value: string }[];
-    displayName?: string;
-    username?: string;
-    _json?: { avatar_url?: string };
-  }> {
+  private getUserProfile(accessToken: string): Promise<GitHubUserResponse> {
     return new Promise((resolve, reject) => {
       this.oauth2.get(
         'https://api.github.com/user',
@@ -103,8 +115,34 @@ export class GithubOAuthProvider implements ExternalIdentityProvider {
         (err: Error | null, body: string) => {
           if (err) {
             reject(err);
-          } else {
+            return;
+          }
+          try {
             resolve(JSON.parse(body));
+          } catch {
+            reject(new Error('Failed to parse GitHub user profile response'));
+          }
+        },
+      );
+    });
+  }
+
+  private getPrimaryEmail(accessToken: string): Promise<string | null> {
+    return new Promise((resolve) => {
+      this.oauth2.get(
+        'https://api.github.com/user/emails',
+        accessToken,
+        (err: Error | null, body: string) => {
+          if (err) {
+            resolve(null);
+            return;
+          }
+          try {
+            const emails: GitHubEmail[] = JSON.parse(body);
+            const primary = emails.find((e) => e.primary && e.verified);
+            resolve(primary?.email ?? null);
+          } catch {
+            resolve(null);
           }
         },
       );

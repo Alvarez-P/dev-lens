@@ -44,6 +44,8 @@ export interface OAuthConfig {
 export interface AppConfiguration {
   nodeEnv: string;
   port: number;
+  frontendUrl: string;
+  apiBaseUrl?: string;
   database: DatabaseConfig;
   redis: RedisConfig;
   minio: MinioConfig;
@@ -56,6 +58,8 @@ export interface AppConfiguration {
 export default (): AppConfiguration => ({
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '3001', 10),
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  apiBaseUrl: process.env.API_BASE_URL,
   database: {
     url: process.env.DATABASE_URL || 'postgresql://devlens:devlens@localhost:5432/devlens',
     host: process.env.DB_HOST || 'localhost',

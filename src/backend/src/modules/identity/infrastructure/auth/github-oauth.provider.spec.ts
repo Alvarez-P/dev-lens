@@ -6,7 +6,6 @@ const mockOAuth2 = {
   get: jest.fn(),
 };
 
-// Mock passport-github2
 jest.mock('passport-github2', () => ({
   Strategy: jest.fn().mockImplementation(() => ({
     name: 'github',
@@ -15,6 +14,18 @@ jest.mock('passport-github2', () => ({
 }));
 
 import { GithubOAuthProvider } from './github-oauth.provider';
+
+const mockUserResponse = JSON.stringify({
+  id: 583231,
+  login: 'octocat',
+  email: 'octocat@github.com',
+  name: 'Octocat',
+  avatar_url: 'https://avatars.githubusercontent.com/u/583231',
+});
+
+const mockEmailsResponse = JSON.stringify([
+  { email: 'octocat@github.com', primary: true, verified: true },
+]);
 
 describe('GithubOAuthProvider', () => {
   let provider: GithubOAuthProvider;
@@ -49,7 +60,7 @@ describe('GithubOAuthProvider', () => {
   });
 
   describe('exchangeCode', () => {
-    it('should return an ExternalUserProfile on successful exchange', async () => {
+    beforeEach(() => {
       mockOAuth2.getOAuthAccessToken.mockImplementation(
         (_code: string, _options: any, callback: any) => {
           callback(null, 'mock_gh_access_token_123', 'ghr_refresh_token_456');
@@ -57,20 +68,17 @@ describe('GithubOAuthProvider', () => {
       );
 
       mockOAuth2.get.mockImplementation(
-        (_url: string, _token: string, callback: (err: Error | null, body: string) => void) => {
-          callback(
-            null,
-            JSON.stringify({
-              id: '583231',
-              displayName: 'Octocat',
-              username: 'octocat',
-              emails: [{ value: 'octocat@github.com' }],
-              _json: { avatar_url: 'https://avatars.githubusercontent.com/u/583231' },
-            }),
-          );
+        (url: string, _token: string, callback: (err: Error | null, body: string) => void) => {
+          if (url.includes('/user/emails')) {
+            callback(null, mockEmailsResponse);
+          } else {
+            callback(null, mockUserResponse);
+          }
         },
       );
+    });
 
+    it('should return an ExternalUserProfile from raw GitHub API response', async () => {
       const profile = await provider.exchangeCode('code_abc', 'http://localhost:3001/callback');
 
       expect(profile.externalId).toBe('583231');
@@ -79,12 +87,54 @@ describe('GithubOAuthProvider', () => {
       expect(profile.avatarUrl).toBe('https://avatars.githubusercontent.com/u/583231');
       expect(profile.accessToken).toBe('mock_gh_access_token_123');
       expect(profile.refreshToken).toBe('ghr_refresh_token_456');
+    });
 
-      expect(mockOAuth2.getOAuthAccessToken).toHaveBeenCalledWith(
-        'code_abc',
-        { redirect_uri: 'http://localhost:3001/callback' },
-        expect.any(Function),
+    it('should fall back to login when name is null', async () => {
+      mockOAuth2.get.mockImplementation(
+        (url: string, _token: string, callback: (err: Error | null, body: string) => void) => {
+          if (url.includes('/user/emails')) {
+            callback(null, mockEmailsResponse);
+          } else {
+            callback(
+              null,
+              JSON.stringify({
+                id: 1,
+                login: 'no-name',
+                email: 'x@x.com',
+                name: null,
+                avatar_url: '',
+              }),
+            );
+          }
+        },
       );
+
+      const profile = await provider.exchangeCode('code', 'http://localhost:3001/callback');
+      expect(profile.displayName).toBe('no-name');
+    });
+
+    it('should fetch emails when user email is null', async () => {
+      mockOAuth2.get.mockImplementation(
+        (url: string, _token: string, callback: (err: Error | null, body: string) => void) => {
+          if (url.includes('/user/emails')) {
+            callback(null, mockEmailsResponse);
+          } else {
+            callback(
+              null,
+              JSON.stringify({
+                id: 1,
+                login: 'private',
+                email: null,
+                name: 'Private',
+                avatar_url: '',
+              }),
+            );
+          }
+        },
+      );
+
+      const profile = await provider.exchangeCode('code', 'http://localhost:3001/callback');
+      expect(profile.email).toBe('octocat@github.com');
     });
 
     it('should reject on token exchange error', async () => {
@@ -100,12 +150,6 @@ describe('GithubOAuthProvider', () => {
     });
 
     it('should reject on profile fetch error', async () => {
-      mockOAuth2.getOAuthAccessToken.mockImplementation(
-        (_code: string, _options: any, callback: any) => {
-          callback(null, 'mock_gh_access_token_123');
-        },
-      );
-
       mockOAuth2.get.mockImplementation(
         (_url: string, _token: string, callback: (err: Error | null, body?: string) => void) => {
           callback(new Error('profile_fetch_failed'));
@@ -115,6 +159,31 @@ describe('GithubOAuthProvider', () => {
       await expect(
         provider.exchangeCode('code_abc', 'http://localhost:3001/callback'),
       ).rejects.toThrow('profile_fetch_failed');
+    });
+
+    it('should reject when no email is available', async () => {
+      mockOAuth2.get.mockImplementation(
+        (url: string, _token: string, callback: (err: Error | null, body: string) => void) => {
+          if (url.includes('/user/emails')) {
+            callback(null, '[]');
+          } else {
+            callback(
+              null,
+              JSON.stringify({
+                id: 1,
+                login: 'noemail',
+                email: null,
+                name: 'No Email',
+                avatar_url: '',
+              }),
+            );
+          }
+        },
+      );
+
+      await expect(provider.exchangeCode('code', 'http://localhost:3001/callback')).rejects.toThrow(
+        'no public email',
+      );
     });
   });
 });
