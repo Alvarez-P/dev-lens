@@ -1,6 +1,6 @@
 import { Module, OnModuleInit, Inject, Optional } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule } from '../../config/config.module';
 import { ConfigService } from '../../config/config.service';
@@ -83,9 +83,22 @@ const typeOrmEntities = [
 
     JwtStrategy,
     PasswordService,
-    OAuthStateService,
-    ProviderRegistry,
     TokenEncryptionService,
+    {
+      provide: 'OAUTH_JWT_SERVICE',
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        new JwtService({
+          secret: configService.oauth.stateSecret,
+          signOptions: { expiresIn: 300 },
+        }),
+    },
+    {
+      provide: OAuthStateService,
+      inject: ['OAUTH_JWT_SERVICE'],
+      useFactory: (jwtService: JwtService) => new OAuthStateService(jwtService),
+    },
     {
       provide: GithubOAuthProvider,
       inject: [ConfigService],

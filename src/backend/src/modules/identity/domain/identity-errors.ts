@@ -84,6 +84,18 @@ export class InvalidOAuthState extends DomainError {
   }
 }
 
+export class UnknownOAuthProvider extends DomainError {
+  constructor(provider: string) {
+    super(`OAuth provider "${provider}" is not configured`, 'UNKNOWN_OAUTH_PROVIDER', 400);
+  }
+}
+
+export class MissingOAuthCode extends DomainError {
+  constructor() {
+    super('OAuth authorization code is required', 'MISSING_OAUTH_CODE', 400);
+  }
+}
+
 export class IdentityAlreadyLinked extends DomainError {
   constructor(provider: string, externalId: string) {
     super(

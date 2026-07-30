@@ -8,7 +8,11 @@ import { ProviderRegistry } from '../auth/provider-registry';
 import { TokenEncryptionService } from '../encryption/token-encryption.service';
 import { ConfigService } from '../../../../config/config.service';
 import { Public } from '../../../../shared/infrastructure/decorators/public.decorator';
-import { InvalidOAuthState } from '../../domain/identity-errors';
+import {
+  InvalidOAuthState,
+  UnknownOAuthProvider,
+  MissingOAuthCode,
+} from '../../domain/identity-errors';
 import {
   OAUTH_ROUTES,
   OAUTH_BASE_PATH,
@@ -50,7 +54,7 @@ export class OAuthController {
     try {
       adapter = this.providerRegistry.resolve(provider);
     } catch {
-      throw new InvalidOAuthState();
+      throw new UnknownOAuthProvider(provider);
     }
 
     const redirectUri = this.buildRedirectUri(provider);
@@ -74,7 +78,7 @@ export class OAuthController {
     @Res() res: Response,
   ): Promise<void> {
     if (!code) {
-      throw new InvalidOAuthState();
+      throw new MissingOAuthCode();
     }
 
     try {

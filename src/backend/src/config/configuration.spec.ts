@@ -33,6 +33,7 @@ describe('Configuration', () => {
           callbackUrl: 'http://localhost:3001/api/v1/auth/oauth/github/callback',
         },
         tokenEncryptionKey: 'test-key',
+        stateSecret: 'test-state-secret',
       };
 
       expect(config.github.clientId).toBe('github_client_id');

@@ -39,6 +39,8 @@ export {
   InvalidTokenError,
   CannotRemoveLastOwnerError,
   InvalidOAuthState,
+  UnknownOAuthProvider,
+  MissingOAuthCode,
   IdentityAlreadyLinked,
   CannotUnlinkSoleIdentity,
 } from './identity-errors';

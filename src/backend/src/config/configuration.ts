@@ -39,6 +39,7 @@ export interface OAuthProviderConfig {
 export interface OAuthConfig {
   github: OAuthProviderConfig;
   tokenEncryptionKey: string;
+  stateSecret: string;
 }
 
 export interface AppConfiguration {
@@ -96,6 +97,8 @@ export default (): AppConfiguration => ({
         `http://localhost:${process.env.PORT || '3001'}/api/v1/auth/oauth/github/callback`,
     },
     tokenEncryptionKey: process.env.AUTH_TOKEN_ENCRYPTION_KEY || 'change-me-in-production',
+    stateSecret:
+      process.env.OAUTH_STATE_SECRET || process.env.JWT_SECRET || 'change-me-in-production',
   },
   logLevel: process.env.LOG_LEVEL || 'debug',
 });
