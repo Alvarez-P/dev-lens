@@ -1,4 +1,7 @@
-import { ExternalIdentity, ExternalIdentityId } from './external-identity.entity';
+import {
+  ExternalIdentity,
+  ExternalIdentityId,
+} from '@/modules/identity/domain/external-identity.entity';
 
 describe('ExternalIdentity', () => {
   const userId = '550e8400-e29b-41d4-a716-446655440000';

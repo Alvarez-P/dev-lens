@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TokenEncryptionService } from './token-encryption.service';
-import { ConfigService } from '../../../../config/config.service';
+import { TokenEncryptionService } from '@/modules/identity/infrastructure/encryption/token-encryption.service';
+import { ConfigService } from '@/config/config.service';
 
 describe('TokenEncryptionService', () => {
   let service: TokenEncryptionService;

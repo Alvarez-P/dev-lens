@@ -6,7 +6,7 @@ import {
   InvalidOAuthState,
   IdentityAlreadyLinked,
   CannotUnlinkSoleIdentity,
-} from './index';
+} from '@/modules/identity/domain/index';
 
 describe('Domain index exports', () => {
   it('should export ExternalIdentityProvider interface', () => {

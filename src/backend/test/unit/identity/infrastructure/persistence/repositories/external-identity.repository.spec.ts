@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ExternalIdentityRepository } from './external-identity.repository';
-import { ExternalIdentityTypeormEntity } from '../typeorm/external-identity.typeorm-entity';
-import { TokenEncryptionService } from '../../encryption/token-encryption.service';
-import { ExternalIdentity, ExternalIdentityId } from '../../../domain/external-identity.entity';
+import { ExternalIdentityRepository } from '@/modules/identity/infrastructure/persistence/repositories/external-identity.repository';
+import { ExternalIdentityTypeormEntity } from '@/modules/identity/infrastructure/persistence/typeorm/external-identity.typeorm-entity';
+import { TokenEncryptionService } from '@/modules/identity/infrastructure/encryption/token-encryption.service';
+import {
+  ExternalIdentity,
+  ExternalIdentityId,
+} from '@/modules/identity/domain/external-identity.entity';
 
 describe('ExternalIdentityRepository', () => {
   let repository: ExternalIdentityRepository;

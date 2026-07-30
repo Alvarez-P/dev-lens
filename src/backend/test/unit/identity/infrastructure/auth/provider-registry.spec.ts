@@ -1,8 +1,8 @@
-import { ProviderRegistry } from './provider-registry';
+import { ProviderRegistry } from '@/modules/identity/infrastructure/auth/provider-registry';
 import {
   ExternalIdentityProvider,
   ExternalUserProfile,
-} from '../../domain/external-identity-provider.interface';
+} from '@/modules/identity/domain/external-identity-provider.interface';
 
 class MockGithubProvider implements ExternalIdentityProvider {
   readonly provider = 'github';

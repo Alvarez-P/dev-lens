@@ -5,25 +5,25 @@ import request from 'supertest';
 import {
   ExternalIdentityProvider,
   ExternalUserProfile,
-} from '../domain/external-identity-provider.interface';
-import { ExternalIdentity } from '../domain/external-identity.entity';
-import { User } from '../domain/user.entity';
-import { Email } from '../domain/email.vo';
-import { UserId } from '../domain/user-id.vo';
+} from '@/modules/identity/domain/external-identity-provider.interface';
+import { ExternalIdentity } from '@/modules/identity/domain/external-identity.entity';
+import { User } from '@/modules/identity/domain/user.entity';
+import { Email } from '@/modules/identity/domain/email.vo';
+import { UserId } from '@/modules/identity/domain/user-id.vo';
 
-import { OAuthController } from '../infrastructure/controllers/oauth.controller';
-import { AuthController } from '../infrastructure/controllers/auth.controller';
-import { OAuthService } from '../application/oauth.service';
-import { AuthService } from '../application/auth.service';
-import { OAuthStateService } from '../infrastructure/auth/oauth-state.service';
-import { ProviderRegistry } from '../infrastructure/auth/provider-registry';
-import { PasswordService } from '../infrastructure/auth/password.service';
+import { OAuthController } from '@/modules/identity/infrastructure/controllers/oauth.controller';
+import { AuthController } from '@/modules/identity/infrastructure/controllers/auth.controller';
+import { OAuthService } from '@/modules/identity/application/oauth.service';
+import { AuthService } from '@/modules/identity/application/auth.service';
+import { OAuthStateService } from '@/modules/identity/infrastructure/auth/oauth-state.service';
+import { ProviderRegistry } from '@/modules/identity/infrastructure/auth/provider-registry';
+import { PasswordService } from '@/modules/identity/infrastructure/auth/password.service';
 
-import { UserRepository } from '../infrastructure/persistence/repositories/user.repository';
-import { ExternalIdentityRepository } from '../infrastructure/persistence/repositories/external-identity.repository';
-import { TokenEncryptionService } from '../infrastructure/encryption/token-encryption.service';
+import { UserRepository } from '@/modules/identity/infrastructure/persistence/repositories/user.repository';
+import { ExternalIdentityRepository } from '@/modules/identity/infrastructure/persistence/repositories/external-identity.repository';
+import { TokenEncryptionService } from '@/modules/identity/infrastructure/encryption/token-encryption.service';
 
-import { ConfigService } from '../../../config/config.service';
+import { ConfigService } from '@/config/config.service';
 
 // ──────────────────────────────────────────────
 // Mock Provider: returns controlled profile data

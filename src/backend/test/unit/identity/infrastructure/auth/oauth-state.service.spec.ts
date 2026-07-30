@@ -1,5 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
-import { OAuthStateService } from './oauth-state.service';
+import { OAuthStateService } from '@/modules/identity/infrastructure/auth/oauth-state.service';
 
 describe('OAuthStateService', () => {
   let service: OAuthStateService;

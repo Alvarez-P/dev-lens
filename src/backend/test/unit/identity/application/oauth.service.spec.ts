@@ -1,19 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { OAuthService } from './oauth.service';
-import { UserRepository } from '../infrastructure/persistence/repositories/user.repository';
-import { ExternalIdentityRepository } from '../infrastructure/persistence/repositories/external-identity.repository';
-import { ProviderRegistry } from '../infrastructure/auth/provider-registry';
-import { TokenEncryptionService } from '../infrastructure/encryption/token-encryption.service';
-import { AuthService } from './auth.service';
+import { OAuthService } from '@/modules/identity/application/oauth.service';
+import { UserRepository } from '@/modules/identity/infrastructure/persistence/repositories/user.repository';
+import { ExternalIdentityRepository } from '@/modules/identity/infrastructure/persistence/repositories/external-identity.repository';
+import { ProviderRegistry } from '@/modules/identity/infrastructure/auth/provider-registry';
+import { TokenEncryptionService } from '@/modules/identity/infrastructure/encryption/token-encryption.service';
+import { AuthService } from '@/modules/identity/application/auth.service';
 import {
   ExternalIdentityProvider,
   ExternalUserProfile,
-} from '../domain/external-identity-provider.interface';
-import { ExternalIdentity } from '../domain/external-identity.entity';
-import { User } from '../domain/user.entity';
-import { Email } from '../domain/email.vo';
-import { UserId } from '../domain/user-id.vo';
-import { IdentityAlreadyLinked } from '../domain/identity-errors';
+} from '@/modules/identity/domain/external-identity-provider.interface';
+import { ExternalIdentity } from '@/modules/identity/domain/external-identity.entity';
+import { User } from '@/modules/identity/domain/user.entity';
+import { Email } from '@/modules/identity/domain/email.vo';
+import { UserId } from '@/modules/identity/domain/user-id.vo';
+import { IdentityAlreadyLinked } from '@/modules/identity/domain/identity-errors';
 import { QueryFailedError } from 'typeorm';
 
 class MockGithubProvider implements ExternalIdentityProvider {

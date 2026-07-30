@@ -17,10 +17,14 @@
     "useDefineForClassFields": false,
     "strictPropertyInitialization": false,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "incremental": true,
     "ignoreDeprecations": "5.0"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
 }

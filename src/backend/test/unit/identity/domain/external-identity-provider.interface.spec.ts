@@ -1,7 +1,7 @@
 import {
   ExternalIdentityProvider,
   ExternalUserProfile,
-} from './external-identity-provider.interface';
+} from '@/modules/identity/domain/external-identity-provider.interface';
 
 describe('ExternalIdentityProvider Interface', () => {
   describe('ExternalUserProfile shape', () => {

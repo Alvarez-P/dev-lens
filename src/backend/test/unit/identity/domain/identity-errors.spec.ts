@@ -4,7 +4,7 @@ import {
   MissingOAuthCode,
   IdentityAlreadyLinked,
   CannotUnlinkSoleIdentity,
-} from './identity-errors';
+} from '@/modules/identity/domain/identity-errors';
 
 describe('InvalidOAuthState', () => {
   it('should create with correct code and status', () => {

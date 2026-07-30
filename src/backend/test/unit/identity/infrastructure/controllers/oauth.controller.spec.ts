@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { OAuthController } from './oauth.controller';
-import { OAuthService } from '../../application/oauth.service';
-import { OAuthStateService } from '../auth/oauth-state.service';
-import { ProviderRegistry } from '../auth/provider-registry';
-import { TokenEncryptionService } from '../encryption/token-encryption.service';
+import { OAuthController } from '@/modules/identity/infrastructure/controllers/oauth.controller';
+import { OAuthService } from '@/modules/identity/application/oauth.service';
+import { OAuthStateService } from '@/modules/identity/infrastructure/auth/oauth-state.service';
+import { ProviderRegistry } from '@/modules/identity/infrastructure/auth/provider-registry';
+import { TokenEncryptionService } from '@/modules/identity/infrastructure/encryption/token-encryption.service';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '../../../../config/config.service';
+import { ConfigService } from '@/config/config.service';
 import {
   ExternalIdentityProvider,
   ExternalUserProfile,
-} from '../../domain/external-identity-provider.interface';
-import { InvalidOAuthState } from '../../domain/identity-errors';
+} from '@/modules/identity/domain/external-identity-provider.interface';
+import { InvalidOAuthState } from '@/modules/identity/domain/identity-errors';
 
 class MockGithubProvider implements ExternalIdentityProvider {
   readonly provider = 'github';
@@ -66,14 +66,12 @@ describe('OAuthController', () => {
 
     const tokenEncryption = {
       encrypt: jest.fn().mockReturnValue('encrypted_temp_token'),
-      decrypt: jest
-        .fn()
-        .mockReturnValue(
-          JSON.stringify({
-            accessToken: 'jwt_access_token_value',
-            refreshToken: 'jwt_refresh_token_value',
-          }),
-        ),
+      decrypt: jest.fn().mockReturnValue(
+        JSON.stringify({
+          accessToken: 'jwt_access_token_value',
+          refreshToken: 'jwt_refresh_token_value',
+        }),
+      ),
     };
 
     const configService = {

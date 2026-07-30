@@ -13,7 +13,7 @@ jest.mock('passport-github2', () => ({
   })),
 }));
 
-import { GithubOAuthProvider } from './github-oauth.provider';
+import { GithubOAuthProvider } from '@/modules/identity/infrastructure/auth/github-oauth.provider';
 
 const mockUserResponse = JSON.stringify({
   id: 583231,

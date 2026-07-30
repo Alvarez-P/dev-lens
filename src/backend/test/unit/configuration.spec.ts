@@ -2,7 +2,7 @@ import configuration, {
   AppConfiguration,
   OAuthConfig,
   OAuthProviderConfig,
-} from '../config/configuration';
+} from '@/config/configuration';
 
 describe('Configuration', () => {
   const originalEnv = process.env;
