@@ -17,6 +17,12 @@ interface RequestOptions {
 }
 
 import { STORAGE_KEYS } from '@/lib/constants';
+import {
+  getAccessToken,
+  getRefreshToken,
+  storeTokens,
+  clearTokens as clearStoredTokens,
+} from '@/lib/auth/token-storage';
 
 interface ApiSuccessResponse<T> {
   success: true;
@@ -50,19 +56,8 @@ const DEFAULT_TIMEOUT = 30_000;
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
-function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-}
-
-function getRefreshToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-}
-
 function clearTokens(): void {
-  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+  clearStoredTokens();
 }
 
 async function attemptTokenRefresh(): Promise<boolean> {
@@ -89,8 +84,7 @@ async function attemptTokenRefresh(): Promise<boolean> {
 
       const data = await response.json();
       if (data.success && data.data) {
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.data.accessToken);
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.data.refreshToken);
+        storeTokens(data.data.accessToken, data.data.refreshToken);
         return true;
       }
 

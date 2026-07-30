@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { post, isSuccessResponse } from '@/lib/api-client';
 import { OAUTH_ENDPOINTS, STORAGE_KEYS } from '@/lib/constants';
 
 export default function OAuthCallbackPage(): React.ReactNode {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,12 +23,12 @@ export default function OAuthCallbackPage(): React.ReactNode {
         }
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken);
         localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken);
-        router.push('/');
+        window.location.href = '/';
       })
       .catch(() => {
         setError('Authentication failed. Please try again.');
       });
-  }, [router]);
+  }, []);
 
   if (error) {
     return (
