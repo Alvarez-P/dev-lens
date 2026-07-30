@@ -202,7 +202,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
 
   const loginWithProvider = useCallback((provider: string): void => {
     if (typeof window === 'undefined') return;
-    window.location.href = `/api/v1/auth/oauth/${provider}`;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    window.location.href = `${apiUrl}/api/v1/auth/oauth/${provider}`;
   }, []);
 
   const getLinkedIdentities = useCallback(async (): Promise<LinkedIdentity[]> => {

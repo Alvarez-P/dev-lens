@@ -114,7 +114,7 @@ const typeOrmEntities = [
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const github = configService.oauth.github;
-        if (!github.clientId) {
+        if (!github.clientId || !github.clientSecret) {
           return null;
         }
         return new GithubOAuthProvider(github);

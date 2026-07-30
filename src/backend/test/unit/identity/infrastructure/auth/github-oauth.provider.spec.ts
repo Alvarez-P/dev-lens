@@ -1,5 +1,5 @@
 const mockOAuth2 = {
-  authorizeURL: jest
+  getAuthorizeUrl: jest
     .fn()
     .mockReturnValue('https://github.com/login/oauth/authorize?state=mock_state'),
   getOAuthAccessToken: jest.fn(),
@@ -52,7 +52,7 @@ describe('GithubOAuthProvider', () => {
       const url = provider.getAuthorizationUrl('csrf-state-123', 'http://localhost:3001/callback');
 
       expect(url).toBe('https://github.com/login/oauth/authorize?state=mock_state');
-      expect(mockOAuth2.authorizeURL).toHaveBeenCalledWith({
+      expect(mockOAuth2.getAuthorizeUrl).toHaveBeenCalledWith({
         redirect_uri: 'http://localhost:3001/callback',
         state: 'csrf-state-123',
       });

@@ -7,7 +7,7 @@ import {
 } from '../../domain/external-identity-provider.interface';
 
 interface OAuth2Internal {
-  authorizeURL(params: Record<string, string>): string;
+  getAuthorizeUrl(params: Record<string, string>): string;
   getOAuthAccessToken(
     code: string,
     params: Record<string, string>,
@@ -61,7 +61,7 @@ export class GithubOAuthProvider implements ExternalIdentityProvider {
   }
 
   getAuthorizationUrl(state: string, redirectUri: string): string {
-    return this.oauth2.authorizeURL({
+    return this.oauth2.getAuthorizeUrl({
       redirect_uri: redirectUri,
       state,
     });
