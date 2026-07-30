@@ -1,7 +1,3 @@
-/**
- * Application configuration schema.
- * Defines the shape of validated configuration values.
- */
 export interface DatabaseConfig {
   url: string;
   host: string;
@@ -29,6 +25,22 @@ export interface AuthConfig {
   jwtRefreshExpiresIn: string;
 }
 
+export interface RepoConfig {
+  storagePath: string;
+  credentialEncryptionKey: string;
+}
+
+export interface OAuthProviderConfig {
+  clientId: string;
+  clientSecret: string;
+  callbackUrl: string;
+}
+
+export interface OAuthConfig {
+  github: OAuthProviderConfig;
+  tokenEncryptionKey: string;
+}
+
 export interface AppConfiguration {
   nodeEnv: string;
   port: number;
@@ -36,6 +48,8 @@ export interface AppConfiguration {
   redis: RedisConfig;
   minio: MinioConfig;
   auth: AuthConfig;
+  repo: RepoConfig;
+  oauth: OAuthConfig;
   logLevel: string;
 }
 
@@ -64,6 +78,20 @@ export default (): AppConfiguration => ({
     jwtSecret: process.env.JWT_SECRET || 'change-me-in-production',
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
     jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  },
+  repo: {
+    storagePath: process.env.REPO_STORAGE_PATH || '/tmp/devlens/repos',
+    credentialEncryptionKey: process.env.CREDENTIAL_ENCRYPTION_KEY || 'change-me-in-production',
+  },
+  oauth: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || '',
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+      callbackUrl:
+        process.env.GITHUB_CALLBACK_URL ||
+        `http://localhost:${process.env.PORT || '3001'}/api/v1/auth/oauth/github/callback`,
+    },
+    tokenEncryptionKey: process.env.AUTH_TOKEN_ENCRYPTION_KEY || 'change-me-in-production',
   },
   logLevel: process.env.LOG_LEVEL || 'debug',
 });

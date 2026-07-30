@@ -8,6 +8,11 @@ export { Organization } from './organization.entity';
 export { OrganizationId } from './organization-id.vo';
 export { Workspace } from './workspace.entity';
 export { WorkspaceId } from './workspace-id.vo';
+export { ExternalIdentity, ExternalIdentityId } from './external-identity.entity';
+export {
+  ExternalIdentityProvider,
+  ExternalUserProfile,
+} from './external-identity-provider.interface';
 
 export {
   UserRegisteredEvent,
@@ -33,4 +38,7 @@ export {
   NotWorkspaceMemberError,
   InvalidTokenError,
   CannotRemoveLastOwnerError,
+  InvalidOAuthState,
+  IdentityAlreadyLinked,
+  CannotUnlinkSoleIdentity,
 } from './identity-errors';

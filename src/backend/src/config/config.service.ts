@@ -6,6 +6,8 @@ import {
   RedisConfig,
   MinioConfig,
   AuthConfig,
+  RepoConfig,
+  OAuthConfig,
 } from './configuration';
 
 @Injectable()
@@ -34,6 +36,14 @@ export class ConfigService {
 
   get auth(): AuthConfig {
     return this.configService.getOrThrow<AuthConfig>('auth');
+  }
+
+  get repo(): RepoConfig {
+    return this.configService.getOrThrow<RepoConfig>('repo');
+  }
+
+  get oauth(): OAuthConfig {
+    return this.configService.getOrThrow<OAuthConfig>('oauth');
   }
 
   get logLevel(): string {

@@ -1,7 +1,7 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { LayoutDashboard, Building2, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, GitBranch, Key, Settings, LogOut } from 'lucide-react';
 import { AppShell } from '@/components/layout/app-shell';
 import type { SidebarItem } from '@/components/layout/sidebar';
 import { ProtectedRoute } from '@/lib/auth/protected-route';
@@ -21,6 +21,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }): 
       label: 'Organizations',
       icon: <Building2 className="h-5 w-5" />,
       href: '/organizations',
+    },
+    {
+      label: 'Repositories',
+      icon: <GitBranch className="h-5 w-5" />,
+      href: '/repositories',
+    },
+    {
+      label: 'Credentials',
+      icon: <Key className="h-5 w-5" />,
+      href: '/credentials',
     },
     { label: 'Settings', icon: <Settings className="h-5 w-5" />, href: '/settings' },
   ];

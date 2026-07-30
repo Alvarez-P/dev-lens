@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,6 +9,7 @@ import { ConfigModule as AppConfigModule } from './config/config.module';
 import { ConfigService } from './config/config.service';
 import { SharedModule } from './shared/shared.module';
 import { IdentityModule } from './modules/identity/identity.module';
+import { RepositoriesModule } from './modules/repositories/repositories.module';
 
 @Module({
   imports: [
@@ -53,6 +55,17 @@ import { IdentityModule } from './modules/identity/identity.module';
       }),
     }),
 
+    // BullMQ (Redis-backed job queues)
+    BullModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          url: configService.redis.url,
+        },
+      }),
+    }),
+
     // Application configuration
     AppConfigModule,
 
@@ -61,6 +74,7 @@ import { IdentityModule } from './modules/identity/identity.module';
 
     // Feature modules
     IdentityModule,
+    RepositoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
