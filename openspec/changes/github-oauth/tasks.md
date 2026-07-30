@@ -43,15 +43,15 @@ Chain strategy: pending
 
 ## Phase 3: Persistence + Resolution
 
-- [ ] 3.1 Create `ExternalIdentityTypeormEntity` (`@Entity('external_identities')`) with unique `(provider, externalId)` constraint + migration
-- [ ] 3.2 Implement `ExternalIdentityRepository` — CRUD, `findByProvider`, token encryption on write
-- [ ] 3.3 Build `OAuthService.authenticateWithProvider()` — 3-path resolution (identity match → email match → provision) + `buildAuthResponse` + DTOs
+- [x] 3.1 Create `ExternalIdentityTypeormEntity` (`@Entity('external_identities')`) with unique `(provider, externalId)` constraint + migration
+- [x] 3.2 Implement `ExternalIdentityRepository` — CRUD, `findByProvider`, token encryption on write
+- [x] 3.3 Build `OAuthService.authenticateWithProvider()` — 3-path resolution (identity match → email match → provision) + `buildAuthResponse` + DTOs
 
 ## Phase 4: API Endpoints + Integration
 
-- [ ] 4.1 Create `OAuthController` — `GET /auth/oauth/:provider` (302 redirect) and `GET /auth/oauth/:provider/callback` (code exchange → JWT)
-- [ ] 4.2 Register controller, providers, TypeORM entity, encryption in `IdentityModule`
-- [ ] 4.3 Integration tests: callback (3 resolution paths), tampered state, duplicate identity, backward compat unchanged
+- [x] 4.1 Create `OAuthController` — `GET /auth/oauth/:provider` (302 redirect) and `GET /auth/oauth/:provider/callback` (code exchange → JWT)
+- [x] 4.2 Register controller, providers, TypeORM entity, encryption in `IdentityModule`
+- [x] 4.3 Integration tests: callback (3 resolution paths), tampered state, duplicate identity, backward compat unchanged
 
 ## Phase 5: Frontend OAuth UI
 
