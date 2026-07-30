@@ -1,4 +1,8 @@
-import configuration, { AppConfiguration, OAuthConfig, OAuthProviderConfig } from './configuration';
+import configuration, {
+  AppConfiguration,
+  OAuthConfig,
+  OAuthProviderConfig,
+} from '../config/configuration';
 
 describe('Configuration', () => {
   const originalEnv = process.env;
