@@ -6,13 +6,10 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
  * Placeholder authentication guard.
  *
  * CURRENT BEHAVIOR: Always allows access (returns true).
+ * Routes that need real auth should use @UseGuards(JwtAuthGuard) from IdentityModule.
  *
- * FUTURE BEHAVIOR (EPIC-003):
- * - Check for JWT/Bearer token in Authorization header
- * - Validate token and extract user identity
- * - Check @Public() decorator to skip auth for public routes
- * - Set RequestContextService.userId on successful authentication
- * - Return 401 Unauthorized for invalid/missing tokens
+ * This guard is bound globally and handles the @Public() decorator check.
+ * In production, this could be replaced with the JwtAuthGuard for global auth.
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -29,7 +26,8 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    // Placeholder: always allow until EPIC-003 implements real auth
+    // Placeholder: always allow for now
+    // Individual modules use @UseGuards(JwtAuthGuard) for real auth
     return true;
   }
 }

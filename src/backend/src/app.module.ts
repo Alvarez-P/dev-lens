@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule as AppConfigModule } from './config/config.module';
+import { ConfigService } from './config/config.service';
 import { SharedModule } from './shared/shared.module';
+import { IdentityModule } from './modules/identity/identity.module';
 
 @Module({
   imports: [
@@ -33,11 +36,31 @@ import { SharedModule } from './shared/shared.module';
       },
     }),
 
+    // Database (PostgreSQL via TypeORM)
+    TypeOrmModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.database.host,
+        port: configService.database.port,
+        username: configService.database.username,
+        password: configService.database.password,
+        database: configService.database.name,
+        autoLoadEntities: true,
+        synchronize: configService.nodeEnv !== 'production',
+        logging: configService.nodeEnv === 'development' ? ['error', 'warn'] : ['error'],
+      }),
+    }),
+
     // Application configuration
     AppConfigModule,
 
     // Shared kernel
     SharedModule,
+
+    // Feature modules
+    IdentityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

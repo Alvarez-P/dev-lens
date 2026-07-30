@@ -4,6 +4,11 @@
  */
 export interface DatabaseConfig {
   url: string;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  name: string;
 }
 
 export interface RedisConfig {
@@ -20,6 +25,8 @@ export interface MinioConfig {
 
 export interface AuthConfig {
   jwtSecret: string;
+  jwtExpiresIn: string;
+  jwtRefreshExpiresIn: string;
 }
 
 export interface AppConfiguration {
@@ -37,6 +44,11 @@ export default (): AppConfiguration => ({
   port: parseInt(process.env.PORT || '3001', 10),
   database: {
     url: process.env.DATABASE_URL || 'postgresql://devlens:devlens@localhost:5432/devlens',
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    username: process.env.DB_USER || 'devlens',
+    password: process.env.DB_PASS || 'devlens',
+    name: process.env.DB_NAME || 'devlens',
   },
   redis: {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
@@ -50,6 +62,8 @@ export default (): AppConfiguration => ({
   },
   auth: {
     jwtSecret: process.env.JWT_SECRET || 'change-me-in-production',
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
+    jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
   logLevel: process.env.LOG_LEVEL || 'debug',
 });
