@@ -1,0 +1,136 @@
+name: devlens
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: devlens-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - devlens-postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devlens-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: devlens-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - devlens-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devlens-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: devlens-minio
+    restart: unless-stopped
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - devlens-minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devlens-network
+
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: devlens-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT}:3001"
+    env_file:
+      - ./src/backend/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - devlens-network
+
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+    container_name: devlens-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    env_file:
+      - ./src/frontend/.env
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - devlens-network
+
+  # Kafka is optional — uncomment the lines below when needed
+  # kafka:
+  #   image: bitnami/kafka:latest
+  #   container_name: devlens-kafka
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9092:9092"
+  #   environment:
+  #     KAFKA_CFG_NODE_ID: "1"
+  #     KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+  #     KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
+  #     KAFKA_CFG_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+  #     KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
+  #     KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+  #   volumes:
+  #     - devlens-kafka-data:/bitnami/kafka
+  #   networks:
+  #     - devlens-network
+
+volumes:
+  devlens-postgres-data:
+    name: devlens-postgres-data
+  devlens-redis-data:
+    name: devlens-redis-data
+  devlens-minio-data:
+    name: devlens-minio-data
+  # devlens-kafka-data:
+  #   name: devlens-kafka-data
+
+networks:
+  devlens-network:
+    name: devlens-network
+    driver: bridge

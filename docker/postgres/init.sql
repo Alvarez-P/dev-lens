@@ -1,0 +1,3 @@
+-- DevLens PostgreSQL initialization script
+-- EPIC-001: Foundation — no business logic yet
+-- Extensions and baseline setup go here as needed
