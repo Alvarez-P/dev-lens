@@ -3,15 +3,6 @@ import { Request, Response } from 'express';
 import { DomainError } from '../../domain/domain-error';
 import { RequestContextService } from '../context/request-context.service';
 
-/**
- * Global exception filter that catches all exceptions and maps them
- * to a consistent API error response format.
- *
- * Mapping rules:
- * - DomainError → HTTP status based on the error's statusCode property
- * - NestJS HttpException → pass through with original status and message
- * - Unknown errors → 500 Internal Server Error
- */
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {

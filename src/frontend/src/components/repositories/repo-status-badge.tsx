@@ -32,11 +32,7 @@ const statusConfig: Record<RepoStatus, { label: string; className: string }> = {
   },
 };
 
-/**
- * Colored badge showing repository sync status.
- * Green=active, yellow= syncing/cloning, red=error, gray=archived.
- */
-export function RepoStatusBadge({ status, className }: RepoStatusBadgeProps): JSX.Element {
+export function RepoStatusBadge({ status, className }: RepoStatusBadgeProps): React.ReactNode {
   const config = statusConfig[status];
   return (
     <span

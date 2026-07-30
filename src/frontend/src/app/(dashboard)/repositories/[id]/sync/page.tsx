@@ -10,10 +10,7 @@ import {
   type SnapshotItem,
 } from '@/components/repositories/sync-history-timeline';
 
-/**
- * Full sync history page with timeline of all snapshots.
- */
-export default function SyncHistoryPage(): JSX.Element {
+export default function SyncHistoryPage(): React.ReactNode {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -22,8 +19,6 @@ export default function SyncHistoryPage(): JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch snapshots from API
-    // const { data } = await get<SnapshotItem[]>(`/api/v1/repositories/${id}/snapshots`);
     setIsLoading(false);
   }, [id]);
 

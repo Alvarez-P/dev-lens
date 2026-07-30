@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, LogIn, UserPlus } from 'lucide-react';
 
-export default function Home(): JSX.Element {
+export default function Home(): React.ReactNode {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
@@ -40,7 +40,6 @@ export default function Home(): JSX.Element {
         </div>
       </div>
 
-      {/* Feature teasers */}
       <div className="mt-20 grid gap-8 sm:grid-cols-3">
         <div className="rounded-xl border border-surface-800 p-6 text-left">
           <h3 className="text-sm font-semibold text-surface-200">Code Analysis</h3>

@@ -1,8 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SnapshotStatus } from '../../domain/snapshot.entity';
 
-// ─── Response ────────────────────────────────────────────────────
-
 export class SnapshotResponseDto {
   @ApiProperty({ example: 'uuid' })
   id!: string;

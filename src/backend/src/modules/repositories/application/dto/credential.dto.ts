@@ -3,8 +3,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { GitProvider } from '../../domain/git-provider.enum';
 import { CredentialType } from '../../domain/credential.entity';
 
-// ─── Create ──────────────────────────────────────────────────────
-
 export class CreateCredentialDto {
   @ApiProperty({ enum: GitProvider, example: 'GITHUB' })
   @IsEnum(GitProvider)
@@ -31,8 +29,6 @@ export class CreateCredentialDto {
   expiresAt?: string;
 }
 
-// ─── Update ──────────────────────────────────────────────────────
-
 export class UpdateCredentialDto {
   @ApiPropertyOptional({ example: 'Updated label' })
   @IsOptional()
@@ -41,8 +37,6 @@ export class UpdateCredentialDto {
   @MaxLength(255)
   name?: string;
 }
-
-// ─── Response ────────────────────────────────────────────────────
 
 export class CredentialResponseDto {
   @ApiProperty({ example: 'uuid' })
@@ -66,8 +60,6 @@ export class CredentialResponseDto {
   @ApiProperty({ nullable: true, example: '2025-01-15T10:00:00Z' })
   expiresAt!: string | null;
 }
-
-// ─── Validate ────────────────────────────────────────────────────
 
 export class ValidateCredentialResultDto {
   @ApiProperty({ example: true })

@@ -3,15 +3,6 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { SyncService } from '../../application/sync.service';
 
-/**
- * Clone job processor — handles initial clones specifically.
- * In the current implementation, this delegates to SyncService
- * which handles both clone (first sync) and pull (subsequent sync).
- *
- * This processor exists as a separate queue entry point for future
- * optimization where initial clones may need different handling
- * (e.g., full clone without --depth 1, progress tracking).
- */
 @Processor('repository-clone')
 export class CloneJobProcessor extends WorkerHost {
   private readonly logger = new Logger(CloneJobProcessor.name);

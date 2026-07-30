@@ -61,8 +61,8 @@ services:
 
   backend:
     build:
-      context: ./src/backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./src/backend/Dockerfile
     container_name: devlens-backend
     restart: unless-stopped
     ports:
@@ -77,7 +77,7 @@ services:
       minio:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health/live"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/v1/health/live"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -87,8 +87,8 @@ services:
 
   frontend:
     build:
-      context: ./src/frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./src/frontend/Dockerfile
     container_name: devlens-frontend
     restart: unless-stopped
     ports:

@@ -1,0 +1,15 @@
+node_modules
+.git
+.github
+.husky
+.atl
+docs
+docker
+*.md
+.env
+.env.example
+.gitignore
+.prettierrc
+.eslintrc.js
+commitlint.config.js
+package-lock.json

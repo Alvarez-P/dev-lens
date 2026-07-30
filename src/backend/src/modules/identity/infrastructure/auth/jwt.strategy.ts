@@ -9,11 +9,6 @@ interface JwtPayload {
   type: string;
 }
 
-/**
- * Passport JWT strategy.
- * Extracts and validates JWT tokens from the Authorization header.
- * Returns the user payload on success which is attached to the request.
- */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private readonly configService: ConfigService) {
@@ -24,13 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  /**
-   * Called by Passport after the token is verified.
-   * The returned value is attached to request.user.
-   * Only access tokens are allowed through this strategy.
-   */
   async validate(payload: JwtPayload): Promise<{ userId: string; email: string }> {
-    // Only validate access tokens — refresh tokens must use the refresh endpoint
     if (payload.type !== 'access') {
       throw new UnauthorizedException('Invalid token type');
     }

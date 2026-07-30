@@ -4,7 +4,6 @@ import { clsx } from 'clsx';
 type SpinnerSize = 'sm' | 'md' | 'lg';
 
 export interface SpinnerProps extends HTMLAttributes<HTMLDivElement> {
-  /** Spinner size */
   size?: SpinnerSize;
 }
 
@@ -14,10 +13,6 @@ const sizeClasses: Record<SpinnerSize, string> = {
   lg: 'h-8 w-8 border-3',
 };
 
-/**
- * Spinner component for loading states.
- * Uses CSS border animation for a clean, lightweight spinner.
- */
 export const Spinner = forwardRef<HTMLDivElement, SpinnerProps>(
   ({ size = 'md', className, ...props }, ref) => {
     return (

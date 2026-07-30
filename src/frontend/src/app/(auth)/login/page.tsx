@@ -7,14 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast-provider';
-import { LogIn } from 'lucide-react';
+import { LogIn, Github } from 'lucide-react';
 
-export default function LoginPage(): JSX.Element {
+const showOAuthButtons = !!process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+
+export default function LoginPage(): React.ReactNode {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const { login } = useAuth();
+  const { login, loginWithProvider } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -58,7 +60,32 @@ export default function LoginPage(): JSX.Element {
       <h2 className="text-xl font-semibold text-surface-100">Sign in</h2>
       <p className="mt-1 text-sm text-surface-400">Enter your credentials to access your account</p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      {showOAuthButtons && (
+        <>
+          <div className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              leftIcon={<Github className="h-4 w-4" />}
+              onClick={() => loginWithProvider('github')}
+            >
+              Sign in with GitHub
+            </Button>
+          </div>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-surface-700" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-surface-900 px-2 text-surface-400">or continue with</span>
+            </div>
+          </div>
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Email"
           type="email"

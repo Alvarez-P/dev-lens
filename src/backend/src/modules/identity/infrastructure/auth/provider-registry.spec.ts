@@ -72,8 +72,11 @@ describe('ProviderRegistry', () => {
       registry.register(new MockGithubProvider());
       registry.register(new MockGitlabProvider());
 
-      // No error means success
-      expect(true).toBe(true);
+      const github = registry.resolve('github');
+      const gitlab = registry.resolve('gitlab');
+
+      expect(github.getAuthorizationUrl('s', 'r')).toContain('github.com');
+      expect(gitlab.getAuthorizationUrl('s', 'r')).toContain('gitlab.com');
     });
   });
 

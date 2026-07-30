@@ -26,15 +26,11 @@ export interface ConnectRepoDialogProps {
   }) => Promise<void>;
 }
 
-/**
- * Modal dialog for connecting a new repository.
- * Form includes: name, URL, provider select, branch (optional).
- */
 export function ConnectRepoDialog({
   isOpen,
   onClose,
   onSubmit,
-}: ConnectRepoDialogProps): JSX.Element | null {
+}: ConnectRepoDialogProps): React.ReactNode {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [provider, setProvider] = useState('GITHUB');
@@ -64,7 +60,7 @@ export function ConnectRepoDialog({
           provider,
           defaultBranch: defaultBranch || undefined,
         });
-        // Reset form
+
         setName('');
         setUrl('');
         setProvider('GITHUB');

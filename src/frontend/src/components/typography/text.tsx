@@ -4,15 +4,14 @@ import { clsx } from 'clsx';
 type TextVariant = 'body' | 'caption' | 'label' | 'code';
 
 export interface TextProps {
-  /** Text variant */
   variant?: TextVariant;
-  /** Whether to use muted styling */
+
   muted?: boolean;
-  /** Content */
+
   children: ReactNode;
-  /** Additional class names */
+
   className?: string;
-  /** HTML element to render as (polymorphic) */
+
   as?: ElementType;
 }
 
@@ -30,17 +29,13 @@ const defaultTags: Record<TextVariant, ElementType> = {
   code: 'code',
 };
 
-/**
- * Text component with consistent typography.
- * Polymorphic — renders as the specified `as` element or a sensible default.
- */
 export function Text({
   variant = 'body',
   muted = false,
   children,
   className,
   as,
-}: TextProps): JSX.Element {
+}: TextProps): React.ReactNode {
   const Tag = as || defaultTags[variant];
 
   return (

@@ -4,11 +4,10 @@ import { clsx } from 'clsx';
 type HeadingLevel = 1 | 2 | 3 | 4;
 
 export interface HeadingProps {
-  /** Heading level (1-4) */
   level: HeadingLevel;
-  /** Heading content */
+
   children: ReactNode;
-  /** Additional class names */
+
   className?: string;
 }
 
@@ -26,11 +25,7 @@ const levelTags: Record<HeadingLevel, ElementType> = {
   4: 'h4',
 };
 
-/**
- * Heading component with consistent typography.
- * Renders the appropriate HTML heading tag based on level.
- */
-export function Heading({ level, children, className }: HeadingProps): JSX.Element {
+export function Heading({ level, children, className }: HeadingProps): React.ReactNode {
   const Tag = levelTags[level];
 
   return <Tag className={clsx('text-surface-100', levelStyles[level], className)}>{children}</Tag>;

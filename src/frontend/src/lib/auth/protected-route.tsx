@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from './auth-context';
 import { Spinner } from '@/components/ui/spinner';
 
-/**
- * ProtectedRoute component.
- * Redirects unauthenticated users to /login.
- * Shows a loading spinner while auth state is being determined.
- */
-export function ProtectedRoute({ children }: { children: ReactNode }): JSX.Element {
+export function ProtectedRoute({ children }: { children: ReactNode }): React.ReactNode {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 

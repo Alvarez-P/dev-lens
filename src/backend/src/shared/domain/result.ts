@@ -1,9 +1,3 @@
-/**
- * Result pattern — an Either-like type for explicit error handling.
- * Inspired by functional programming approaches to avoid throwing exceptions
- * for expected failure cases.
- */
-
 export type Result<T, E = Error> = OkResult<T> | ErrResult<E>;
 
 export class OkResult<T> {

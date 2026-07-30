@@ -15,9 +15,6 @@ export class GitProviderFactory {
     private readonly genericProvider: GenericProvider,
   ) {}
 
-  /**
-   * Get the appropriate provider implementation for the given enum.
-   */
   getProvider(provider: GitProvider): GitProviderInterface {
     switch (provider) {
       case GitProvider.GITHUB:
@@ -27,7 +24,6 @@ export class GitProviderFactory {
       case GitProvider.BITBUCKET:
         return this.bitbucketProvider;
       case GitProvider.AZURE_DEVOPS:
-        // Falls back to generic for Azure DevOps (can be extended)
         return this.genericProvider;
       case GitProvider.GENERIC:
         return this.genericProvider;

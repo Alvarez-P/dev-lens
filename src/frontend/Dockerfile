@@ -1,37 +1,25 @@
-# Build stage
-FROM node:20-alpine AS build
-
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 WORKDIR /app
 
-# Copy package files
+FROM base AS deps
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY package.json ./
+COPY src/frontend/package.json ./src/frontend/
+COPY src/backend/package.json ./src/backend/
+RUN pnpm install --frozen-lockfile --filter devlens-frontend...
 
-# Install dependencies
-RUN npm ci
+FROM deps AS build
+COPY src/frontend/ ./src/frontend/
+RUN pnpm --filter devlens-frontend run build
 
-# Copy source code
-COPY tsconfig.json next.config.js tailwind.config.ts postcss.config.js ./
-COPY src ./src
-COPY public ./public
+FROM base AS production
+COPY --from=build /app/src/frontend/.next/standalone ./
+COPY --from=build /app/src/frontend/.next/static ./src/frontend/.next/static
+COPY --from=build /app/src/frontend/public ./src/frontend/public
 
-# Build the application
-RUN npm run build
+WORKDIR /app/src/frontend
 
-# Production stage
-FROM node:20-alpine AS production
-
-WORKDIR /app
-
-# Copy standalone build output
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
-COPY --from=build /app/public ./public
-
-# Expose application port
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
-
-# Start the application
 CMD ["node", "server.js"]

@@ -79,7 +79,7 @@ export class SnapshotRepository {
     entity.fileCount = snapshot.fileCount;
     entity.sizeBytes = snapshot.sizeBytes;
     entity.status = snapshot.status;
-    entity.createdAt = new Date(); // not stored in domain
+    entity.createdAt = new Date();
     return entity;
   }
 }

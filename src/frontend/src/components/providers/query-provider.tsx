@@ -8,10 +8,6 @@ interface QueryProviderProps {
   children: ReactNode;
 }
 
-/**
- * Client component that wraps the application with React Query's QueryClientProvider.
- * Must be imported in the root layout.
- */
-export function QueryProvider({ children }: QueryProviderProps): JSX.Element {
+export function QueryProvider({ children }: QueryProviderProps): React.ReactNode {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

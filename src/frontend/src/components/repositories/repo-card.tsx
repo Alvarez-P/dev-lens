@@ -17,9 +17,6 @@ export interface RepoCardProps {
   className?: string;
 }
 
-/**
- * Card showing repository name, provider badge, status indicator, last sync info.
- */
 export function RepoCard({
   id,
   name,
@@ -30,7 +27,7 @@ export function RepoCard({
   lastSyncAt,
   fileCount,
   className,
-}: RepoCardProps): JSX.Element {
+}: RepoCardProps): React.ReactNode {
   const timeAgo = lastSyncAt ? formatTimeAgo(new Date(lastSyncAt)) : 'Never synced';
 
   return (

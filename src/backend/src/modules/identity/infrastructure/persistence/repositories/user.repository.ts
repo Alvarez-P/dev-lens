@@ -6,12 +6,6 @@ import { User } from '../../../domain/user.entity';
 import { UserId } from '../../../domain/user-id.vo';
 import { Email } from '../../../domain/email.vo';
 
-/**
- * Repository for the User aggregate.
- *
- * Maps between TypeORM persistence entities (UserTypeOrmEntity)
- * and domain entities (User).
- */
 @Injectable()
 export class UserRepository {
   constructor(
@@ -19,58 +13,37 @@ export class UserRepository {
     private readonly ormRepo: Repository<UserTypeOrmEntity>,
   ) {}
 
-  /**
-   * Find a user by their ID.
-   */
   async findById(id: UserId): Promise<User | null> {
     const entity = await this.ormRepo.findOne({ where: { id: id.toString() } });
     if (!entity) return null;
     return this.toDomain(entity);
   }
 
-  /**
-   * Find a user by their email address.
-   */
   async findByEmail(email: Email): Promise<User | null> {
     const entity = await this.ormRepo.findOne({ where: { email: email.toString() } });
     if (!entity) return null;
     return this.toDomain(entity);
   }
 
-  /**
-   * Save (create or update) a user.
-   */
   async save(user: User): Promise<void> {
     const entity = this.toPersistence(user);
     await this.ormRepo.save(entity);
   }
 
-  /**
-   * Delete a user by ID.
-   */
   async delete(id: UserId): Promise<void> {
     await this.ormRepo.delete(id.toString());
   }
 
-  /**
-   * Check if a user exists by ID.
-   */
   async exists(id: UserId): Promise<boolean> {
     const count = await this.ormRepo.count({ where: { id: id.toString() } });
     return count > 0;
   }
 
-  /**
-   * Check if a user exists by email.
-   */
   async existsByEmail(email: Email): Promise<boolean> {
     const count = await this.ormRepo.count({ where: { email: email.toString() } });
     return count > 0;
   }
 
-  /**
-   * Map from persistence (TypeORM) to domain entity.
-   */
   private toDomain(entity: UserTypeOrmEntity): User {
     return User.reconstitute(
       UserId.from(entity.id),
@@ -87,9 +60,6 @@ export class UserRepository {
     );
   }
 
-  /**
-   * Map from domain entity to persistence (TypeORM).
-   */
   private toPersistence(user: User): UserTypeOrmEntity {
     const entity = new UserTypeOrmEntity();
     entity.id = user.id.toString();

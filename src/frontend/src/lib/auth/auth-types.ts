@@ -1,6 +1,3 @@
-/**
- * User profile returned from the API.
- */
 export interface UserProfile {
   id: string;
   email: string;
@@ -11,17 +8,11 @@ export interface UserProfile {
   createdAt: string;
 }
 
-/**
- * Login credentials.
- */
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-/**
- * Registration data.
- */
 export interface RegisterData {
   email: string;
   password: string;
@@ -29,9 +20,6 @@ export interface RegisterData {
   lastName: string;
 }
 
-/**
- * Auth response from the API.
- */
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -39,11 +27,20 @@ export interface AuthResponse {
   user: UserProfile;
 }
 
-/**
- * Authentication state.
- */
 export interface AuthState {
   user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+}
+
+export interface LinkedIdentity {
+  id: string;
+  provider: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  linkedAt: string;
+}
+
+export interface ProviderLogin {
+  provider: string;
 }

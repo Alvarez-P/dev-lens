@@ -15,7 +15,7 @@ function StatCard({
   value: string | number;
   icon: React.ReactNode;
   href?: string;
-}): JSX.Element {
+}): React.ReactNode {
   const content = (
     <div className="rounded-xl border border-surface-800 bg-surface-900 p-6 transition-colors hover:border-surface-700">
       <div className="flex items-center gap-4">
@@ -36,7 +36,7 @@ function StatCard({
   return content;
 }
 
-export default function DashboardPage(): JSX.Element {
+export default function DashboardPage(): React.ReactNode {
   const { user } = useAuth();
 
   return (

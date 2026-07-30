@@ -1,8 +1,6 @@
 import { IsString, IsOptional, IsNotEmpty, MaxLength, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-// ─── Request DTOs ───────────────────────────────────────────────
-
 export class CreateWorkspaceDto {
   @ApiProperty({ example: 'Main Workspace', description: 'Workspace name' })
   @IsString()
@@ -41,8 +39,6 @@ export class UpdateWorkspaceDto {
   @MaxLength(1000)
   description?: string;
 }
-
-// ─── Response DTOs ──────────────────────────────────────────────
 
 export class WorkspaceResponseDto {
   @ApiProperty({ example: 'workspace-uuid' })

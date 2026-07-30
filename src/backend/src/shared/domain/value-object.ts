@@ -1,12 +1,4 @@
-/**
- * Abstract base for value objects.
- * Value objects are immutable and compared by structural equality.
- */
 export abstract class ValueObject {
-  /**
-   * Returns the component values used for equality comparison.
-   * Must be overridden by subclasses.
-   */
   protected abstract getEqualityComponents(): unknown[];
 
   equals(other: ValueObject): boolean {
@@ -21,8 +13,6 @@ export abstract class ValueObject {
       return false;
     }
 
-    return thisComponents.every((component, index) =>
-      Object.is(component, otherComponents[index]),
-    );
+    return thisComponents.every((component, index) => Object.is(component, otherComponents[index]));
   }
 }

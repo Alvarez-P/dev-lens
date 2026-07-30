@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/toast-provider';
 import { post } from '@/lib/api-client';
 import { Mail, ArrowLeft } from 'lucide-react';
 
-export default function ForgotPasswordPage(): JSX.Element {
+export default function ForgotPasswordPage(): React.ReactNode {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);

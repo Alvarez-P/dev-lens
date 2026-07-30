@@ -5,9 +5,6 @@ import { GitProviderInterface } from './provider.interface';
 export class BitbucketProvider implements GitProviderInterface {
   private readonly apiBase = 'https://api.bitbucket.org/2.0';
 
-  /**
-   * Validate a Bitbucket repository URL.
-   */
   async validateUrl(url: string, credential?: string): Promise<boolean> {
     const repoPath = this.toRepoPath(url);
     if (!repoPath) return false;
@@ -25,9 +22,6 @@ export class BitbucketProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Validate credentials against Bitbucket API.
-   */
   async validateCredentials(_url: string, credential: string): Promise<boolean> {
     try {
       const response = await fetch(`${this.apiBase}/user`, {
@@ -39,9 +33,6 @@ export class BitbucketProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Get the default branch from Bitbucket API.
-   */
   async getDefaultBranch(url: string, credential?: string): Promise<string> {
     const repoPath = this.toRepoPath(url);
     if (!repoPath) return 'main';
@@ -62,9 +53,6 @@ export class BitbucketProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Get repository info from Bitbucket API.
-   */
   async getRepoInfo(
     url: string,
     credential?: string,
@@ -101,10 +89,6 @@ export class BitbucketProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Convert git URL to API repo path.
-   * e.g., https://bitbucket.org/workspace/repo → workspace/repo
-   */
   private toRepoPath(url: string): string | null {
     const match = url.match(/bitbucket\.org[/:]([\w.-]+\/[\w.-]+)/);
     if (!match) return null;

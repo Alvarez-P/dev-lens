@@ -1,0 +1,104 @@
+schema: spec-driven
+
+context: |
+  Name: DevLens
+  Description: Software Intelligence Platform
+  GitHub: Alvarez-P/dev-lens
+  Type: Full-stack monorepo (pnpm workspace)
+
+  Stack:
+    Backend:  NestJS 10.4, TypeScript 5.5 (CommonJS), TypeORM, BullMQ, Passport/JWT, Swagger, Pino
+    Frontend: Next.js 15.5 + React 19.2 + TailwindCSS 3.4, Zustand, TanStack Query
+    Infra:    PostgreSQL 16, Redis 7, MinIO, Docker Compose
+    PKM:      pnpm 9.15, Node >=20
+
+  Architecture:
+    Style: Modular monolith with DDD bounded contexts
+    Contexts: identity (auth, orgs, workspaces, RBAC), repositories (git providers, sync, snapshots)
+    Shared: DDD building blocks — Entity, ValueObject, AggregateRoot, DomainEvent, Result, UnitOfWork
+    Layers: application, domain, infrastructure (per bounded context)
+    RFCs: 14 architecture RFCs in docs/architecture/
+
+  Conventions:
+    Linter:    ESLint 8 + @typescript-eslint
+    Formatter: Prettier 3.3 (singleQuote, trailingComma: all, printWidth: 100)
+    TS:        strict mode on all packages
+    Commits:   conventional commits (commitlint), Husky pre-commit hooks
+    CI:        lint.yml, test.yml, build.yml on PRs to main/develop and push to main
+
+rules:
+  proposal:
+    - Reference existing RFCs in docs/architecture/ for design decisions
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Follow DDD bounded-context structure: modules/{context}/{application,domain,infrastructure}/
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale, referencing existing RFCs
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing NestJS module structure with application/domain/infrastructure layers
+    tdd: true
+    test_command: "pnpm -r test"
+  verify:
+    test_command: "pnpm -r test"
+    build_command: "pnpm -r build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: true
+  unit:
+    backend:
+      runner: jest
+      config: src/backend/jest.config.js
+      pattern: "src/**/*.spec.ts"
+      coverage: "jest --coverage"
+      status: configured_no_tests
+    frontend:
+      runner: vitest
+      config: src/frontend/vitest.config.ts
+      pattern: "src/**/*.{test,spec}.{ts,tsx}"
+      coverage: built-in (text, json, html)
+      status: configured_no_tests
+  integration:
+    backend:
+      runner: jest + supertest
+      config: src/backend/test/jest-e2e.json
+      pattern: "test/*.e2e-spec.ts"
+      status: configured_has_tests
+  e2e:
+    frontend:
+      runner: playwright
+      config: src/frontend/playwright.config.ts
+      pattern: "e2e/*.spec.ts"
+      browser: chromium
+      status: configured_has_tests
+  lint:
+    runner: eslint
+    config: .eslintrc.js
+    status: configured
+  format:
+    runner: prettier
+    config: .prettierrc
+    status: configured
+  types:
+    runner: typescript
+    strict: true
+    status: configured
+  ci:
+    workflows:
+      - name: Lint
+        file: .github/workflows/lint.yml
+        triggers: [pull_request, push]
+      - name: Test
+        file: .github/workflows/test.yml
+        triggers: [pull_request, push]
+      - name: Build
+        file: .github/workflows/build.yml
+        triggers: [pull_request, push]

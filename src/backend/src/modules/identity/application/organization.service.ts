@@ -36,9 +36,6 @@ export class OrganizationService {
     private readonly eventDispatcher: DomainEventDispatcher,
   ) {}
 
-  /**
-   * Create a new organization.
-   */
   async create(dto: CreateOrganizationDto, userId: string): Promise<OrganizationResponseDto> {
     const ownerId = UserId.from(userId);
     const slug = this.generateSlug(dto.name);
@@ -50,9 +47,6 @@ export class OrganizationService {
     return this.toResponse(org);
   }
 
-  /**
-   * Find an organization by ID.
-   */
   async findById(id: string, userId: string): Promise<OrganizationResponseDto> {
     const org = await this.organizationRepository.findById(OrganizationId.from(id));
     if (!org) {
@@ -62,26 +56,17 @@ export class OrganizationService {
     return this.toResponse(org);
   }
 
-  /**
-   * Find an organization by slug.
-   */
   async findBySlug(slug: string): Promise<OrganizationResponseDto | null> {
     const org = await this.organizationRepository.findBySlug(slug);
     if (!org) return null;
     return this.toResponse(org);
   }
 
-  /**
-   * List all organizations (with pagination — simplified for now).
-   */
   async findAll(userId: string): Promise<OrganizationResponseDto[]> {
     const orgs = await this.organizationRepository.findByUserId(UserId.from(userId));
     return orgs.map((org) => this.toResponse(org));
   }
 
-  /**
-   * Update organization details.
-   */
   async update(
     orgId: string,
     userId: string,
@@ -98,9 +83,6 @@ export class OrganizationService {
     return this.toResponse(org);
   }
 
-  /**
-   * Delete an organization (owner only).
-   */
   async delete(orgId: string, userId: string): Promise<void> {
     const org = await this.organizationRepository.findById(OrganizationId.from(orgId));
     if (!org) throw new OrganizationNotFoundError(orgId);
@@ -109,16 +91,12 @@ export class OrganizationService {
     await this.organizationRepository.delete(org.id);
   }
 
-  /**
-   * Add a member to the organization.
-   */
   async addMember(orgId: string, userId: string, dto: AddMemberDto): Promise<MemberResponseDto> {
     const org = await this.organizationRepository.findById(OrganizationId.from(orgId));
     if (!org) throw new OrganizationNotFoundError(orgId);
 
     this.ensureOwnerOrAdmin(org, UserId.from(userId));
 
-    // Find the user to add by email
     const email = Email.create(dto.email);
     const userToAdd = await this.userRepository.findByEmail(email);
     if (!userToAdd) throw new UserNotFoundError(dto.email);
@@ -142,9 +120,6 @@ export class OrganizationService {
     };
   }
 
-  /**
-   * Remove a member from the organization.
-   */
   async removeMember(orgId: string, memberId: string, userId: string): Promise<void> {
     const org = await this.organizationRepository.findById(OrganizationId.from(orgId));
     if (!org) throw new OrganizationNotFoundError(orgId);
@@ -154,7 +129,6 @@ export class OrganizationService {
     const member = org.members.find((m) => m.id.toString() === memberId);
     if (!member) throw new Error('Member not found');
 
-    // Cannot remove the last owner
     const ownerCount = org.members.filter((m) => m.role === Role.OWNER).length;
     if (member.role === Role.OWNER && ownerCount <= 1) {
       throw new CannotRemoveLastOwnerError();
@@ -165,9 +139,6 @@ export class OrganizationService {
     await this.eventDispatcher.dispatchBatch(org.domainEvents);
   }
 
-  /**
-   * Change a member's role.
-   */
   async changeRole(
     orgId: string,
     memberId: string,
@@ -182,7 +153,6 @@ export class OrganizationService {
     const member = org.members.find((m) => m.id.toString() === memberId);
     if (!member) throw new Error('Member not found');
 
-    // Cannot change the last owner's role
     if (member.role === Role.OWNER && dto.role !== Role.OWNER) {
       const ownerCount = org.members.filter((m) => m.role === Role.OWNER).length;
       if (ownerCount <= 1) {
@@ -206,9 +176,6 @@ export class OrganizationService {
     };
   }
 
-  /**
-   * Get members of an organization.
-   */
   async getMembers(orgId: string, userId: string): Promise<MemberResponseDto[]> {
     const org = await this.organizationRepository.findById(OrganizationId.from(orgId));
     if (!org) throw new OrganizationNotFoundError(orgId);

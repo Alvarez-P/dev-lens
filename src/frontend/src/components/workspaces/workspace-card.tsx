@@ -11,11 +11,7 @@ interface Workspace {
   organizationId: string;
 }
 
-/**
- * Workspace card component.
- * Displays workspace name and description.
- */
-export function WorkspaceCard({ workspace }: { workspace: Workspace }): JSX.Element {
+export function WorkspaceCard({ workspace }: { workspace: Workspace }): React.ReactNode {
   return (
     <Link
       href={`/workspaces/${workspace.id}`}

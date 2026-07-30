@@ -4,13 +4,6 @@ import { tap } from 'rxjs/operators';
 import { Request, Response } from 'express';
 import { LoggerService } from '../logging/logger.service';
 
-/**
- * Interceptor that logs incoming HTTP requests with:
- * - HTTP method and URL
- * - Response status code
- * - Request duration
- * - Correlation ID
- */
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   constructor(private readonly logger: LoggerService) {}

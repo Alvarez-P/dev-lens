@@ -28,7 +28,6 @@ export class HealthController {
     const checks: Record<string, { status: string; error?: string }> = {};
     let allReady = true;
 
-    // Check PostgreSQL
     try {
       const pool = new Pool({ connectionString: this.configService.database.url });
       const client = await pool.connect();
@@ -41,7 +40,6 @@ export class HealthController {
       allReady = false;
     }
 
-    // Check Redis
     try {
       const redis = new Redis(this.configService.redis.url);
       await redis.ping();
@@ -52,7 +50,6 @@ export class HealthController {
       allReady = false;
     }
 
-    // Check MinIO
     try {
       const minioClient = new Minio.Client({
         endPoint: this.configService.minio.endpoint,
@@ -69,10 +66,7 @@ export class HealthController {
     }
 
     if (!allReady) {
-      throw new HttpException(
-        { status: 'error', checks },
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
+      throw new HttpException({ status: 'error', checks }, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     return { status: 'ok', checks };

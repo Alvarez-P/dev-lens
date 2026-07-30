@@ -1,10 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
-/**
- * TypeORM entity for the 'members' table.
- * Polymorphic: members can belong to either an organization or a workspace.
- * Uses entity_type + entity_id to identify the parent aggregate.
- */
 @Entity('members')
 export class MemberTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -14,7 +9,7 @@ export class MemberTypeOrmEntity {
   userId!: string;
 
   @Column({ name: 'entity_type' })
-  entityType!: string; // 'organization' | 'workspace'
+  entityType!: string;
 
   @Column({ name: 'entity_id' })
   entityId!: string;

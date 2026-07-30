@@ -31,15 +31,11 @@ export interface CreateCredentialDialogProps {
   }) => Promise<void>;
 }
 
-/**
- * Modal dialog for creating a new credential.
- * Form includes: provider, name, type (PAT/SSH), value (masked input).
- */
 export function CreateCredentialDialog({
   isOpen,
   onClose,
   onSubmit,
-}: CreateCredentialDialogProps): JSX.Element | null {
+}: CreateCredentialDialogProps): React.ReactNode {
   const [name, setName] = useState('');
   const [provider, setProvider] = useState('GITHUB');
   const [type, setType] = useState('PAT');

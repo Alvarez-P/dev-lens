@@ -6,10 +6,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-/**
- * TypeORM entity for the 'users' table.
- * Maps to the domain User aggregate root.
- */
 @Entity('users')
 export class UserTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')

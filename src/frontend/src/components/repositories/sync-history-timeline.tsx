@@ -22,14 +22,10 @@ export interface SyncHistoryTimelineProps {
   className?: string;
 }
 
-/**
- * Timeline of repository sync snapshots.
- * Shows commit SHA, date, file count, size for each snapshot.
- */
 export function SyncHistoryTimeline({
   snapshots,
   className,
-}: SyncHistoryTimelineProps): JSX.Element {
+}: SyncHistoryTimelineProps): React.ReactNode {
   if (snapshots.length === 0) {
     return (
       <div className="rounded-xl border border-surface-800 bg-surface-900 p-8 text-center">
@@ -43,12 +39,10 @@ export function SyncHistoryTimeline({
     <div className={clsx('space-y-0', className)}>
       {snapshots.map((snapshot, index) => (
         <div key={snapshot.id} className="relative flex gap-4 pb-8 last:pb-0">
-          {/* Timeline line */}
           {index < snapshots.length - 1 && (
             <div className="absolute left-[11px] top-6 h-full w-0.5 bg-surface-700" />
           )}
 
-          {/* Dot */}
           <div
             className={clsx(
               'relative z-10 mt-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
@@ -68,7 +62,6 @@ export function SyncHistoryTimeline({
             )}
           </div>
 
-          {/* Content */}
           <div className="min-w-0 flex-1 rounded-lg border border-surface-800 bg-surface-900 p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">

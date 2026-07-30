@@ -31,7 +31,7 @@ interface Member {
   joinedAt: string;
 }
 
-export default function WorkspaceDetailPage(): JSX.Element {
+export default function WorkspaceDetailPage(): React.ReactNode {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
@@ -113,7 +113,6 @@ export default function WorkspaceDetailPage(): JSX.Element {
         }
       />
 
-      {/* Members */}
       <div className="rounded-xl border border-surface-800">
         <div className="flex items-center justify-between border-b border-surface-800 px-6 py-4">
           <div className="flex items-center gap-2">

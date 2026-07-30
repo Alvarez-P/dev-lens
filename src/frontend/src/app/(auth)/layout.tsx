@@ -1,10 +1,6 @@
 import type { ReactNode } from 'react';
 
-/**
- * Auth pages layout.
- * Centered card layout with DevLens branding — no sidebar.
- */
-export default function AuthLayout({ children }: { children: ReactNode }): JSX.Element {
+export default function AuthLayout({ children }: { children: ReactNode }): React.ReactNode {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-950 px-4">
       <div className="mb-8 text-center">

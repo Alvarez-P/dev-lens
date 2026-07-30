@@ -2,11 +2,10 @@ import { type HTMLAttributes } from 'react';
 import { clsx } from 'clsx';
 
 export interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
-  /** Width of the skeleton (e.g., '100%', '200px', '12rem') */
   width?: string | number;
-  /** Height of the skeleton (e.g., '1rem', '40px') */
+
   height?: string | number;
-  /** Border radius */
+
   rounded?: 'sm' | 'md' | 'lg' | 'xl' | 'full' | 'none';
 }
 
@@ -19,10 +18,6 @@ const roundedClasses = {
   full: 'rounded-full',
 };
 
-/**
- * Skeleton loading placeholder.
- * Uses Tailwind's animate-pulse for a shimmer effect.
- */
 export function Skeleton({
   width,
   height = '1rem',
@@ -30,7 +25,7 @@ export function Skeleton({
   className,
   style,
   ...props
-}: SkeletonProps): JSX.Element {
+}: SkeletonProps): React.ReactNode {
   return (
     <div
       className={clsx('animate-pulse bg-surface-700', roundedClasses[rounded], className)}

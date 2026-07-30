@@ -2,13 +2,6 @@ import { Entity } from '../../../shared/domain/entity';
 import { SnapshotId } from './snapshot-id.vo';
 import { RepositoryId } from './repository-id.vo';
 
-/**
- * Snapshot status lifecycle:
- *   CREATED    — Snapshot record created
- *   PROCESSING — Sync/content acquisition in progress
- *   PROCESSED  — All data acquired (immutable)
- *   FAILED     — Sync process failed
- */
 export enum SnapshotStatus {
   CREATED = 'CREATED',
   PROCESSING = 'PROCESSING',
@@ -16,12 +9,6 @@ export enum SnapshotStatus {
   FAILED = 'FAILED',
 }
 
-/**
- * Snapshot Entity (NOT aggregate root — belongs to Repository).
- *
- * Immutable — created during sync, never modified after PROCESSED.
- * Represents a point-in-time capture of a repository's state.
- */
 export class Snapshot extends Entity<SnapshotId> {
   private constructor(
     id: SnapshotId,
@@ -39,9 +26,6 @@ export class Snapshot extends Entity<SnapshotId> {
     super(id);
   }
 
-  /**
-   * Factory: creates a new snapshot in CREATED status.
-   */
   static create(
     repositoryId: RepositoryId,
     commitSha: string,
@@ -65,9 +49,6 @@ export class Snapshot extends Entity<SnapshotId> {
     );
   }
 
-  /**
-   * Reconstitute a Snapshot from persistence.
-   */
   static reconstitute(
     id: SnapshotId,
     repositoryId: RepositoryId,
@@ -96,9 +77,6 @@ export class Snapshot extends Entity<SnapshotId> {
     );
   }
 
-  /**
-   * Mark the snapshot as PROCESSING.
-   */
   startProcessing(): void {
     if (this.status !== SnapshotStatus.CREATED) {
       throw new Error('Snapshot can only be marked as PROCESSING from CREATED status');
@@ -106,9 +84,6 @@ export class Snapshot extends Entity<SnapshotId> {
     this.status = SnapshotStatus.PROCESSING;
   }
 
-  /**
-   * Mark the snapshot as PROCESSED with final metadata.
-   */
   completeProcessing(fileCount: number, sizeBytes: number): void {
     if (this.status !== SnapshotStatus.PROCESSING && this.status !== SnapshotStatus.CREATED) {
       throw new Error('Snapshot can only be completed from CREATED or PROCESSING status');
@@ -118,9 +93,6 @@ export class Snapshot extends Entity<SnapshotId> {
     this.status = SnapshotStatus.PROCESSED;
   }
 
-  /**
-   * Mark the snapshot as FAILED.
-   */
   markAsFailed(): void {
     this.status = SnapshotStatus.FAILED;
   }

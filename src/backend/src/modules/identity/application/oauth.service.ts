@@ -9,6 +9,8 @@ import { ExternalIdentity } from '../domain/external-identity.entity';
 import { User } from '../domain/user.entity';
 import { Email } from '../domain/email.vo';
 import { UserId } from '../domain/user-id.vo';
+import { IdentityAlreadyLinked } from '../domain/identity-errors';
+import { QueryFailedError } from 'typeorm';
 
 @Injectable()
 export class OAuthService {
@@ -19,6 +21,20 @@ export class OAuthService {
     private readonly tokenEncryptionService: TokenEncryptionService,
     private readonly authService: AuthService,
   ) {}
+
+  private async saveIdentity(identity: ExternalIdentity): Promise<void> {
+    try {
+      await this.externalIdentityRepository.save(identity);
+    } catch (error) {
+      if (error instanceof QueryFailedError && (error as QueryFailedError).driverError) {
+        const driverError = (error as QueryFailedError).driverError as unknown as { code: string };
+        if (driverError.code === '23505') {
+          throw new IdentityAlreadyLinked(identity.provider, identity.externalId);
+        }
+      }
+      throw error;
+    }
+  }
 
   async authenticateWithProvider(
     providerName: string,
@@ -61,7 +77,7 @@ export class OAuthService {
         displayName: profile.displayName,
         avatarUrl: profile.avatarUrl,
       });
-      await this.externalIdentityRepository.save(identity);
+      await this.saveIdentity(identity);
 
       return this.authService.buildAuthResponse(userByEmail);
     }
@@ -87,7 +103,7 @@ export class OAuthService {
       displayName: profile.displayName,
       avatarUrl: profile.avatarUrl,
     });
-    await this.externalIdentityRepository.save(newIdentity);
+    await this.saveIdentity(newIdentity);
 
     return this.authService.buildAuthResponse(newUser);
   }

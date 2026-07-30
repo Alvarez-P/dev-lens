@@ -1,6 +1,3 @@
-/**
- * Supported git hosting providers.
- */
 export enum GitProvider {
   GITHUB = 'GITHUB',
   GITLAB = 'GITLAB',
@@ -9,9 +6,6 @@ export enum GitProvider {
   GENERIC = 'GENERIC',
 }
 
-/**
- * Map host to GitProvider.
- */
 export function detectProvider(url: { host: string }): GitProvider {
   const host = url.host.toLowerCase();
   if (host.includes('github')) return GitProvider.GITHUB;

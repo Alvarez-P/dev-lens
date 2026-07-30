@@ -5,13 +5,6 @@ import { Member, MemberId } from './member.entity';
 import { Role } from './role.enum';
 import { OrganizationCreatedEvent, MemberAddedEvent, MemberRemovedEvent } from './domain-events';
 
-/**
- * Organization Aggregate Root.
- *
- * Represents an organization that owns workspaces and manages members.
- * Organizations have a single owner (creator) and can have multiple members
- * with different roles.
- */
 export class Organization extends AggregateRoot<OrganizationId> {
   private readonly _members: Member[] = [];
 
@@ -29,10 +22,6 @@ export class Organization extends AggregateRoot<OrganizationId> {
     this._members = members;
   }
 
-  /**
-   * Factory: creates a new organization, adds the creator as OWNER,
-   * and publishes OrganizationCreatedEvent.
-   */
   static create(
     name: string,
     slug: string,
@@ -49,7 +38,6 @@ export class Organization extends AggregateRoot<OrganizationId> {
       new Date(),
     );
 
-    // Creator becomes the owner
     org._members.push(Member.create(ownerId, Role.OWNER));
 
     org.addDomainEvent(
@@ -59,10 +47,6 @@ export class Organization extends AggregateRoot<OrganizationId> {
     return org;
   }
 
-  /**
-   * Reconstructs an existing organization (from persistence).
-   * Does NOT publish domain events.
-   */
   static reconstitute(
     id: OrganizationId,
     name: string,
@@ -80,9 +64,6 @@ export class Organization extends AggregateRoot<OrganizationId> {
     return [...this._members];
   }
 
-  /**
-   * Updates organization details.
-   */
   updateDetails(dto: { name?: string; description?: string | null }): void {
     if (dto.name !== undefined) {
       this.name = dto.name;
@@ -93,10 +74,6 @@ export class Organization extends AggregateRoot<OrganizationId> {
     this.updatedAt = new Date();
   }
 
-  /**
-   * Adds a new member to the organization.
-   * Throws if the member already exists.
-   */
   addMember(userId: UserId, role: Role = Role.MEMBER): Member {
     const exists = this._members.some((m) => m.userId.equals(userId));
     if (exists) {
@@ -112,10 +89,6 @@ export class Organization extends AggregateRoot<OrganizationId> {
     return member;
   }
 
-  /**
-   * Removes a member from the organization.
-   * Cannot remove the last owner.
-   */
   removeMember(memberId: MemberId): void {
     const index = this._members.findIndex((m) => m.id.equals(memberId));
     if (index === -1) {
@@ -124,7 +97,6 @@ export class Organization extends AggregateRoot<OrganizationId> {
 
     const member = this._members[index];
 
-    // Prevent removing the last owner
     if (member.role === Role.OWNER) {
       const ownerCount = this._members.filter((m) => m.role === Role.OWNER).length;
       if (ownerCount <= 1) {
@@ -138,16 +110,12 @@ export class Organization extends AggregateRoot<OrganizationId> {
     this.addDomainEvent(new MemberRemovedEvent(this.id.toString(), member.userId.toString()));
   }
 
-  /**
-   * Changes a member's role.
-   */
   changeRole(memberId: MemberId, newRole: Role): void {
     const member = this._members.find((m) => m.id.equals(memberId));
     if (!member) {
       throw new Error('Member not found');
     }
 
-    // Prevent changing the last owner's role away from OWNER
     if (member.role === Role.OWNER && newRole !== Role.OWNER) {
       const ownerCount = this._members.filter((m) => m.role === Role.OWNER).length;
       if (ownerCount <= 1) {
@@ -159,16 +127,10 @@ export class Organization extends AggregateRoot<OrganizationId> {
     this.updatedAt = new Date();
   }
 
-  /**
-   * Finds a member by user ID.
-   */
   getMemberByUserId(userId: UserId): Member | undefined {
     return this._members.find((m) => m.userId.equals(userId));
   }
 
-  /**
-   * Checks if the given user is a member of this organization.
-   */
   hasMember(userId: UserId): boolean {
     return this._members.some((m) => m.userId.equals(userId));
   }

@@ -31,17 +31,11 @@ export class RepositoryService {
     private readonly syncQueue: Queue,
   ) {}
 
-  /**
-   * Register a new repository.
-   */
   async create(dto: CreateRepositoryDto, userId: string): Promise<RepositoryResponseDto> {
-    // Validate and normalize URL
     const url = RepositoryUrl.create(dto.url);
 
-    // Detect provider if not specified
     const provider = dto.provider ?? detectProvider(url);
 
-    // Create domain entity
     const repository = Repository.create(
       dto.name,
       url,
@@ -53,48 +47,36 @@ export class RepositoryService {
       dto.credentialId ?? null,
     );
 
-    // Persist
     await this.repositoryRepo.save(repository);
 
-    // Dispatch domain events
     await this.eventDispatcher.dispatchBatch(repository.domainEvents);
 
     return this.toResponse(repository);
   }
 
-  /**
-   * Find a repository by ID.
-   */
   async findById(id: string, userId: string): Promise<RepositoryResponseDto> {
     const repo = await this.repositoryRepo.findById(RepositoryId.from(id));
     if (!repo) {
       throw new RepositoryNotFoundError(id);
     }
-    // Simple ownership check
+
     if (repo.ownerId !== userId) {
       throw new RepositoryAccessDeniedError(id);
     }
     return this.toResponse(repo);
   }
 
-  /**
-   * Find all repositories accessible to a user.
-   */
   async findAll(
     userId: string,
     page: number = 1,
     limit: number = 20,
   ): Promise<PaginatedResult<RepositoryResponseDto>> {
-    // For MVP: filter by ownerId. Future: scope by workspace/organization membership.
     const result = await this.repositoryRepo.findByOwnerId(userId, page, limit);
 
     const dtos = result.data.map((repo) => this.toResponse(repo));
     return new PaginatedResult(dtos, result.meta.total, page, limit);
   }
 
-  /**
-   * Update a repository.
-   */
   async update(
     id: string,
     dto: UpdateRepositoryDto,
@@ -119,9 +101,6 @@ export class RepositoryService {
     return this.toResponse(repo);
   }
 
-  /**
-   * Soft-delete: archive a repository.
-   */
   async archive(id: string, userId: string): Promise<void> {
     const repo = await this.repositoryRepo.findById(RepositoryId.from(id));
     if (!repo) {
@@ -136,9 +115,6 @@ export class RepositoryService {
     await this.eventDispatcher.dispatchBatch(repo.domainEvents);
   }
 
-  /**
-   * Hard delete a repository and its snapshots.
-   */
   async delete(id: string, userId: string): Promise<void> {
     const repo = await this.repositoryRepo.findById(RepositoryId.from(id));
     if (!repo) {
@@ -152,10 +128,6 @@ export class RepositoryService {
     await this.repositoryRepo.delete(RepositoryId.from(id));
   }
 
-  /**
-   * Trigger a sync for a repository.
-   * Returns immediately after enqueuing; actual sync happens via BullMQ worker.
-   */
   async triggerSync(id: string, userId: string): Promise<void> {
     const repo = await this.repositoryRepo.findById(RepositoryId.from(id));
     if (!repo) {
@@ -169,7 +141,6 @@ export class RepositoryService {
       throw new SyncInProgressError(id);
     }
 
-    // If it's the first sync (no lastSyncAt), mark as CLONING
     if (!repo.lastSyncAt) {
       repo.startCloning();
     } else {
@@ -179,16 +150,12 @@ export class RepositoryService {
     await this.repositoryRepo.save(repo);
     await this.eventDispatcher.dispatchBatch(repo.domainEvents);
 
-    // Enqueue sync job
     await this.syncQueue.add('sync', {
       repositoryId: id,
       userId,
     });
   }
 
-  /**
-   * Get sync history (snapshots) for a repository.
-   */
   async getSyncHistory(
     id: string,
     userId: string,
@@ -222,9 +189,6 @@ export class RepositoryService {
     return new PaginatedResult(dtos, result.meta.total, page, limit);
   }
 
-  /**
-   * Get a single snapshot by ID.
-   */
   async getSnapshot(
     repositoryId: string,
     snapshotId: string,

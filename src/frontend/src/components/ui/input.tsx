@@ -6,17 +6,16 @@ import { clsx } from 'clsx';
 type InputVariant = 'default' | 'filled';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  /** Input styling variant */
   variant?: InputVariant;
-  /** Label text shown above the input */
+
   label?: string;
-  /** Error message shown below the input */
+
   error?: string;
-  /** Helper text shown below the input (hidden when error is present) */
+
   helperText?: string;
-  /** Icon shown on the left side of the input */
+
   leftIcon?: ReactNode;
-  /** Icon shown on the right side of the input */
+
   rightIcon?: ReactNode;
 }
 
@@ -25,10 +24,6 @@ const variantClasses: Record<InputVariant, string> = {
   filled: 'bg-surface-800 border-transparent text-surface-100 placeholder:text-surface-500',
 };
 
-/**
- * Input component with label, error handling, helper text, and icon support.
- * Uses forwardRef for form library integration.
- */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {

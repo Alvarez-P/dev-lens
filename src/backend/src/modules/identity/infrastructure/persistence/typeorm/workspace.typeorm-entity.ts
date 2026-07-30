@@ -6,10 +6,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-/**
- * TypeORM entity for the 'workspaces' table.
- * Maps to the domain Workspace aggregate root.
- */
 @Entity('workspaces')
 export class WorkspaceTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')

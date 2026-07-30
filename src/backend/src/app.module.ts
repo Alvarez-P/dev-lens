@@ -13,13 +13,11 @@ import { RepositoriesModule } from './modules/repositories/repositories.module';
 
 @Module({
   imports: [
-    // Global configuration
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
 
-    // Structured logging with Pino
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.LOG_LEVEL || 'debug',
@@ -38,7 +36,6 @@ import { RepositoriesModule } from './modules/repositories/repositories.module';
       },
     }),
 
-    // Database (PostgreSQL via TypeORM)
     TypeOrmModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [ConfigService],
@@ -55,7 +52,6 @@ import { RepositoriesModule } from './modules/repositories/repositories.module';
       }),
     }),
 
-    // BullMQ (Redis-backed job queues)
     BullModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [ConfigService],
@@ -66,13 +62,10 @@ import { RepositoriesModule } from './modules/repositories/repositories.module';
       }),
     }),
 
-    // Application configuration
     AppConfigModule,
 
-    // Shared kernel
     SharedModule,
 
-    // Feature modules
     IdentityModule,
     RepositoriesModule,
   ],

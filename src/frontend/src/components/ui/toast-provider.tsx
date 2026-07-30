@@ -16,12 +16,7 @@ function generateToastId(): string {
   return `toast-${toastIdCounter}-${Date.now()}`;
 }
 
-/**
- * Provider component that manages toast notifications.
- * Wraps the app and provides the `useToast()` hook.
- * Toasts stack from the top-right corner.
- */
-export function ToastProvider({ children }: { children: ReactNode }): JSX.Element {
+export function ToastProvider({ children }: { children: ReactNode }): React.ReactNode {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const addToast = useCallback((message: string, type: ToastType = 'info', duration?: number) => {
@@ -43,7 +38,6 @@ export function ToastProvider({ children }: { children: ReactNode }): JSX.Elemen
     <ToastContext.Provider value={{ toast: addToast }}>
       {children}
 
-      {/* Toast container — fixed position top-right */}
       <div
         className="pointer-events-none fixed right-4 top-4 z-[100] flex flex-col gap-2"
         aria-live="polite"
@@ -59,16 +53,6 @@ export function ToastProvider({ children }: { children: ReactNode }): JSX.Elemen
   );
 }
 
-/**
- * Hook to show toast notifications.
- *
- * @example
- * ```tsx
- * const { toast } = useToast();
- * toast('Operation successful', 'success');
- * toast('Something went wrong', 'error', 8000);
- * ```
- */
 export function useToast(): ToastContextType {
   const context = useContext(ToastContext);
   if (!context) {
