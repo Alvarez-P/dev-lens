@@ -32,8 +32,8 @@ interface TokenPayload {
 
 @Injectable()
 export class AuthService {
-  private readonly accessTokenExpiresIn = 900; // 15 minutes
-  private readonly refreshTokenExpiresIn = 604800; // 7 days
+  private readonly accessTokenExpiresIn = 900;
+  private readonly refreshTokenExpiresIn = 604800;
 
   constructor(
     private readonly userRepository: UserRepository,
@@ -44,34 +44,23 @@ export class AuthService {
     private readonly eventDispatcher: DomainEventDispatcher,
   ) {}
 
-  /**
-   * Register a new user.
-   */
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
-    // Check for existing user
     const email = Email.create(dto.email);
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
       throw new UserAlreadyExistsError(dto.email);
     }
 
-    // Hash password
     const passwordHash = await this.passwordService.hash(dto.password);
 
-    // Create user aggregate
     const user = User.create(email, passwordHash, dto.firstName, dto.lastName);
     await this.userRepository.save(user);
 
-    // Dispatch domain events
     await this.eventDispatcher.dispatchBatch(user.domainEvents);
 
-    // Generate tokens
     return this.buildAuthResponse(user);
   }
 
-  /**
-   * Authenticate a user with email and password.
-   */
   async login(dto: LoginDto): Promise<AuthResponseDto> {
     const email = Email.create(dto.email);
     const user = await this.userRepository.findByEmail(email);
@@ -84,7 +73,6 @@ export class AuthService {
       throw new InvalidCredentialsError();
     }
 
-    // Record login
     user.recordLogin();
     await this.userRepository.save(user);
     await this.eventDispatcher.dispatchBatch(user.domainEvents);
@@ -92,12 +80,7 @@ export class AuthService {
     return this.buildAuthResponse(user);
   }
 
-  /**
-   * Refresh an access token using a valid refresh token.
-   * Uses refresh token rotation for security.
-   */
   async refreshToken(dto: RefreshTokenDto): Promise<AuthResponseDto> {
-    // Verify refresh token
     let payload: TokenPayload;
     try {
       payload = this.jwtService.verify<TokenPayload>(dto.refreshToken, {
@@ -116,7 +99,6 @@ export class AuthService {
       throw new InvalidTokenError();
     }
 
-    // Validate stored refresh token hash
     if (!user.refreshTokenHash) {
       throw new InvalidTokenError();
     }
@@ -129,13 +111,9 @@ export class AuthService {
       throw new InvalidTokenError();
     }
 
-    // Rotate refresh token (old one invalidated, new one issued)
     return this.buildAuthResponse(user);
   }
 
-  /**
-   * Logout — clears the refresh token, invalidating all sessions.
-   */
   async logout(userId: string): Promise<void> {
     const user = await this.userRepository.findById(UserId.from(userId));
     if (!user) {
@@ -146,12 +124,7 @@ export class AuthService {
     await this.userRepository.save(user);
   }
 
-  /**
-   * Verify email with a verification token (placeholder).
-   */
   async verifyEmail(token: string): Promise<void> {
-    // TODO: Implement email verification token validation
-    // For now, decode the token and verify the user
     let payload: { sub: string; type: string };
     try {
       payload = this.jwtService.verify<{ sub: string; type: string }>(token, {
@@ -175,18 +148,13 @@ export class AuthService {
     await this.eventDispatcher.dispatchBatch(user.domainEvents);
   }
 
-  /**
-   * Request a password reset (placeholder — sends email in production).
-   */
   async requestPasswordReset(email: string): Promise<void> {
     const emailVo = Email.create(email);
     const user = await this.userRepository.findByEmail(emailVo);
     if (!user) {
-      // Don't reveal whether the email exists — return silently
       return;
     }
 
-    // Generate a reset token
     const resetToken = this.jwtService.sign(
       { sub: user.id.toString(), type: 'password-reset' },
       {
@@ -195,14 +163,9 @@ export class AuthService {
       },
     );
 
-    // TODO: Send email with reset token via email service
-    // For now, the token is logged and can be used directly
     console.log(`[DEV] Password reset token for ${email}: ${resetToken}`);
   }
 
-  /**
-   * Reset password using a reset token.
-   */
   async resetPassword(token: string, newPassword: string): Promise<void> {
     let payload: { sub: string; type: string };
     try {
@@ -227,9 +190,6 @@ export class AuthService {
     await this.userRepository.save(user);
   }
 
-  /**
-   * Get the current user's profile by userId.
-   */
   async getMe(userId: string): Promise<UserProfileResponseDto> {
     const user = await this.userRepository.findById(UserId.from(userId));
     if (!user) {
@@ -239,11 +199,7 @@ export class AuthService {
     return this.toProfileResponse(user);
   }
 
-  /**
-   * Build the full auth response with tokens.
-   */
-  private async buildAuthResponse(user: User): Promise<AuthResponseDto> {
-    // Generate access token
+  async buildAuthResponse(user: User): Promise<AuthResponseDto> {
     const accessToken = this.jwtService.sign(
       {
         sub: user.id.toString(),
@@ -256,7 +212,6 @@ export class AuthService {
       },
     );
 
-    // Generate refresh token
     const refreshToken = this.jwtService.sign(
       {
         sub: user.id.toString(),
@@ -269,7 +224,6 @@ export class AuthService {
       },
     );
 
-    // Hash and store the refresh token
     const refreshTokenHash = await this.passwordService.hash(refreshToken);
     user.setRefreshToken(refreshTokenHash);
     await this.userRepository.save(user);

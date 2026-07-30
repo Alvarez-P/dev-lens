@@ -1,0 +1,149 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { OAuthController } from './oauth.controller';
+import { OAuthService } from '../../application/oauth.service';
+import { OAuthStateService } from '../auth/oauth-state.service';
+import { ProviderRegistry } from '../auth/provider-registry';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '../../../../config/config.service';
+import {
+  ExternalIdentityProvider,
+  ExternalUserProfile,
+} from '../../domain/external-identity-provider.interface';
+
+class MockGithubProvider implements ExternalIdentityProvider {
+  readonly provider = 'github';
+  getProviderName(): string {
+    return 'github';
+  }
+  getAuthorizationUrl(state: string, redirectUri: string): string {
+    return `https://github.com/login/oauth/authorize?state=${state}&redirect_uri=${redirectUri}`;
+  }
+  async exchangeCode(_code: string, _redirectUri: string): Promise<ExternalUserProfile> {
+    return {
+      externalId: 'gh_12345',
+      email: 'octocat@github.com',
+      displayName: 'Octocat',
+      avatarUrl: 'https://avatars.githubusercontent.com/u/583231',
+      accessToken: 'gho_mock_token',
+    };
+  }
+}
+
+describe('OAuthController', () => {
+  let app: INestApplication;
+  let oauthService: jest.Mocked<OAuthService>;
+  let oauthStateService: OAuthStateService;
+  let providerRegistry: ProviderRegistry;
+
+  const mockAuthResponse = {
+    accessToken: 'jwt_access_token_value',
+    refreshToken: 'jwt_refresh_token_value',
+    expiresIn: 900,
+    user: {
+      id: 'user-id-1',
+      email: 'octocat@github.com',
+      firstName: 'Octocat',
+      lastName: '',
+      avatarUrl: 'https://avatars.githubusercontent.com/u/583231',
+      isEmailVerified: true,
+      createdAt: '2024-01-15T10:00:00.000Z',
+    },
+  };
+
+  beforeAll(async () => {
+    oauthService = {
+      authenticateWithProvider: jest.fn().mockResolvedValue(mockAuthResponse),
+    } as unknown as jest.Mocked<OAuthService>;
+
+    providerRegistry = new ProviderRegistry();
+    providerRegistry.register(new MockGithubProvider());
+
+    oauthStateService = new OAuthStateService(new JwtService({ secret: 'test-state-secret' }));
+
+    const configService = {
+      oauth: {
+        github: {
+          clientId: 'test-client-id',
+          clientSecret: 'test-client-secret',
+          callbackUrl: 'http://localhost:3001/api/v1/auth/oauth/github/callback',
+        },
+        tokenEncryptionKey: 'test-encryption-key',
+      },
+    } as unknown as ConfigService;
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      controllers: [OAuthController],
+      providers: [
+        { provide: OAuthService, useValue: oauthService },
+        { provide: OAuthStateService, useValue: oauthStateService },
+        { provide: ProviderRegistry, useValue: providerRegistry },
+        { provide: ConfigService, useValue: configService },
+        { provide: 'APP_PIPE', useValue: { transform: (v: any) => v } },
+      ],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('GET /api/v1/auth/oauth/:provider', () => {
+    it('should redirect to the provider authorization URL', async () => {
+      const res = await request(app.getHttpServer()).get('/api/v1/auth/oauth/github').expect(302);
+
+      expect(res.headers.location).toContain('https://github.com/login/oauth/authorize');
+      expect(res.headers.location).toContain('state=');
+      expect(res.headers.location).toContain('redirect_uri=');
+    });
+
+    it('should return 400 for unknown provider', async () => {
+      await request(app.getHttpServer()).get('/api/v1/auth/oauth/unknown').expect(400);
+    });
+  });
+
+  describe('GET /api/v1/auth/oauth/:provider/callback', () => {
+    it('should exchange code and redirect with JWT', async () => {
+      const stateToken = oauthStateService.sign('valid-state-value');
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/auth/oauth/github/callback?code=valid_code&state=${stateToken}`)
+        .expect(302);
+
+      expect(res.headers.location).toContain('oauth=success');
+      expect(res.headers.location).toContain('accessToken=jwt_access_token_value');
+      expect(oauthService.authenticateWithProvider).toHaveBeenCalledWith(
+        'github',
+        'valid_code',
+        'http://localhost:3001/api/v1/auth/oauth/github/callback',
+      );
+    });
+
+    it('should return 400 for invalid state', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/oauth/github/callback?code=code&state=tampered-state')
+        .expect(400);
+    });
+
+    it('should return 400 for missing code', async () => {
+      const stateToken = oauthStateService.sign('valid-state');
+
+      await request(app.getHttpServer())
+        .get(`/api/v1/auth/oauth/github/callback?state=${stateToken}`)
+        .expect(400);
+    });
+
+    it('should return 400 for unknown provider in callback', async () => {
+      const stateToken = oauthStateService.sign('valid-state');
+
+      await request(app.getHttpServer())
+        .get(`/api/v1/auth/oauth/unknown/callback?code=code&state=${stateToken}`)
+        .expect(400);
+    });
+  });
+});

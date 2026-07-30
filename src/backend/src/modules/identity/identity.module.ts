@@ -5,40 +5,44 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule } from '../../config/config.module';
 import { ConfigService } from '../../config/config.service';
 
-// ─── Domain ─────────────────────────────────────────────────────
-
-// ─── Application Services ───────────────────────────────────────
 import { AuthService } from './application/auth.service';
 import { UserService } from './application/user.service';
 import { OrganizationService } from './application/organization.service';
 import { WorkspaceService } from './application/workspace.service';
+import { OAuthService } from './application/oauth.service';
 
-// ─── Infrastructure — Auth ─────────────────────────────────────
 import { JwtStrategy } from './infrastructure/auth/jwt.strategy';
 import { PasswordService } from './infrastructure/auth/password.service';
+import { OAuthStateService } from './infrastructure/auth/oauth-state.service';
+import { ProviderRegistry } from './infrastructure/auth/provider-registry';
+import { GithubOAuthProvider } from './infrastructure/auth/github-oauth.provider';
 
-// ─── Infrastructure — Persistence ──────────────────────────────
+import { TokenEncryptionService } from './infrastructure/encryption/token-encryption.service';
+
 import { UserTypeOrmEntity } from './infrastructure/persistence/typeorm/user.typeorm-entity';
 import { OrganizationTypeOrmEntity } from './infrastructure/persistence/typeorm/organization.typeorm-entity';
 import { WorkspaceTypeOrmEntity } from './infrastructure/persistence/typeorm/workspace.typeorm-entity';
 import { MemberTypeOrmEntity } from './infrastructure/persistence/typeorm/member.typeorm-entity';
+import { ExternalIdentityTypeormEntity } from './infrastructure/persistence/typeorm/external-identity.typeorm-entity';
 
 import { UserRepository } from './infrastructure/persistence/repositories/user.repository';
 import { OrganizationRepository } from './infrastructure/persistence/repositories/organization.repository';
 import { WorkspaceRepository } from './infrastructure/persistence/repositories/workspace.repository';
 import { MemberRepository } from './infrastructure/persistence/repositories/member.repository';
+import { ExternalIdentityRepository } from './infrastructure/persistence/repositories/external-identity.repository';
 
-// ─── Controllers ────────────────────────────────────────────────
 import { AuthController } from './infrastructure/controllers/auth.controller';
 import { UsersController } from './infrastructure/controllers/users.controller';
 import { OrganizationsController } from './infrastructure/controllers/organizations.controller';
 import { WorkspacesController } from './infrastructure/controllers/workspaces.controller';
+import { OAuthController } from './infrastructure/controllers/oauth.controller';
 
 const typeOrmEntities = [
   UserTypeOrmEntity,
   OrganizationTypeOrmEntity,
   WorkspaceTypeOrmEntity,
   MemberTypeOrmEntity,
+  ExternalIdentityTypeormEntity,
 ];
 
 @Module({
@@ -51,38 +55,54 @@ const typeOrmEntities = [
       useFactory: (configService: ConfigService) => ({
         secret: configService.auth.jwtSecret,
         signOptions: {
-          expiresIn: 900, // 15 minutes (overridden per-token in AuthService)
+          expiresIn: 900,
         },
       }),
     }),
     ConfigModule,
   ],
-  controllers: [AuthController, UsersController, OrganizationsController, WorkspacesController],
+  controllers: [
+    AuthController,
+    UsersController,
+    OrganizationsController,
+    WorkspacesController,
+    OAuthController,
+  ],
   providers: [
-    // Application services
     AuthService,
     UserService,
     OrganizationService,
     WorkspaceService,
+    OAuthService,
 
-    // Repositories
     UserRepository,
     OrganizationRepository,
     WorkspaceRepository,
     MemberRepository,
+    ExternalIdentityRepository,
 
-    // Auth infrastructure
     JwtStrategy,
     PasswordService,
+    OAuthStateService,
+    ProviderRegistry,
+    TokenEncryptionService,
+    {
+      provide: GithubOAuthProvider,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        new GithubOAuthProvider(configService.oauth.github),
+    },
   ],
   exports: [
     AuthService,
     UserService,
     OrganizationService,
     WorkspaceService,
+    OAuthService,
     UserRepository,
     OrganizationRepository,
     WorkspaceRepository,
+    ExternalIdentityRepository,
   ],
 })
 export class IdentityModule {}
