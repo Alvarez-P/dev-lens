@@ -1,4 +1,4 @@
-import { Module, OnModuleInit, Inject, Optional } from '@nestjs/common';
+import { Module, Inject, Optional } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -85,8 +85,18 @@ const typeOrmEntities = [
     PasswordService,
     TokenEncryptionService,
     {
+      provide: ProviderRegistry,
+      inject: [{ token: GithubOAuthProvider, optional: true }],
+      useFactory: (githubProvider: GithubOAuthProvider | null) => {
+        const registry = new ProviderRegistry();
+        if (githubProvider) {
+          registry.register(githubProvider);
+        }
+        return registry;
+      },
+    },
+    {
       provide: 'OAUTH_JWT_SERVICE',
-      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
         new JwtService({
@@ -128,17 +138,4 @@ const typeOrmEntities = [
     ExternalIdentityRepository,
   ],
 })
-export class IdentityModule implements OnModuleInit {
-  constructor(
-    private readonly registry: ProviderRegistry,
-    @Optional()
-    @Inject(GithubOAuthProvider)
-    private readonly githubProvider: GithubOAuthProvider | null,
-  ) {}
-
-  onModuleInit(): void {
-    if (this.githubProvider) {
-      this.registry.register(this.githubProvider);
-    }
-  }
-}
+export class IdentityModule {}
