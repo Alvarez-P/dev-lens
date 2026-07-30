@@ -1,7 +1,3 @@
-/**
- * Application configuration schema.
- * Defines the shape of validated configuration values.
- */
 export interface DatabaseConfig {
   url: string;
   host: string;
@@ -34,6 +30,17 @@ export interface RepoConfig {
   credentialEncryptionKey: string;
 }
 
+export interface OAuthProviderConfig {
+  clientId: string;
+  clientSecret: string;
+  callbackUrl: string;
+}
+
+export interface OAuthConfig {
+  github: OAuthProviderConfig;
+  tokenEncryptionKey: string;
+}
+
 export interface AppConfiguration {
   nodeEnv: string;
   port: number;
@@ -42,6 +49,7 @@ export interface AppConfiguration {
   minio: MinioConfig;
   auth: AuthConfig;
   repo: RepoConfig;
+  oauth: OAuthConfig;
   logLevel: string;
 }
 
@@ -74,6 +82,16 @@ export default (): AppConfiguration => ({
   repo: {
     storagePath: process.env.REPO_STORAGE_PATH || '/tmp/devlens/repos',
     credentialEncryptionKey: process.env.CREDENTIAL_ENCRYPTION_KEY || 'change-me-in-production',
+  },
+  oauth: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || '',
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+      callbackUrl:
+        process.env.GITHUB_CALLBACK_URL ||
+        `http://localhost:${process.env.PORT || '3001'}/api/v1/auth/oauth/github/callback`,
+    },
+    tokenEncryptionKey: process.env.AUTH_TOKEN_ENCRYPTION_KEY || 'change-me-in-production',
   },
   logLevel: process.env.LOG_LEVEL || 'debug',
 });
