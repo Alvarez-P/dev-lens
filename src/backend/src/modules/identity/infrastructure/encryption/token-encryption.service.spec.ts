@@ -43,7 +43,7 @@ describe('TokenEncryptionService', () => {
 
   describe('decrypt', () => {
     it('should round-trip a plaintext value correctly', () => {
-      const plaintext = 'gho_abc123secret_token';
+      const plaintext = 'mock_gh_abc123secret_token';
 
       const encrypted = service.encrypt(plaintext);
       const decrypted = service.decrypt(encrypted);

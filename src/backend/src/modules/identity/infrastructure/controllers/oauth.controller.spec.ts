@@ -26,7 +26,7 @@ class MockGithubProvider implements ExternalIdentityProvider {
       email: 'octocat@github.com',
       displayName: 'Octocat',
       avatarUrl: 'https://avatars.githubusercontent.com/u/583231',
-      accessToken: 'gho_mock_token',
+      accessToken: 'mock_gh_mock_token',
     };
   }
 }

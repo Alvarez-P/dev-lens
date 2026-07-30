@@ -11,7 +11,7 @@ describe('ExternalIdentityProvider Interface', () => {
         email: 'octocat@github.com',
         displayName: 'Octocat',
         avatarUrl: 'https://avatars.githubusercontent.com/u/583231',
-        accessToken: 'gho_xxxxx',
+        accessToken: 'mock_gh_xxxxx',
         refreshToken: 'ghr_xxxxx',
       };
 
@@ -19,7 +19,7 @@ describe('ExternalIdentityProvider Interface', () => {
       expect(profile.email).toBe('octocat@github.com');
       expect(profile.displayName).toBe('Octocat');
       expect(profile.avatarUrl).toBe('https://avatars.githubusercontent.com/u/583231');
-      expect(profile.accessToken).toBe('gho_xxxxx');
+      expect(profile.accessToken).toBe('mock_gh_xxxxx');
       expect(profile.refreshToken).toBe('ghr_xxxxx');
     });
 
@@ -28,7 +28,7 @@ describe('ExternalIdentityProvider Interface', () => {
         externalId: 'gl_67890',
         email: 'user@gitlab.com',
         displayName: 'GitLab User',
-        accessToken: 'glpat_yyyyy',
+        accessToken: 'mock_gl_yyyyy',
       };
 
       expect(profile.externalId).toBe('gl_67890');

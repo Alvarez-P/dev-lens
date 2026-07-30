@@ -55,7 +55,7 @@ describe('GithubOAuthProvider', () => {
       // Mock token exchange success
       mockOAuth2.getOAuthAccessToken.mockImplementation(
         (_code: string, _options: any, callback: any) => {
-          callback(null, 'gho_access_token_123', 'ghr_refresh_token_456');
+          callback(null, 'mock_gh_access_token_123', 'ghr_refresh_token_456');
         },
       );
 
@@ -76,7 +76,7 @@ describe('GithubOAuthProvider', () => {
       expect(profile.email).toBe('octocat@github.com');
       expect(profile.displayName).toBe('Octocat');
       expect(profile.avatarUrl).toBe('https://avatars.githubusercontent.com/u/583231');
-      expect(profile.accessToken).toBe('gho_access_token_123');
+      expect(profile.accessToken).toBe('mock_gh_access_token_123');
       expect(profile.refreshToken).toBe('ghr_refresh_token_456');
 
       // Verify OAuth2 was called with the code and redirect URI
@@ -102,7 +102,7 @@ describe('GithubOAuthProvider', () => {
     it('should reject on profile fetch error', async () => {
       mockOAuth2.getOAuthAccessToken.mockImplementation(
         (_code: string, _options: any, callback: any) => {
-          callback(null, 'gho_access_token_123');
+          callback(null, 'mock_gh_access_token_123');
         },
       );
 

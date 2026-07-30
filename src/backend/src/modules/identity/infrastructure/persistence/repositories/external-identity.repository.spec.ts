@@ -37,7 +37,7 @@ describe('ExternalIdentityRepository', () => {
     encryptionService = {
       encrypt: jest.fn().mockReturnValue('encrypted_value'),
       decrypt: jest.fn().mockImplementation((val: string) => {
-        if (val === 'encrypted_access_token_value') return 'gho_plain_access_token';
+        if (val === 'encrypted_access_token_value') return 'mock_gh_plain_access_token';
         if (val === 'encrypted_refresh_token_value') return 'ghr_plain_refresh_token';
         return 'decrypted_' + val;
       }),
@@ -70,7 +70,7 @@ describe('ExternalIdentityRepository', () => {
       expect(result!.userId).toBe(mockEntity.userId);
       expect(result!.provider).toBe('github');
       expect(result!.externalId).toBe('gh_12345');
-      expect(result!.accessToken).toBe('gho_plain_access_token');
+      expect(result!.accessToken).toBe('mock_gh_plain_access_token');
       expect(result!.refreshToken).toBe('ghr_plain_refresh_token');
       expect(result!.displayName).toBe('octocat');
     });
@@ -145,7 +145,7 @@ describe('ExternalIdentityRepository', () => {
         userId: 'a1b2c3d4-user-id',
         provider: 'github',
         externalId: 'gh_new_user',
-        accessToken: 'gho_plain_new_token',
+        accessToken: 'mock_gh_plain_new_token',
         refreshToken: 'ghr_plain_new_refresh',
         displayName: 'newuser',
         avatarUrl: null,
@@ -153,7 +153,7 @@ describe('ExternalIdentityRepository', () => {
 
       await repository.save(identity);
 
-      expect(encryptionService.encrypt).toHaveBeenCalledWith('gho_plain_new_token');
+      expect(encryptionService.encrypt).toHaveBeenCalledWith('mock_gh_plain_new_token');
       expect(encryptionService.encrypt).toHaveBeenCalledWith('ghr_plain_new_refresh');
       expect(ormRepo.save).toHaveBeenCalledTimes(1);
       const savedEntity = ormRepo.save.mock.calls[0][0] as ExternalIdentityTypeormEntity;
@@ -168,7 +168,7 @@ describe('ExternalIdentityRepository', () => {
         userId: 'a1b2c3d4-user-id',
         provider: 'github',
         externalId: 'gh_no_refresh',
-        accessToken: 'gho_token_only',
+        accessToken: 'mock_gh_token_only',
         displayName: null,
         avatarUrl: null,
       });
@@ -176,7 +176,7 @@ describe('ExternalIdentityRepository', () => {
       await repository.save(identity);
 
       expect(encryptionService.encrypt).toHaveBeenCalledTimes(1);
-      expect(encryptionService.encrypt).toHaveBeenCalledWith('gho_token_only');
+      expect(encryptionService.encrypt).toHaveBeenCalledWith('mock_gh_token_only');
       const savedEntity = ormRepo.save.mock.calls[0][0] as ExternalIdentityTypeormEntity;
       expect(savedEntity.refreshToken).toBeNull();
     });

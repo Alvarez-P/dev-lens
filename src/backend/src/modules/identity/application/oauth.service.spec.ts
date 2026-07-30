@@ -30,7 +30,7 @@ class MockGithubProvider implements ExternalIdentityProvider {
       email: 'octocat@github.com',
       displayName: 'Octocat',
       avatarUrl: 'https://avatars.githubusercontent.com/u/583231',
-      accessToken: 'gho_mock_token_123',
+      accessToken: 'mock_gh_mock_token_123',
       refreshToken: 'ghr_mock_refresh_456',
     };
   }
@@ -49,7 +49,7 @@ class MockGitlabProvider implements ExternalIdentityProvider {
       externalId: 'gl_789',
       email: 'user@gitlab.com',
       displayName: 'GitLab User',
-      accessToken: 'glpat_mock_token',
+      accessToken: 'mock_gl_mock_token',
     };
   }
 }
