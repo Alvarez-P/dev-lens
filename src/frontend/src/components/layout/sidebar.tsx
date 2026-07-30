@@ -6,33 +6,26 @@ import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 
 export interface SidebarItem {
-  /** Display label */
   label: string;
-  /** Icon component */
+
   icon: ReactNode;
-  /** Navigation href */
+
   href: string;
 }
 
 export interface SidebarProps {
-  /** Sidebar navigation items */
   items: SidebarItem[];
-  /** Whether the sidebar is collapsed */
+
   collapsed: boolean;
-  /** Callback to toggle collapsed state */
+
   onCollapse?: () => void;
-  /** Optional header/logo area */
+
   header?: ReactNode;
-  /** Additional class names */
+
   className?: string;
 }
 
-/**
- * Navigation sidebar component.
- * Uses Next.js Link for client-side navigation.
- * Highlights the active route based on pathname.
- */
-export function Sidebar({ items, collapsed, header, className }: SidebarProps): JSX.Element {
+export function Sidebar({ items, collapsed, header, className }: SidebarProps): React.ReactNode {
   const pathname = usePathname();
 
   return (
@@ -43,7 +36,6 @@ export function Sidebar({ items, collapsed, header, className }: SidebarProps): 
         className,
       )}
     >
-      {/* Header / Logo */}
       {header && (
         <div
           className={clsx(
@@ -55,7 +47,6 @@ export function Sidebar({ items, collapsed, header, className }: SidebarProps): 
         </div>
       )}
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2">
         <ul className="space-y-1">
           {items.map((item) => {

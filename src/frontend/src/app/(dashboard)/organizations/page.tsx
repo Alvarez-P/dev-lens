@@ -22,7 +22,7 @@ interface Organization {
   updatedAt: string;
 }
 
-export default function OrganizationsPage(): JSX.Element {
+export default function OrganizationsPage(): React.ReactNode {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({

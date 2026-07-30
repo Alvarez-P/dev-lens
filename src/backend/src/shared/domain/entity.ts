@@ -1,9 +1,5 @@
 import { Identifier } from './identifier';
 
-/**
- * Abstract base for domain entities.
- * Entities have identity — two entities with the same ID are considered equal.
- */
 export abstract class Entity<TId extends Identifier = Identifier> {
   constructor(protected readonly _id: TId) {}
 

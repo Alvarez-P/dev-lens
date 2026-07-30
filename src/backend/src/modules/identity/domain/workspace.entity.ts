@@ -6,14 +6,6 @@ import { Member, MemberId } from './member.entity';
 import { Role } from './role.enum';
 import { WorkspaceCreatedEvent } from './domain-events';
 
-/**
- * Workspace Aggregate Root.
- *
- * Represents a workspace within an organization.
- * Workspaces own repositories, analyses, and other resources.
- * Members are inherited from the parent organization by default,
- * with optional workspace-specific roles.
- */
 export class Workspace extends AggregateRoot<WorkspaceId> {
   private readonly _members: Member[] = [];
 
@@ -31,9 +23,6 @@ export class Workspace extends AggregateRoot<WorkspaceId> {
     this._members = members;
   }
 
-  /**
-   * Factory: creates a new workspace within an organization.
-   */
   static create(
     name: string,
     slug: string,
@@ -51,7 +40,6 @@ export class Workspace extends AggregateRoot<WorkspaceId> {
       new Date(),
     );
 
-    // Creator becomes an admin of the workspace
     workspace._members.push(Member.create(creatorId, Role.ADMIN));
 
     workspace.addDomainEvent(
@@ -66,10 +54,6 @@ export class Workspace extends AggregateRoot<WorkspaceId> {
     return workspace;
   }
 
-  /**
-   * Reconstructs an existing workspace (from persistence).
-   * Does NOT publish domain events.
-   */
   static reconstitute(
     id: WorkspaceId,
     name: string,
@@ -96,9 +80,6 @@ export class Workspace extends AggregateRoot<WorkspaceId> {
     return [...this._members];
   }
 
-  /**
-   * Updates workspace details.
-   */
   updateDetails(dto: { name?: string; description?: string | null }): void {
     if (dto.name !== undefined) {
       this.name = dto.name;
@@ -109,9 +90,6 @@ export class Workspace extends AggregateRoot<WorkspaceId> {
     this.updatedAt = new Date();
   }
 
-  /**
-   * Adds a member to the workspace.
-   */
   addMember(userId: UserId, role: Role = Role.MEMBER): Member {
     const exists = this._members.some((m) => m.userId.equals(userId));
     if (exists) {
@@ -125,9 +103,6 @@ export class Workspace extends AggregateRoot<WorkspaceId> {
     return member;
   }
 
-  /**
-   * Removes a member from the workspace.
-   */
   removeMember(memberId: MemberId): void {
     const index = this._members.findIndex((m) => m.id.equals(memberId));
     if (index === -1) {
@@ -136,7 +111,6 @@ export class Workspace extends AggregateRoot<WorkspaceId> {
 
     const member = this._members[index];
 
-    // Prevent removing the last admin
     if (member.role === Role.ADMIN) {
       const adminCount = this._members.filter(
         (m) => m.role === Role.ADMIN || m.role === Role.OWNER,
@@ -150,16 +124,10 @@ export class Workspace extends AggregateRoot<WorkspaceId> {
     this.updatedAt = new Date();
   }
 
-  /**
-   * Checks if the given user is a member of this workspace.
-   */
   hasMember(userId: UserId): boolean {
     return this._members.some((m) => m.userId.equals(userId));
   }
 
-  /**
-   * Gets a member by user ID.
-   */
   getMemberByUserId(userId: UserId): Member | undefined {
     return this._members.find((m) => m.userId.equals(userId));
   }

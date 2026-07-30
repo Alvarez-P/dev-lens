@@ -12,7 +12,7 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: ReactNode }): JSX.Element {
+export function ThemeProvider({ children }: { children: ReactNode }): React.ReactNode {
   const [theme, setThemeState] = useState<Theme>('dark');
 
   const setTheme = useCallback((newTheme: Theme) => {

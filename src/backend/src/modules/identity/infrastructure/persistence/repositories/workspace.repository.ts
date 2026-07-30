@@ -20,9 +20,6 @@ export class WorkspaceRepository {
     private readonly memberRepo: Repository<MemberTypeOrmEntity>,
   ) {}
 
-  /**
-   * Find a workspace by its ID.
-   */
   async findById(id: WorkspaceId): Promise<Workspace | null> {
     const entity = await this.ormRepo.findOne({ where: { id: id.toString() } });
     if (!entity) return null;
@@ -34,9 +31,6 @@ export class WorkspaceRepository {
     return this.toDomain(entity, members);
   }
 
-  /**
-   * Find all workspaces for an organization.
-   */
   async findByOrgId(orgId: OrganizationId): Promise<Workspace[]> {
     const entities = await this.ormRepo.find({
       where: { organizationId: orgId.toString() },
@@ -53,9 +47,6 @@ export class WorkspaceRepository {
     return workspaces;
   }
 
-  /**
-   * Find all workspaces a user belongs to.
-   */
   async findByUserId(userId: UserId): Promise<WorkspaceResponseDto[]> {
     const memberRows = await this.memberRepo.find({
       where: { entityType: 'workspace', userId: userId.toString() },
@@ -77,14 +68,10 @@ export class WorkspaceRepository {
     }));
   }
 
-  /**
-   * Save (create or update) a workspace and its members.
-   */
   async save(workspace: Workspace): Promise<void> {
     const entity = this.toPersistence(workspace);
     await this.ormRepo.save(entity);
 
-    // Sync members
     await this.memberRepo.delete({
       entityType: 'workspace',
       entityId: workspace.id.toString(),
@@ -106,17 +93,11 @@ export class WorkspaceRepository {
     }
   }
 
-  /**
-   * Delete a workspace.
-   */
   async delete(id: WorkspaceId): Promise<void> {
     await this.memberRepo.delete({ entityType: 'workspace', entityId: id.toString() });
     await this.ormRepo.delete(id.toString());
   }
 
-  /**
-   * Check if a workspace exists.
-   */
   async exists(id: WorkspaceId): Promise<boolean> {
     const count = await this.ormRepo.count({ where: { id: id.toString() } });
     return count > 0;

@@ -14,10 +14,11 @@ interface CreateOrgDialogProps {
   onCreated: () => void;
 }
 
-/**
- * Modal dialog for creating a new organization.
- */
-export function CreateOrgDialog({ isOpen, onClose, onCreated }: CreateOrgDialogProps): JSX.Element {
+export function CreateOrgDialog({
+  isOpen,
+  onClose,
+  onCreated,
+}: CreateOrgDialogProps): React.ReactNode {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

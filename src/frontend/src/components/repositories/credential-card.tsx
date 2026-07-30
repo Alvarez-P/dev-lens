@@ -29,11 +29,6 @@ const typeLabels: Record<string, string> = {
   OAUTH: 'OAuth Token',
 };
 
-/**
- * Card for credential management.
- * Shows provider, type, expiration status.
- * NEVER exposes the actual credential value.
- */
 export function CredentialCard({
   id,
   name,
@@ -43,7 +38,7 @@ export function CredentialCard({
   expiresAt,
   onDelete,
   className,
-}: CredentialCardProps): JSX.Element {
+}: CredentialCardProps): React.ReactNode {
   const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
 
   return (

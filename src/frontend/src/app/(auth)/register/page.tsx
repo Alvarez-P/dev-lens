@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast-provider';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Github } from 'lucide-react';
 
-export default function RegisterPage(): JSX.Element {
+const showOAuthButtons = !!process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+
+export default function RegisterPage(): React.ReactNode {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -19,7 +21,7 @@ export default function RegisterPage(): JSX.Element {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { register } = useAuth();
+  const { register, loginWithProvider } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -52,7 +54,7 @@ export default function RegisterPage(): JSX.Element {
 
   function handleChange(field: string, value: string): void {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear the error for this field when user starts typing
+
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -91,7 +93,32 @@ export default function RegisterPage(): JSX.Element {
       <h2 className="text-xl font-semibold text-surface-100">Create account</h2>
       <p className="mt-1 text-sm text-surface-400">Fill in your details to get started</p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      {showOAuthButtons && (
+        <>
+          <div className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              leftIcon={<Github className="h-4 w-4" />}
+              onClick={() => loginWithProvider('github')}
+            >
+              Sign up with GitHub
+            </Button>
+          </div>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-surface-700" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-surface-900 px-2 text-surface-400">or continue with</span>
+            </div>
+          </div>
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="First name"

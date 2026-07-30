@@ -11,11 +11,7 @@ interface Organization {
   memberCount: number;
 }
 
-/**
- * Organization card component.
- * Displays org name, description, and member count.
- */
-export function OrgCard({ organization }: { organization: Organization }): JSX.Element {
+export function OrgCard({ organization }: { organization: Organization }): React.ReactNode {
   return (
     <Link
       href={`/organizations/${organization.slug}`}

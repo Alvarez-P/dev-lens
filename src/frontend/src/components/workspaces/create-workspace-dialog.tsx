@@ -21,15 +21,12 @@ interface CreateWorkspaceDialogProps {
   onCreated: () => void;
 }
 
-/**
- * Modal dialog for creating a new workspace.
- */
 export function CreateWorkspaceDialog({
   isOpen,
   onClose,
   organizations,
   onCreated,
-}: CreateWorkspaceDialogProps): JSX.Element {
+}: CreateWorkspaceDialogProps): React.ReactNode {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [organizationId, setOrganizationId] = useState(

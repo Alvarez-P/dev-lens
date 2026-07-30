@@ -8,11 +8,7 @@ import { ProtectedRoute } from '@/lib/auth/protected-route';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Button } from '@/components/ui/button';
 
-/**
- * Dashboard layout with AppShell, sidebar, and user menu.
- * Wrapped with ProtectedRoute to ensure authentication.
- */
-export default function DashboardLayout({ children }: { children: ReactNode }): JSX.Element {
+export default function DashboardLayout({ children }: { children: ReactNode }): React.ReactNode {
   const { user, logout } = useAuth();
 
   const sidebarItems: SidebarItem[] = [

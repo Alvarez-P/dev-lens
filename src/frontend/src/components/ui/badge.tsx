@@ -5,11 +5,10 @@ type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info';
 type BadgeSize = 'sm' | 'md';
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  /** Badge color variant */
   variant?: BadgeVariant;
-  /** Badge size */
+
   size?: BadgeSize;
-  /** Badge content */
+
   children: ReactNode;
 }
 
@@ -26,16 +25,13 @@ const sizeClasses: Record<BadgeSize, string> = {
   md: 'px-2.5 py-1 text-sm',
 };
 
-/**
- * Badge component for labels, statuses, and tags.
- */
 export function Badge({
   variant = 'default',
   size = 'sm',
   children,
   className,
   ...props
-}: BadgeProps): JSX.Element {
+}: BadgeProps): React.ReactNode {
   return (
     <span
       className={clsx(

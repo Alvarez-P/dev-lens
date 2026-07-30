@@ -5,9 +5,6 @@ import { GitProviderInterface } from './provider.interface';
 export class GitLabProvider implements GitProviderInterface {
   private readonly apiBase = 'https://gitlab.com/api/v4';
 
-  /**
-   * Validate a GitLab repository URL.
-   */
   async validateUrl(url: string, credential?: string): Promise<boolean> {
     const projectPath = this.toProjectPath(url);
     if (!projectPath) return false;
@@ -27,9 +24,6 @@ export class GitLabProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Validate credentials against GitLab API.
-   */
   async validateCredentials(_url: string, credential: string): Promise<boolean> {
     try {
       const response = await fetch(`${this.apiBase}/user`, {
@@ -41,9 +35,6 @@ export class GitLabProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Get the default branch from GitLab API.
-   */
   async getDefaultBranch(url: string, credential?: string): Promise<string> {
     const projectPath = this.toProjectPath(url);
     if (!projectPath) return 'main';
@@ -66,9 +57,6 @@ export class GitLabProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Get repository info from GitLab API.
-   */
   async getRepoInfo(
     url: string,
     credential?: string,
@@ -107,10 +95,6 @@ export class GitLabProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Convert git URL to API project path.
-   * e.g., https://gitlab.com/group/subgroup/repo → group/subgroup/repo
-   */
   private toProjectPath(url: string): string | null {
     const match = url.match(/gitlab\.com[/:](.+?)(?:\.git)?$/);
     if (!match) return null;

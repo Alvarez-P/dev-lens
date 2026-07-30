@@ -55,12 +55,12 @@ Chain strategy: pending
 
 ## Phase 5: Frontend OAuth UI
 
-- [ ] 5.1 Add `loginWithProvider(provider)` to `AuthContext` — `window.location` redirect to `/api/v1/auth/oauth/{provider}`
-- [ ] 5.2 Add "Sign in with GitHub" button on login + register pages, conditional on env var (`NEXT_PUBLIC_GITHUB_CLIENT_ID`)
-- [ ] 5.3 Build Settings > Security — linked identity list, display name, Unlink button (reject sole auth method)
+- [x] 5.1 Add `loginWithProvider(provider)` to `AuthContext` — `window.location` redirect to `/api/v1/auth/oauth/{provider}`
+- [x] 5.2 Add "Sign in with GitHub" button on login + register pages, conditional on env var (`NEXT_PUBLIC_GITHUB_CLIENT_ID`)
+- [x] 5.3 Build Settings > Security — linked identity list, display name, Unlink button (reject sole auth method)
 
 ## Phase 6: Verification
 
-- [ ] 6.1 E2E: full OAuth flow — button → redirect → callback → authenticated session with JWT
-- [ ] 6.2 E2E: auto-provision new user, returning user match, existing email/password user link
-- [ ] 6.3 E2E: unlink prevention when identity is sole auth method (no password set)
+- [x] 6.1 E2E: full OAuth flow — button → redirect → callback → authenticated session with JWT (Playwright, with mocked backend)
+- [x] 6.2 E2E: auto-provision new user, returning user match, existing email/password user link (Playwright, with mocked backend)
+- [x] 6.3 E2E: unlink prevention when identity is sole auth method (no password set) (Playwright, with mocked backend)

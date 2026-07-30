@@ -33,7 +33,7 @@ interface Member {
   joinedAt: string;
 }
 
-export default function OrganizationDetailPage(): JSX.Element {
+export default function OrganizationDetailPage(): React.ReactNode {
   const params = useParams();
   const slug = params.slug as string;
   const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -113,7 +113,6 @@ export default function OrganizationDetailPage(): JSX.Element {
         }
       />
 
-      {/* Members section */}
       <div className="rounded-xl border border-surface-800">
         <div className="flex items-center justify-between border-b border-surface-800 px-6 py-4">
           <div className="flex items-center gap-2">

@@ -17,18 +17,13 @@ interface Credential {
   expiresAt: string | null;
 }
 
-/**
- * Credentials management page.
- * Lists all saved credentials (never exposes encrypted values).
- */
-export default function CredentialsPage(): JSX.Element {
+export default function CredentialsPage(): React.ReactNode {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [isLoading] = useState(false);
 
   const handleCreate = useCallback(
     async (data: { provider: string; name: string; type: string; value: string }) => {
-      // TODO: POST /api/v1/credentials
       console.log('Create credential:', data);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
@@ -36,7 +31,6 @@ export default function CredentialsPage(): JSX.Element {
   );
 
   const handleDelete = useCallback(async (id: string) => {
-    // TODO: DELETE /api/v1/credentials/${id}
     console.log('Delete credential:', id);
   }, []);
 

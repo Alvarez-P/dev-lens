@@ -36,9 +36,6 @@ export class SyncService {
     private readonly eventDispatcher: DomainEventDispatcher,
   ) {}
 
-  /**
-   * Execute a full sync: clone or pull, create snapshot, report results.
-   */
   async executeSync(repositoryId: string, userId?: string): Promise<SyncResult> {
     const repo = await this.repositoryRepo.findById(RepositoryId.from(repositoryId));
     if (!repo) {
@@ -54,10 +51,8 @@ export class SyncService {
     }
 
     try {
-      // Clone or pull the repository
       const commitInfo = await this.cloneOrPull(repo, credentialValue);
 
-      // Get file stats
       const fileCount = await this.gitService.getFileCount(
         this.gitService.getRepoPath(repo.id.toString()),
       );
@@ -65,10 +60,8 @@ export class SyncService {
         this.gitService.getRepoPath(repo.id.toString()),
       );
 
-      // Create snapshot
       const snapshot = await this.createSnapshot(repo, commitInfo, fileCount, sizeBytes);
 
-      // Update repository
       repo.completeSync(commitInfo.sha, snapshot.id.toString(), sizeBytes, fileCount);
       await this.repositoryRepo.save(repo);
       await this.eventDispatcher.dispatchBatch(repo.domainEvents);
@@ -92,9 +85,6 @@ export class SyncService {
     }
   }
 
-  /**
-   * Clone (first time) or pull (subsequent) the repository.
-   */
   private async cloneOrPull(repo: Repository, credential?: string): Promise<CommitInfo> {
     const repoPath = this.gitService.getRepoPath(repo.id.toString());
     const url = repo.url.toString();
@@ -107,13 +97,9 @@ export class SyncService {
       await this.gitService.pull(repoPath, repo.defaultBranch, credential);
     }
 
-    // Get current commit info
     return this.gitService.getCurrentCommit(repoPath);
   }
 
-  /**
-   * Create an immutable snapshot record.
-   */
   private async createSnapshot(
     repo: Repository,
     commitInfo: CommitInfo,

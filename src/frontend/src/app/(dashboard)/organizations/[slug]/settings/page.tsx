@@ -20,7 +20,7 @@ interface OrganizationDetail {
   ownerId: string;
 }
 
-export default function OrganizationSettingsPage(): JSX.Element {
+export default function OrganizationSettingsPage(): React.ReactNode {
   const params = useParams();
   const slug = params.slug as string;
   const router = useRouter();
@@ -45,7 +45,6 @@ export default function OrganizationSettingsPage(): JSX.Element {
   const [isDeleting, setIsDeleting] = useState(false);
   const [formInitialized, setFormInitialized] = useState(false);
 
-  // Initialize form when org data loads
   if (org && !formInitialized) {
     setName(org.name);
     setDescription(org.description ?? '');
@@ -146,7 +145,6 @@ export default function OrganizationSettingsPage(): JSX.Element {
         </div>
       </form>
 
-      {/* Danger zone */}
       <div className="rounded-xl border border-error-500/30 bg-error-500/5 p-6">
         <h3 className="text-lg font-semibold text-error-400">Danger zone</h3>
         <p className="mt-1 text-sm text-surface-400">

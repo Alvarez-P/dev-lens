@@ -10,23 +10,17 @@ export interface SelectOption {
 }
 
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
-  /** Label text shown above the select */
   label?: string;
-  /** Error message shown below the select */
+
   error?: string;
-  /** Helper text shown below the select */
+
   helperText?: string;
-  /** Available options */
+
   options: SelectOption[];
-  /** Placeholder option text */
+
   placeholder?: string;
 }
 
-/**
- * Select component with label, error handling, and helper text.
- * Styled consistently with the Input component.
- * Uses forwardRef for form library integration.
- */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, helperText, options, placeholder, disabled, className, id, ...props }, ref) => {
     const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');

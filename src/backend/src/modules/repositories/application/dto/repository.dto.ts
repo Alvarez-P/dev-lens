@@ -3,8 +3,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RepositoryStatus } from '../../domain/repository-status.enum';
 import { GitProvider } from '../../domain/git-provider.enum';
 
-// ─── Create ──────────────────────────────────────────────────────
-
 export class CreateRepositoryDto {
   @ApiProperty({ example: 'my-project' })
   @IsString()
@@ -44,8 +42,6 @@ export class CreateRepositoryDto {
   credentialId?: string;
 }
 
-// ─── Update ──────────────────────────────────────────────────────
-
 export class UpdateRepositoryDto {
   @ApiPropertyOptional({ example: 'my-renamed-project' })
   @IsOptional()
@@ -63,8 +59,6 @@ export class UpdateRepositoryDto {
   @IsOptional()
   credentialId?: string | null;
 }
-
-// ─── Response ────────────────────────────────────────────────────
 
 export class RepositoryResponseDto {
   @ApiProperty({ example: 'uuid' })

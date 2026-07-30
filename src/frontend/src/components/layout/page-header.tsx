@@ -2,26 +2,21 @@ import { type ReactNode } from 'react';
 import { clsx } from 'clsx';
 
 export interface PageHeaderProps {
-  /** Page title */
   title: string;
-  /** Optional description below the title */
+
   description?: string;
-  /** Optional action buttons or elements aligned to the right */
+
   actions?: ReactNode;
-  /** Additional class names */
+
   className?: string;
 }
 
-/**
- * Consistent page header component.
- * Provides a standard heading style across all pages.
- */
 export function PageHeader({
   title,
   description,
   actions,
   className,
-}: PageHeaderProps): JSX.Element {
+}: PageHeaderProps): React.ReactNode {
   return (
     <div
       className={clsx(

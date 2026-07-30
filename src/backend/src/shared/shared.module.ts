@@ -18,13 +18,10 @@ import { InMemoryUnitOfWork } from './domain/unit-of-work';
   imports: [ConfigModule],
   controllers: [HealthController],
   providers: [
-    // Services
     LoggerService,
 
-    // Request-scoped context
     RequestContextService,
 
-    // Domain services
     {
       provide: 'DOMAIN_EVENT_DISPATCHER',
       useClass: InMemoryDomainEventDispatcher,
@@ -35,25 +32,21 @@ import { InMemoryUnitOfWork } from './domain/unit-of-work';
       inject: ['DOMAIN_EVENT_DISPATCHER'],
     },
 
-    // Global pipes
     {
       provide: APP_PIPE,
       useClass: CustomValidationPipe,
     },
 
-    // Global filters
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
 
-    // Global guards
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
 
-    // Global interceptors
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,

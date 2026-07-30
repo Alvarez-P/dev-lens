@@ -22,15 +22,12 @@ interface InviteMemberDialogProps {
   onInvited: () => void;
 }
 
-/**
- * Modal dialog for inviting a member to an organization.
- */
 export function InviteMemberDialog({
   isOpen,
   onClose,
   organizationId,
   onInvited,
-}: InviteMemberDialogProps): JSX.Element {
+}: InviteMemberDialogProps): React.ReactNode {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('member');
   const [isSubmitting, setIsSubmitting] = useState(false);

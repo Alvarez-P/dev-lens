@@ -9,9 +9,6 @@ import { RepoCard } from '@/components/repositories/repo-card';
 import { ConnectRepoDialog } from '@/components/repositories/connect-repo-dialog';
 import type { RepoStatus } from '@/components/repositories/repo-status-badge';
 
-// TODO: Replace with React Query hooks when API is available
-// import { useRepositories, useCreateRepository } from '@/lib/hooks/repositories';
-
 interface Repository {
   id: string;
   name: string;
@@ -23,20 +20,15 @@ interface Repository {
   fileCount: number | null;
 }
 
-/**
- * Repositories list page.
- * Shows all connected repositories with status, last sync info.
- */
-export default function RepositoriesPage(): JSX.Element {
+export default function RepositoriesPage(): React.ReactNode {
   const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [repositories] = useState<Repository[]>([]);
   const [isLoading] = useState(false);
 
   const handleConnectRepo = useCallback(
     async (data: { name: string; url: string; provider: string; defaultBranch?: string }) => {
-      // TODO: API call
       console.log('Connect repo:', data);
-      // Simulate API delay
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
     [],

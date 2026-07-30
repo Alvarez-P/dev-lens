@@ -1,13 +1,7 @@
 import { ValueObject } from '../../../shared/domain/value-object';
 
-// Matches https://host/path and git@host:path patterns
 const GIT_URL_REGEX = /^(https?:\/\/|git@)[^\s]+$/;
 
-/**
- * RepositoryUrl Value Object.
- * Validates git URL format and normalizes URLs.
- * Immutable — compared by structural equality.
- */
 export class RepositoryUrl extends ValueObject {
   private static readonly GENERIC_URL_REGEX = /^(https?:\/\/|git@)[^\s]+$/;
 
@@ -15,9 +9,6 @@ export class RepositoryUrl extends ValueObject {
     super();
   }
 
-  /**
-   * Creates a RepositoryUrl after validating the URL format.
-   */
   static create(value: string): RepositoryUrl {
     const trimmed = value.trim();
 
@@ -34,18 +25,13 @@ export class RepositoryUrl extends ValueObject {
     return new RepositoryUrl(normalized);
   }
 
-  /**
-   * Normalize a git URL: strip trailing .git, trailing slashes.
-   */
   private static normalize(value: string): string {
     let result = value;
 
-    // Strip trailing .git
     if (result.endsWith('.git')) {
       result = result.slice(0, -4);
     }
 
-    // Strip trailing slash
     if (result.endsWith('/')) {
       result = result.slice(0, -1);
     }
@@ -53,18 +39,12 @@ export class RepositoryUrl extends ValueObject {
     return result;
   }
 
-  /**
-   * Extract the repository name from the URL (last path segment).
-   */
   get repositoryName(): string {
     const segments = this.value.replace(/\.git$/, '').split('/');
     const last = segments[segments.length - 1] || '';
     return last;
   }
 
-  /**
-   * Returns the host portion of the URL.
-   */
   get host(): string {
     try {
       if (this.value.startsWith('git@')) {

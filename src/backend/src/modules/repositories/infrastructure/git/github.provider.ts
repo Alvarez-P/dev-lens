@@ -5,9 +5,6 @@ import { GitProviderInterface } from './provider.interface';
 export class GitHubProvider implements GitProviderInterface {
   private readonly apiBase = 'https://api.github.com';
 
-  /**
-   * Validate a GitHub repository URL by checking if it's reachable.
-   */
   async validateUrl(url: string, credential?: string): Promise<boolean> {
     const apiUrl = this.toApiUrl(url);
     if (!apiUrl) return false;
@@ -27,9 +24,6 @@ export class GitHubProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Validate credentials by calling the GitHub API.
-   */
   async validateCredentials(_url: string, credential: string): Promise<boolean> {
     try {
       const response = await fetch(`${this.apiBase}/user`, {
@@ -44,9 +38,6 @@ export class GitHubProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Get the default branch from GitHub API.
-   */
   async getDefaultBranch(url: string, credential?: string): Promise<string> {
     const apiUrl = this.toApiUrl(url);
     if (!apiUrl) return 'main';
@@ -69,9 +60,6 @@ export class GitHubProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Get repository info from GitHub API.
-   */
   async getRepoInfo(
     url: string,
     credential?: string,
@@ -112,19 +100,12 @@ export class GitHubProvider implements GitProviderInterface {
     }
   }
 
-  /**
-   * Convert a git URL to the GitHub API URL.
-   * e.g., https://github.com/org/repo → https://api.github.com/repos/org/repo
-   */
   private toApiUrl(url: string): string | null {
     const match = url.match(/github\.com[/:]([\w.-]+)\/([\w.-]+)/);
     if (!match) return null;
     return `${this.apiBase}/repos/${match[1]}/${match[2]}`;
   }
 
-  /**
-   * Extract repository name from URL.
-   */
   private extractRepoName(url: string): string {
     const segments = url.replace(/\.git$/, '').split('/');
     return segments[segments.length - 1] || 'unknown';

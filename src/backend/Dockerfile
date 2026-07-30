@@ -1,34 +1,28 @@
-# Build stage
-FROM node:20-alpine AS build
-
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 WORKDIR /app
 
-# Copy package files
+FROM base AS deps
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY package.json ./
+COPY src/frontend/package.json ./src/frontend/
+COPY src/backend/package.json ./src/backend/
+RUN pnpm install --frozen-lockfile --filter devlens-backend...
 
-# Install dependencies
-RUN npm ci
+FROM deps AS build
+COPY src/backend/ ./src/backend/
+RUN pnpm --filter devlens-backend run build
 
-# Copy source code
-COPY tsconfig.json tsconfig.build.json nest-cli.json ./
-COPY src ./src
-
-# Build the application
-RUN npm run build
-
-# Production stage
-FROM node:20-alpine AS production
-
-WORKDIR /app
-
-# Copy production dependencies and built artifacts
+FROM base AS production
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY package.json ./
-RUN npm ci --omit=dev
+COPY src/frontend/package.json ./src/frontend/
+COPY src/backend/package.json ./src/backend/
+RUN pnpm install --prod --frozen-lockfile --filter devlens-backend...
+COPY --from=build /app/src/backend/dist ./src/backend/dist
 
-COPY --from=build /app/dist ./dist
+WORKDIR /app/src/backend
 
-# Expose application port
 EXPOSE 3001
 
-# Start the application
 CMD ["node", "dist/main"]

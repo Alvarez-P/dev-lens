@@ -18,6 +18,7 @@ By the end of this Epic, users should be able to securely access DevLens, create
 # Objectives
 
 - Implement authentication and authorization.
+- Support federated OAuth 2.0 login (GitHub first, provider-extensible).
 - Support individual and organization accounts.
 - Implement role-based access control.
 - Enable workspace management.
@@ -32,7 +33,8 @@ By the end of this Epic, users should be able to securely access DevLens, create
 
 ### Authentication
 
-- User registration.
+- User registration (email/password).
+- OAuth 2.0 provider login (GitHub, extensible to GitLab, Bitbucket, Google).
 - User login.
 - Logout.
 - Refresh tokens.
@@ -117,7 +119,7 @@ The following documents must be reviewed before implementation:
 
 - `docs/product/PRODUCT_CONTEXT.md`
 - `docs/architecture/RFC-002-System-Architecture.md`
-- `docs/architecture/RFC-005-Authentication-Architecture.md` *(or equivalent RFC)*
+- `docs/architecture/RFC-005-Authentication-Architecture.md`
 - Relevant ADRs
 
 ---
@@ -126,7 +128,9 @@ The following documents must be reviewed before implementation:
 
 ## Authentication
 
+- Federated OAuth 2.0 authentication (GitHub, extensible).
 - Secure authentication flow.
+- External identity linking and management.
 - Session lifecycle management.
 - Token refresh mechanism.
 - Email verification.
@@ -156,10 +160,11 @@ The following documents must be reviewed before implementation:
 
 ## User Experience
 
-- Login page.
-- Registration page.
+- Login page with provider buttons (GitHub, email/password).
+- Registration page with provider options.
+- OAuth callback and account linking flow.
 - Forgot password flow.
-- User profile.
+- User profile with linked identities management.
 - Account settings.
 - Organization selector.
 - Workspace selector.
@@ -177,7 +182,8 @@ The following documents must be reviewed before implementation:
 
 This Epic is considered complete when:
 
-- Users can register and authenticate securely.
+- Users can register and authenticate securely via email/password and OAuth providers.
+- External identities can be linked and unlinked to user accounts.
 - Sessions persist correctly.
 - Organizations can be created and managed.
 - Workspaces can be created inside organizations.

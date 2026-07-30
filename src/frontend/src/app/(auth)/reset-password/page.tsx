@@ -10,11 +10,7 @@ import { post } from '@/lib/api-client';
 import { KeyRound, ArrowLeft } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
-/**
- * Inner component that uses useSearchParams.
- * Must be wrapped in a Suspense boundary.
- */
-function ResetPasswordForm(): JSX.Element {
+function ResetPasswordForm(): React.ReactNode {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -172,11 +168,7 @@ function ResetPasswordForm(): JSX.Element {
   );
 }
 
-/**
- * Reset password page.
- * Wraps the form in a Suspense boundary for useSearchParams compatibility.
- */
-export default function ResetPasswordPage(): JSX.Element {
+export default function ResetPasswordPage(): React.ReactNode {
   return (
     <Suspense
       fallback={

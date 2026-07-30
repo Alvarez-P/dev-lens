@@ -16,16 +16,11 @@ export class CredentialEncryptionService {
       throw new Error('CREDENTIAL_ENCRYPTION_KEY is not configured');
     }
 
-    // Derive a 32-byte key from the configured hex string
     const hash = crypto.createHash('sha256');
     hash.update(keyHex);
     this.encryptionKey = hash.digest();
   }
 
-  /**
-   * Encrypt a plaintext value.
-   * Returns a base64-encoded string: iv + authTag + ciphertext.
-   */
   encrypt(plaintext: string): string {
     const iv = crypto.randomBytes(IV_LENGTH);
     const cipher = crypto.createCipheriv(ALGORITHM, this.encryptionKey, iv);
@@ -35,14 +30,10 @@ export class CredentialEncryptionService {
 
     const authTag = cipher.getAuthTag();
 
-    // Concatenate: iv (16) + authTag (16) + ciphertext
     const combined = Buffer.concat([iv, authTag, Buffer.from(encrypted, 'hex')]);
     return combined.toString('base64');
   }
 
-  /**
-   * Decrypt a base64-encoded encrypted value.
-   */
   decrypt(encryptedBase64: string): string {
     const combined = Buffer.from(encryptedBase64, 'base64');
 

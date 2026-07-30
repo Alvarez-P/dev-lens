@@ -30,14 +30,10 @@ export class WorkspaceService {
     private readonly eventDispatcher: DomainEventDispatcher,
   ) {}
 
-  /**
-   * Create a new workspace within an organization.
-   */
   async create(dto: CreateWorkspaceDto, userId: string): Promise<WorkspaceResponseDto> {
     const org = await this.organizationRepository.findById(OrganizationId.from(dto.organizationId));
     if (!org) throw new OrganizationNotFoundError(dto.organizationId);
 
-    // Ensure user is a member of the org
     if (!org.hasMember(UserId.from(userId))) {
       throw new NotOrganizationMemberError();
     }
@@ -57,9 +53,6 @@ export class WorkspaceService {
     return this.toResponse(workspace);
   }
 
-  /**
-   * Find a workspace by ID.
-   */
   async findById(id: string, userId: string): Promise<WorkspaceResponseDto> {
     const workspace = await this.workspaceRepository.findById(WorkspaceId.from(id));
     if (!workspace) throw new WorkspaceNotFoundError(id);
@@ -68,9 +61,6 @@ export class WorkspaceService {
     return this.toResponse(workspace);
   }
 
-  /**
-   * Find all workspaces for an organization.
-   */
   async findByOrg(orgId: string, userId: string): Promise<WorkspaceResponseDto[]> {
     const org = await this.organizationRepository.findById(OrganizationId.from(orgId));
     if (!org) throw new OrganizationNotFoundError(orgId);
@@ -83,16 +73,10 @@ export class WorkspaceService {
     return workspaces.map((w) => this.toResponse(w));
   }
 
-  /**
-   * Get all workspaces the user can access.
-   */
   async findAll(userId: string): Promise<WorkspaceResponseDto[]> {
     return this.workspaceRepository.findByUserId(UserId.from(userId));
   }
 
-  /**
-   * Update workspace details.
-   */
   async update(id: string, userId: string, dto: UpdateWorkspaceDto): Promise<WorkspaceResponseDto> {
     const workspace = await this.workspaceRepository.findById(WorkspaceId.from(id));
     if (!workspace) throw new WorkspaceNotFoundError(id);
@@ -105,9 +89,6 @@ export class WorkspaceService {
     return this.toResponse(workspace);
   }
 
-  /**
-   * Delete a workspace.
-   */
   async delete(id: string, userId: string): Promise<void> {
     const workspace = await this.workspaceRepository.findById(WorkspaceId.from(id));
     if (!workspace) throw new WorkspaceNotFoundError(id);
@@ -116,9 +97,6 @@ export class WorkspaceService {
     await this.workspaceRepository.delete(workspace.id);
   }
 
-  /**
-   * Add a member to the workspace.
-   */
   async addMember(
     workspaceId: string,
     memberUserId: string,
@@ -146,9 +124,6 @@ export class WorkspaceService {
     };
   }
 
-  /**
-   * Remove a member from the workspace.
-   */
   async removeMember(workspaceId: string, memberId: string, userId: string): Promise<void> {
     const workspace = await this.workspaceRepository.findById(WorkspaceId.from(workspaceId));
     if (!workspace) throw new WorkspaceNotFoundError(workspaceId);
@@ -164,9 +139,6 @@ export class WorkspaceService {
     await this.workspaceRepository.save(workspace);
   }
 
-  /**
-   * Get members of a workspace.
-   */
   async getMembers(workspaceId: string, userId: string): Promise<MemberResponseDto[]> {
     const workspace = await this.workspaceRepository.findById(WorkspaceId.from(workspaceId));
     if (!workspace) throw new WorkspaceNotFoundError(workspaceId);

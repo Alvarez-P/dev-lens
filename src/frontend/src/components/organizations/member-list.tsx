@@ -19,11 +19,7 @@ const roleVariants: Record<string, 'info' | 'success' | 'default' | 'warning'> =
   viewer: 'warning',
 };
 
-/**
- * Member list component.
- * Displays members with their roles and join dates.
- */
-export function MemberList({ members }: { members: Member[] }): JSX.Element {
+export function MemberList({ members }: { members: Member[] }): React.ReactNode {
   if (members.length === 0) {
     return (
       <div className="px-6 py-8 text-center">

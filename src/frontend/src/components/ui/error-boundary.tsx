@@ -5,11 +5,10 @@ import { AlertTriangle } from 'lucide-react';
 import { Button } from './button';
 
 interface ErrorBoundaryProps {
-  /** Children to render */
   children: ReactNode;
-  /** Optional custom fallback UI */
+
   fallback?: ReactNode;
-  /** Optional error callback for logging */
+
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
@@ -18,10 +17,6 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-/**
- * React error boundary that catches errors in its child component tree.
- * Shows a fallback UI when an error is caught, with an option to retry.
- */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);

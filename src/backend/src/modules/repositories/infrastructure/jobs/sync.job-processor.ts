@@ -28,7 +28,6 @@ export class SyncJobProcessor extends WorkerHost {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Sync failed for repository ${repositoryId}: ${message}`);
 
-      // Re-throw to trigger BullMQ retry mechanism
       throw error;
     }
   }

@@ -45,7 +45,7 @@ export class RepositoryTypeOrmEntity {
   @Column({ name: 'last_sync_at', nullable: true, type: 'timestamptz' })
   lastSyncAt!: Date | null;
 
-  @Column({ name: 'last_sync_commit', nullable: true, length: 64 })
+  @Column({ name: 'last_sync_commit', nullable: true, type: 'varchar', length: 64 })
   lastSyncCommit!: string | null;
 
   @Column({ name: 'size_bytes', nullable: true, type: 'bigint' })

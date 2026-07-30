@@ -18,9 +18,6 @@ export class OrganizationRepository {
     private readonly memberRepo: Repository<MemberTypeOrmEntity>,
   ) {}
 
-  /**
-   * Find an organization by its ID.
-   */
   async findById(id: OrganizationId): Promise<Organization | null> {
     const entity = await this.ormRepo.findOne({ where: { id: id.toString() } });
     if (!entity) return null;
@@ -32,9 +29,6 @@ export class OrganizationRepository {
     return this.toDomain(entity, members);
   }
 
-  /**
-   * Find an organization by slug.
-   */
   async findBySlug(slug: string): Promise<Organization | null> {
     const entity = await this.ormRepo.findOne({ where: { slug } });
     if (!entity) return null;
@@ -46,9 +40,6 @@ export class OrganizationRepository {
     return this.toDomain(entity, members);
   }
 
-  /**
-   * Find all organizations a user belongs to.
-   */
   async findByUserId(userId: UserId): Promise<Organization[]> {
     const memberRows = await this.memberRepo.find({
       where: { entityType: 'organization', userId: userId.toString() },
@@ -70,15 +61,10 @@ export class OrganizationRepository {
     return organizations;
   }
 
-  /**
-   * Save (create or update) an organization and its members.
-   */
   async save(org: Organization): Promise<void> {
-    // Save the organization itself
     const entity = this.toPersistence(org);
     await this.ormRepo.save(entity);
 
-    // Sync members: delete old, insert current
     await this.memberRepo.delete({
       entityType: 'organization',
       entityId: org.id.toString(),
@@ -100,17 +86,11 @@ export class OrganizationRepository {
     }
   }
 
-  /**
-   * Delete an organization (cascades to members).
-   */
   async delete(id: OrganizationId): Promise<void> {
     await this.memberRepo.delete({ entityType: 'organization', entityId: id.toString() });
     await this.ormRepo.delete(id.toString());
   }
 
-  /**
-   * Check if an organization exists by ID.
-   */
   async exists(id: OrganizationId): Promise<boolean> {
     const count = await this.ormRepo.count({ where: { id: id.toString() } });
     return count > 0;

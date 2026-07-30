@@ -8,15 +8,14 @@ type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Button visual variant */
   variant?: ButtonVariant;
-  /** Button size */
+
   size?: ButtonSize;
-  /** Show loading spinner and disable interaction */
+
   isLoading?: boolean;
-  /** Icon to show before the button text */
+
   leftIcon?: ReactNode;
-  /** Icon to show after the button text */
+
   rightIcon?: ReactNode;
 }
 
@@ -38,10 +37,6 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: 'px-6 py-3 text-base gap-2.5',
 };
 
-/**
- * Button component with multiple variants, sizes, and loading state support.
- * Uses forwardRef for form integration and composition.
- */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {

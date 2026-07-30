@@ -13,6 +13,8 @@ import { ExternalIdentity } from '../domain/external-identity.entity';
 import { User } from '../domain/user.entity';
 import { Email } from '../domain/email.vo';
 import { UserId } from '../domain/user-id.vo';
+import { IdentityAlreadyLinked } from '../domain/identity-errors';
+import { QueryFailedError } from 'typeorm';
 
 class MockGithubProvider implements ExternalIdentityProvider {
   readonly provider = 'github';
@@ -211,6 +213,36 @@ describe('OAuthService', () => {
       await expect(
         service.authenticateWithProvider('bitbucket', 'code', 'http://localhost:3001/callback'),
       ).rejects.toThrow(/not found/i);
+    });
+    it('should throw IdentityAlreadyLinked on duplicate (provider, externalId)', async () => {
+      identityRepo.findByProvider.mockResolvedValue(null);
+
+      const existingUser = User.reconstitute(
+        UserId.from('email-matched-user-id'),
+        Email.create('octocat@github.com'),
+        'hashed_password',
+        'Octocat',
+        '',
+        null,
+        true,
+        null,
+        null,
+        new Date('2024-01-10T00:00:00Z'),
+        new Date('2024-01-10T00:00:00Z'),
+      );
+      userRepo.findByEmail.mockResolvedValue(existingUser);
+
+      const dbError = new QueryFailedError('INSERT', [], new Error('duplicate key'));
+      Object.defineProperty(dbError, 'driverError', { value: { code: '23505' } });
+      identityRepo.save.mockRejectedValue(dbError);
+
+      await expect(
+        service.authenticateWithProvider(
+          'github',
+          'auth_code',
+          'http://localhost:3001/api/v1/auth/oauth/github/callback',
+        ),
+      ).rejects.toThrow(IdentityAlreadyLinked);
     });
   });
 });

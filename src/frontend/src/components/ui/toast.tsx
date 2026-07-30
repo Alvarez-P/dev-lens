@@ -32,11 +32,7 @@ const typeIcons: Record<ToastType, ReactNode> = {
   info: <Info className="h-5 w-5" />,
 };
 
-/**
- * Individual toast notification component.
- * Auto-dismisses after the specified duration (default 5 seconds).
- */
-export function Toast({ toast, onDismiss }: ToastProps): JSX.Element {
+export function Toast({ toast, onDismiss }: ToastProps): React.ReactNode {
   const { id, message, type, duration = 5000 } = toast;
   const [isExiting, setIsExiting] = useState(false);
 

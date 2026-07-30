@@ -22,9 +22,6 @@ import {
   type SnapshotItem,
 } from '@/components/repositories/sync-history-timeline';
 
-// TODO: Replace with React Query hooks
-// import { useRepository, useTriggerSync, useRepositorySnapshots } from '@/lib/hooks/repositories';
-
 interface RepositoryDetail {
   id: string;
   name: string;
@@ -39,11 +36,7 @@ interface RepositoryDetail {
   createdAt: string;
 }
 
-/**
- * Repository detail page.
- * Shows status, last sync, branch info, and snapshot history.
- */
-export default function RepositoryDetailPage(): JSX.Element {
+export default function RepositoryDetailPage(): React.ReactNode {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -54,24 +47,19 @@ export default function RepositoryDetailPage(): JSX.Element {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    // TODO: Fetch repository details from API
-    // const { data } = await get<RepositoryDetail>(`/api/v1/repositories/${id}`);
     setIsLoading(false);
   }, [id]);
 
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      // TODO: POST /api/v1/repositories/${id}/sync
       await new Promise((resolve) => setTimeout(resolve, 2000));
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const handleArchive = async () => {
-    // TODO: DELETE /api/v1/repositories/${id}
-  };
+  const handleArchive = async () => {};
 
   if (isLoading) {
     return (
@@ -133,7 +121,6 @@ export default function RepositoryDetailPage(): JSX.Element {
         }
       />
 
-      {/* Status card */}
       <div className="rounded-xl border border-surface-800 bg-surface-900 p-6">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div>
@@ -202,7 +189,6 @@ export default function RepositoryDetailPage(): JSX.Element {
         )}
       </div>
 
-      {/* Sync History */}
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-surface-100">Sync History</h2>

@@ -1,8 +1,6 @@
 import { IsEmail, IsString, MinLength, MaxLength, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-// ─── Request DTOs ───────────────────────────────────────────────
-
 export class RegisterDto {
   @ApiProperty({ example: 'john@example.com', description: 'User email address' })
   @IsEmail()
@@ -75,8 +73,6 @@ export class VerifyEmailDto {
   @IsNotEmpty()
   token!: string;
 }
-
-// ─── Response DTOs ──────────────────────────────────────────────
 
 export class UserProfileResponseDto {
   @ApiProperty({ example: 'uuid-string', description: 'User ID' })

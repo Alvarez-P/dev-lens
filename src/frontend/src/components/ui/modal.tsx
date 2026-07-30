@@ -8,17 +8,16 @@ import { X } from 'lucide-react';
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
 
 export interface ModalProps {
-  /** Whether the modal is visible */
   isOpen: boolean;
-  /** Callback when the modal should close */
+
   onClose: () => void;
-  /** Modal title shown in the header */
+
   title?: string;
-  /** Modal size */
+
   size?: ModalSize;
-  /** Modal body content */
+
   children: ReactNode;
-  /** Optional footer content */
+
   footer?: ReactNode;
 }
 
@@ -29,11 +28,6 @@ const sizeClasses: Record<ModalSize, string> = {
   xl: 'max-w-xl',
 };
 
-/**
- * Portal-based modal component with backdrop overlay.
- * Closes on Escape key press and backdrop click.
- * Animated with CSS transitions for smooth open/close.
- */
 export function Modal({
   isOpen,
   onClose,
@@ -41,7 +35,7 @@ export function Modal({
   size = 'md',
   children,
   footer,
-}: ModalProps): JSX.Element | null {
+}: ModalProps): React.ReactNode {
   const handleEscape = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -81,14 +75,12 @@ export function Modal({
       aria-modal="true"
       aria-labelledby={title ? 'modal-title' : undefined}
     >
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
 
-      {/* Modal panel */}
       <div
         className={clsx(
           'relative z-10 w-full animate-scale-in',
@@ -96,7 +88,6 @@ export function Modal({
           sizeClasses[size],
         )}
       >
-        {/* Header */}
         {title && (
           <div className="flex items-center justify-between border-b border-surface-700 px-6 py-4">
             <h2 id="modal-title" className="text-lg font-semibold text-surface-100">
@@ -112,10 +103,8 @@ export function Modal({
           </div>
         )}
 
-        {/* Body */}
         <div className="px-6 py-4">{children}</div>
 
-        {/* Footer */}
         {footer && (
           <div className="flex items-center justify-end gap-3 border-t border-surface-700 px-6 py-4">
             {footer}

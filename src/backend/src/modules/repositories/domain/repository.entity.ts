@@ -11,12 +11,6 @@ import {
   RepositoryArchivedEvent,
 } from './domain-events';
 
-/**
- * Repository Aggregate Root.
- *
- * Manages the complete repository lifecycle:
- * register → clone → sync → archive.
- */
 export class Repository extends AggregateRoot<RepositoryId> {
   private constructor(
     id: RepositoryId,
@@ -39,9 +33,6 @@ export class Repository extends AggregateRoot<RepositoryId> {
     super(id);
   }
 
-  /**
-   * Factory: creates a new Repository and publishes RepositoryRegisteredEvent.
-   */
   static create(
     name: string,
     url: RepositoryUrl,
@@ -63,10 +54,10 @@ export class Repository extends AggregateRoot<RepositoryId> {
       ownerId,
       RepositoryStatus.ACTIVE,
       credentialId,
-      null, // lastSyncAt
-      null, // lastSyncCommit
-      null, // sizeBytes
-      null, // fileCount
+      null,
+      null,
+      null,
+      null,
       new Date(),
       new Date(),
     );
@@ -86,10 +77,6 @@ export class Repository extends AggregateRoot<RepositoryId> {
     return repo;
   }
 
-  /**
-   * Reconstitute a Repository from persistence.
-   * Does NOT publish domain events.
-   */
   static reconstitute(
     id: RepositoryId,
     name: string,
@@ -128,9 +115,6 @@ export class Repository extends AggregateRoot<RepositoryId> {
     );
   }
 
-  /**
-   * Update repository metadata.
-   */
   update(dto: { name?: string; defaultBranch?: string; credentialId?: string | null }): void {
     if (dto.name !== undefined) {
       this.name = dto.name;
@@ -144,9 +128,6 @@ export class Repository extends AggregateRoot<RepositoryId> {
     this.updatedAt = new Date();
   }
 
-  /**
-   * Mark the repository as CLONING (initial clone started).
-   */
   startCloning(): void {
     this.status = RepositoryStatus.CLONING;
     this.updatedAt = new Date();
@@ -154,9 +135,6 @@ export class Repository extends AggregateRoot<RepositoryId> {
     this.addDomainEvent(new RepositorySyncStartedEvent(this.id.toString(), this.id.toString()));
   }
 
-  /**
-   * Mark the repository as SYNCING.
-   */
   startSyncing(): void {
     if (this.status === RepositoryStatus.ARCHIVED) {
       throw new Error('Cannot sync an archived repository');
@@ -167,9 +145,6 @@ export class Repository extends AggregateRoot<RepositoryId> {
     this.addDomainEvent(new RepositorySyncStartedEvent(this.id.toString(), this.id.toString()));
   }
 
-  /**
-   * Complete a sync successfully.
-   */
   completeSync(commitSha: string, snapshotId: string, sizeBytes: number, fileCount: number): void {
     this.status = RepositoryStatus.ACTIVE;
     this.lastSyncAt = new Date();
@@ -188,9 +163,6 @@ export class Repository extends AggregateRoot<RepositoryId> {
     );
   }
 
-  /**
-   * Mark the repository as ERROR after a failed sync.
-   */
   markAsError(errorMessage?: string): void {
     this.status = RepositoryStatus.ERROR;
     this.updatedAt = new Date();
@@ -204,9 +176,6 @@ export class Repository extends AggregateRoot<RepositoryId> {
     );
   }
 
-  /**
-   * Archive the repository (stops syncing).
-   */
   archive(): void {
     this.status = RepositoryStatus.ARCHIVED;
     this.updatedAt = new Date();

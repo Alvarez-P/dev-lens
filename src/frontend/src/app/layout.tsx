@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }): JSX.Element {
+export default function RootLayout({ children }: { children: React.ReactNode }): React.ReactNode {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-surface-950 text-surface-50 antialiased">

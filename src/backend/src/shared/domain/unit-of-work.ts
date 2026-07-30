@@ -2,41 +2,16 @@ import { AggregateRoot } from './aggregate-root';
 import { DomainEventDispatcher } from './domain-event-dispatcher';
 import { Identifier } from './identifier';
 
-/**
- * Unit of Work interface for managing transactional consistency.
- * Collects domain events from aggregate roots during the transaction
- * and dispatches them after a successful commit.
- */
 export interface UnitOfWork {
-  /**
-   * Begins a new transaction.
-   */
   start(): Promise<void>;
 
-  /**
-   * Commits the current transaction.
-   * After commit, collected domain events are dispatched.
-   */
   commit(): Promise<void>;
 
-  /**
-   * Rolls back the current transaction.
-   */
   rollback(): Promise<void>;
 
-  /**
-   * Wraps commit + domain event dispatch.
-   * Commits the transaction, then dispatches all collected domain events
-   * from tracked aggregate roots, ensuring events are only fired on success.
-   */
   complete(): Promise<void>;
 }
 
-/**
- * Concrete implementation of UnitOfWork using an in-memory approach.
- * Tracks aggregate roots modified during the transaction and dispatches
- * their domain events upon successful commit.
- */
 export class InMemoryUnitOfWork implements UnitOfWork {
   private readonly trackedAggregates: Map<string, AggregateRoot> = new Map();
   private isActive = false;
@@ -48,9 +23,6 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     this.trackedAggregates.clear();
   }
 
-  /**
-   * Register an aggregate root to track its domain events.
-   */
   track(aggregate: AggregateRoot): void {
     if (!this.isActive) {
       throw new Error('No active transaction. Call start() first.');
@@ -82,7 +54,6 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     try {
       await this.commit();
 
-      // Collect and dispatch domain events from all tracked aggregates
       const allEvents = Array.from(this.trackedAggregates.values()).flatMap(
         (aggregate) => aggregate.domainEvents,
       );

@@ -24,9 +24,6 @@ export class CredentialService {
     private readonly providerFactory: GitProviderFactory,
   ) {}
 
-  /**
-   * Create a new encrypted credential.
-   */
   async create(dto: CreateCredentialDto, userId: string): Promise<CredentialResponseDto> {
     const encryptedValue = this.encryptionService.encrypt(dto.value);
     const provider = dto.provider as GitProvider;
@@ -46,9 +43,6 @@ export class CredentialService {
     return this.toResponse(credential);
   }
 
-  /**
-   * Find a credential by ID.
-   */
   async findById(id: string, userId: string): Promise<CredentialResponseDto> {
     const credential = await this.credentialRepo.findById(CredentialId.from(id));
     if (!credential) {
@@ -60,17 +54,11 @@ export class CredentialService {
     return this.toResponse(credential);
   }
 
-  /**
-   * List all credentials for a user.
-   */
   async findByUser(userId: string): Promise<CredentialResponseDto[]> {
     const credentials = await this.credentialRepo.findByOwnerId(userId);
     return credentials.map((c) => this.toResponse(c));
   }
 
-  /**
-   * Update a credential label.
-   */
   async update(
     id: string,
     dto: UpdateCredentialDto,
@@ -92,9 +80,6 @@ export class CredentialService {
     return this.toResponse(credential);
   }
 
-  /**
-   * Delete a credential.
-   */
   async delete(id: string, userId: string): Promise<void> {
     const credential = await this.credentialRepo.findById(CredentialId.from(id));
     if (!credential) {
@@ -107,9 +92,6 @@ export class CredentialService {
     await this.credentialRepo.delete(CredentialId.from(id));
   }
 
-  /**
-   * Validate a credential by testing it against the provider.
-   */
   async validate(id: string, userId: string): Promise<ValidateCredentialResultDto> {
     const credential = await this.credentialRepo.findById(CredentialId.from(id));
     if (!credential) {
@@ -127,10 +109,7 @@ export class CredentialService {
       const decrypted = this.encryptionService.decrypt(credential.encryptedValue);
       const provider = this.providerFactory.getProvider(credential.provider);
 
-      const isValid = await provider.validateCredentials(
-        '', // No specific URL — validate the token itself
-        decrypted,
-      );
+      const isValid = await provider.validateCredentials('', decrypted);
 
       return {
         valid: isValid,

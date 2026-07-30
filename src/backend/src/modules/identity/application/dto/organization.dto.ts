@@ -2,8 +2,6 @@ import { IsString, IsOptional, IsNotEmpty, MaxLength, IsEnum, IsEmail } from 'cl
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '../../domain/role.enum';
 
-// ─── Request DTOs ───────────────────────────────────────────────
-
 export class CreateOrganizationDto {
   @ApiProperty({ example: 'Acme Corp', description: 'Organization name' })
   @IsString()
@@ -50,8 +48,6 @@ export class UpdateMemberRoleDto {
   @IsNotEmpty()
   role!: Role;
 }
-
-// ─── Response DTOs ──────────────────────────────────────────────
 
 export class MemberResponseDto {
   @ApiProperty({ example: 'member-uuid' })

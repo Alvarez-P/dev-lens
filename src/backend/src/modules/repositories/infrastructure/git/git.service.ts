@@ -20,26 +20,18 @@ export class GitService {
     this.storagePath = configService.repo.storagePath;
   }
 
-  /**
-   * Get the local storage path for a repository.
-   */
   getRepoPath(repositoryId: string): string {
     return path.join(this.storagePath, repositoryId);
   }
 
-  /**
-   * Clone a repository with --depth 1 for performance.
-   */
   async clone(
     url: string,
     targetPath: string,
     branch?: string,
     credential?: string,
   ): Promise<void> {
-    // Ensure parent directory exists
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
 
-    // Build authenticated URL if credential is provided
     const cloneUrl = credential ? this.injectCredential(url, credential) : url;
 
     const git = simpleGit();
@@ -52,13 +44,9 @@ export class GitService {
     await git.clone(cloneUrl, targetPath, options);
   }
 
-  /**
-   * Pull latest changes from remote.
-   */
   async pull(targetPath: string, _branch?: string, credential?: string): Promise<void> {
     const git = simpleGit(targetPath);
 
-    // If we have a credential, we need to update the remote URL
     if (credential) {
       const remotes = await git.getRemotes(true);
       const origin = remotes.find((r) => r.name === 'origin');
@@ -71,9 +59,6 @@ export class GitService {
     await git.pull();
   }
 
-  /**
-   * Get current HEAD commit info.
-   */
   async getCurrentCommit(targetPath: string): Promise<CommitInfo> {
     const git = simpleGit(targetPath);
 
@@ -92,9 +77,6 @@ export class GitService {
     };
   }
 
-  /**
-   * Count source files in a repository (excludes node_modules, .git).
-   */
   async getFileCount(targetPath: string): Promise<number> {
     try {
       const { stdout } = await this.exec(
@@ -102,7 +84,6 @@ export class GitService {
       );
       return parseInt(stdout.trim(), 10) || 0;
     } catch {
-      // Fallback: count all non-binary files
       try {
         const { stdout } = await this.exec(
           `find "${targetPath}" -type f -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | wc -l`,
@@ -114,9 +95,6 @@ export class GitService {
     }
   }
 
-  /**
-   * Get total size of a repository in bytes.
-   */
   async getRepoSize(targetPath: string): Promise<number> {
     try {
       const { stdout } = await this.exec(`du -sb "${targetPath}" 2>/dev/null | cut -f1`);
@@ -126,9 +104,6 @@ export class GitService {
     }
   }
 
-  /**
-   * Check if a repository path exists (has been cloned).
-   */
   async exists(targetPath: string): Promise<boolean> {
     try {
       await fs.access(path.join(targetPath, '.git'));
@@ -138,34 +113,24 @@ export class GitService {
     }
   }
 
-  /**
-   * Inject credential token into a git URL for authentication.
-   * Supports https:// and git@ patterns.
-   */
   private injectCredential(url: string, credential: string): string {
     if (url.startsWith('https://')) {
-      // https://github.com/org/repo → https://token@github.com/org/repo
       return url.replace('https://', `https://${credential}@`);
     }
 
     if (url.startsWith('git@')) {
-      // git@github.com:org/repo → https://token@github.com/org/repo
-      // simple-git handles SSH keys differently — keep as-is for SSH
       return url;
     }
 
     return url;
   }
 
-  /**
-   * Execute a shell command and return stdout/stderr.
-   */
   private async exec(command: string): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
       try {
         const stdout = execSync(command, {
           encoding: 'utf-8',
-          maxBuffer: 10 * 1024 * 1024, // 10MB
+          maxBuffer: 10 * 1024 * 1024,
         });
         resolve({ stdout: stdout.trim(), stderr: '' });
       } catch (error: any) {
