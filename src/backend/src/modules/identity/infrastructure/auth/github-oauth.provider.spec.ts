@@ -3,16 +3,14 @@ const mockOAuth2 = {
     .fn()
     .mockReturnValue('https://github.com/login/oauth/authorize?state=mock_state'),
   getOAuthAccessToken: jest.fn(),
+  get: jest.fn(),
 };
-
-const mockUserProfile = jest.fn();
 
 // Mock passport-github2
 jest.mock('passport-github2', () => ({
   Strategy: jest.fn().mockImplementation(() => ({
     name: 'github',
     _oauth2: mockOAuth2,
-    userProfile: mockUserProfile,
   })),
 }));
 
@@ -52,23 +50,26 @@ describe('GithubOAuthProvider', () => {
 
   describe('exchangeCode', () => {
     it('should return an ExternalUserProfile on successful exchange', async () => {
-      // Mock token exchange success
       mockOAuth2.getOAuthAccessToken.mockImplementation(
         (_code: string, _options: any, callback: any) => {
           callback(null, 'mock_gh_access_token_123', 'ghr_refresh_token_456');
         },
       );
 
-      // Mock profile fetch success
-      mockUserProfile.mockImplementation((_token: string, callback: any) => {
-        callback(null, {
-          id: '583231',
-          displayName: 'Octocat',
-          username: 'octocat',
-          emails: [{ value: 'octocat@github.com' }],
-          _json: { avatar_url: 'https://avatars.githubusercontent.com/u/583231' },
-        });
-      });
+      mockOAuth2.get.mockImplementation(
+        (_url: string, _token: string, callback: (err: Error | null, body: string) => void) => {
+          callback(
+            null,
+            JSON.stringify({
+              id: '583231',
+              displayName: 'Octocat',
+              username: 'octocat',
+              emails: [{ value: 'octocat@github.com' }],
+              _json: { avatar_url: 'https://avatars.githubusercontent.com/u/583231' },
+            }),
+          );
+        },
+      );
 
       const profile = await provider.exchangeCode('code_abc', 'http://localhost:3001/callback');
 
@@ -79,7 +80,6 @@ describe('GithubOAuthProvider', () => {
       expect(profile.accessToken).toBe('mock_gh_access_token_123');
       expect(profile.refreshToken).toBe('ghr_refresh_token_456');
 
-      // Verify OAuth2 was called with the code and redirect URI
       expect(mockOAuth2.getOAuthAccessToken).toHaveBeenCalledWith(
         'code_abc',
         { redirect_uri: 'http://localhost:3001/callback' },
@@ -106,9 +106,11 @@ describe('GithubOAuthProvider', () => {
         },
       );
 
-      mockUserProfile.mockImplementation((_token: string, callback: any) => {
-        callback(new Error('profile_fetch_failed'));
-      });
+      mockOAuth2.get.mockImplementation(
+        (_url: string, _token: string, callback: (err: Error | null, body?: string) => void) => {
+          callback(new Error('profile_fetch_failed'));
+        },
+      );
 
       await expect(
         provider.exchangeCode('code_abc', 'http://localhost:3001/callback'),

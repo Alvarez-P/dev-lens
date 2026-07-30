@@ -184,8 +184,7 @@ describe('OAuth Integration (3 resolution paths)', () => {
       .get(`/api/v1/auth/oauth/mock/callback?code=valid_code&state=${stateToken}`)
       .expect(302);
 
-    expect(res.headers.location).toContain('oauth=success');
-    expect(res.headers.location).toContain('accessToken=');
+    expect(res.headers.location).toContain('/auth/callback?code=');
     expect(identityRepo.findByProvider).toHaveBeenCalledWith('mock', 'mock_external_1');
     expect(userRepo.findById).toHaveBeenCalledWith(
       expect.objectContaining({ value: 'existing-user-uuid' }),
@@ -225,7 +224,7 @@ describe('OAuth Integration (3 resolution paths)', () => {
       .get(`/api/v1/auth/oauth/mock/callback?code=valid_code&state=${stateToken}`)
       .expect(302);
 
-    expect(res.headers.location).toContain('oauth=success');
+    expect(res.headers.location).toContain('/auth/callback?code=');
     expect(identityRepo.findByProvider).toHaveBeenCalledWith('mock', 'mock_external_1');
     expect(userRepo.findByEmail).toHaveBeenCalled();
     expect(identityRepo.save).toHaveBeenCalled();
@@ -254,7 +253,7 @@ describe('OAuth Integration (3 resolution paths)', () => {
       .get(`/api/v1/auth/oauth/mock/callback?code=valid_code&state=${stateToken}`)
       .expect(302);
 
-    expect(res.headers.location).toContain('oauth=success');
+    expect(res.headers.location).toContain('/auth/callback?code=');
     expect(userRepo.save).toHaveBeenCalled();
     expect(identityRepo.save).toHaveBeenCalled();
 
@@ -317,7 +316,7 @@ describe('OAuth Integration (3 resolution paths)', () => {
       .get(`/api/v1/auth/oauth/mock/callback?code=valid_code&state=${stateToken}`)
       .expect(302);
 
-    expect(res.headers.location).toContain('oauth=success');
+    expect(res.headers.location).toContain('/auth/callback?code=');
   });
 
   // ─── Backward comp: existing auth endpoints unchanged ─────────────

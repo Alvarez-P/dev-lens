@@ -12,8 +12,10 @@ import type {
   LinkedIdentity,
 } from './auth-types';
 
-const ACCESS_TOKEN_KEY = 'devlens_access_token';
-const REFRESH_TOKEN_KEY = 'devlens_refresh_token';
+import { STORAGE_KEYS } from '@/lib/constants';
+
+const ACCESS_TOKEN_KEY = STORAGE_KEYS.ACCESS_TOKEN;
+const REFRESH_TOKEN_KEY = STORAGE_KEYS.REFRESH_TOKEN;
 
 function getStoredAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -80,22 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
       void 0;
     }
     return false;
-  }, []);
-
-  // Handle OAuth callback: store tokens from URL params before session restore
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('oauth') === 'success') {
-      const accessToken = params.get('accessToken');
-      const refreshToken = params.get('refreshToken');
-      if (accessToken && refreshToken) {
-        storeTokens(accessToken, refreshToken);
-        // Clean URL parameters without full page reload
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    }
   }, []);
 
   useEffect(() => {

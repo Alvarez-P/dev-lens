@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit, Inject, Optional } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -89,8 +89,18 @@ const typeOrmEntities = [
     {
       provide: GithubOAuthProvider,
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        new GithubOAuthProvider(configService.oauth.github),
+      useFactory: (configService: ConfigService) => {
+        const github = configService.oauth.github;
+        if (!github.clientId) {
+          return null;
+        }
+        return new GithubOAuthProvider(github);
+      },
+    },
+    {
+      provide: 'OAUTH_PROVIDERS_CONFIGURED',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => !!configService.oauth.github.clientId,
     },
   ],
   exports: [
@@ -105,4 +115,17 @@ const typeOrmEntities = [
     ExternalIdentityRepository,
   ],
 })
-export class IdentityModule {}
+export class IdentityModule implements OnModuleInit {
+  constructor(
+    private readonly registry: ProviderRegistry,
+    @Optional()
+    @Inject(GithubOAuthProvider)
+    private readonly githubProvider: GithubOAuthProvider | null,
+  ) {}
+
+  onModuleInit(): void {
+    if (this.githubProvider) {
+      this.registry.register(this.githubProvider);
+    }
+  }
+}

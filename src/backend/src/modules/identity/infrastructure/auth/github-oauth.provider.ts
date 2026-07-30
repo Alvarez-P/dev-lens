@@ -1,31 +1,45 @@
 import { Injectable } from '@nestjs/common';
-import { Strategy as GitHubStrategy } from 'passport-github2';
+import { Strategy } from 'passport-github2';
 import { OAuthProviderConfig } from '../../../../config/configuration';
 import {
   ExternalIdentityProvider,
   ExternalUserProfile,
 } from '../../domain/external-identity-provider.interface';
 
+interface OAuth2Internal {
+  authorizeURL(params: Record<string, string>): string;
+  getOAuthAccessToken(
+    code: string,
+    params: Record<string, string>,
+    callback: (err: Error | null, accessToken: string, refreshToken: string) => void,
+  ): void;
+  get(url: string, accessToken: string, callback: (err: Error | null, body: string) => void): void;
+}
+
+type GitHubStrategyInternal = Strategy & { _oauth2: OAuth2Internal };
+
+function createStrategy(config: OAuthProviderConfig): GitHubStrategyInternal {
+  const strategy = new Strategy(
+    {
+      clientID: config.clientId,
+      clientSecret: config.clientSecret,
+      callbackURL: config.callbackUrl,
+      scope: ['user:email'],
+    },
+    () => {},
+  ) as unknown as GitHubStrategyInternal;
+
+  return strategy;
+}
+
 @Injectable()
 export class GithubOAuthProvider implements ExternalIdentityProvider {
   readonly provider = 'github';
-  private readonly strategy: GitHubStrategy;
-  private readonly oauth2: any;
+  private readonly oauth2: OAuth2Internal;
 
   constructor(config: OAuthProviderConfig) {
-    this.strategy = new GitHubStrategy(
-      {
-        clientID: config.clientId,
-        clientSecret: config.clientSecret,
-        callbackURL: config.callbackUrl,
-        scope: ['user:email'],
-      },
-      () => {
-        // No-op verify callback — flow is handled by exchangeCode
-      },
-    ) as any;
-
-    this.oauth2 = (this.strategy as any)._oauth2;
+    const strategy = createStrategy(config);
+    this.oauth2 = strategy._oauth2;
   }
 
   getProviderName(): string {
@@ -73,15 +87,27 @@ export class GithubOAuthProvider implements ExternalIdentityProvider {
     });
   }
 
-  private getUserProfile(accessToken: string): Promise<any> {
+  private getUserProfile(
+    accessToken: string,
+  ): Promise<{
+    id: number | string;
+    emails?: { value: string }[];
+    displayName?: string;
+    username?: string;
+    _json?: { avatar_url?: string };
+  }> {
     return new Promise((resolve, reject) => {
-      this.strategy.userProfile(accessToken, (err?: Error | null, profile?: any) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(profile);
-        }
-      });
+      this.oauth2.get(
+        'https://api.github.com/user',
+        accessToken,
+        (err: Error | null, body: string) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(JSON.parse(body));
+          }
+        },
+      );
     });
   }
 }

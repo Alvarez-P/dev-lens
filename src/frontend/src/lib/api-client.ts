@@ -16,6 +16,8 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
+import { STORAGE_KEYS } from '@/lib/constants';
+
 interface ApiSuccessResponse<T> {
   success: true;
   data: T;
@@ -36,7 +38,11 @@ interface ApiErrorResponse {
   path: string;
 }
 
-type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
+export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
+
+export function isSuccessResponse<T>(response: ApiResponse<T>): response is ApiSuccessResponse<T> {
+  return 'success' in response && response.success === true;
+}
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const DEFAULT_TIMEOUT = 30_000;
@@ -44,22 +50,19 @@ const DEFAULT_TIMEOUT = 30_000;
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
-const ACCESS_TOKEN_KEY = 'devlens_access_token';
-const REFRESH_TOKEN_KEY = 'devlens_refresh_token';
-
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 }
 
 function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
+  return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 }
 
 function clearTokens(): void {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
 }
 
 async function attemptTokenRefresh(): Promise<boolean> {
@@ -86,8 +89,8 @@ async function attemptTokenRefresh(): Promise<boolean> {
 
       const data = await response.json();
       if (data.success && data.data) {
-        localStorage.setItem(ACCESS_TOKEN_KEY, data.data.accessToken);
-        localStorage.setItem(REFRESH_TOKEN_KEY, data.data.refreshToken);
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.data.accessToken);
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.data.refreshToken);
         return true;
       }
 

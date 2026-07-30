@@ -11,6 +11,7 @@ import {
   ExternalIdentityProvider,
   ExternalUserProfile,
 } from '../../domain/external-identity-provider.interface';
+import { InvalidOAuthState } from '../../domain/identity-errors';
 
 class MockGithubProvider implements ExternalIdentityProvider {
   readonly provider = 'github';
@@ -115,8 +116,7 @@ describe('OAuthController', () => {
         .get(`/api/v1/auth/oauth/github/callback?code=valid_code&state=${stateToken}`)
         .expect(302);
 
-      expect(res.headers.location).toContain('oauth=success');
-      expect(res.headers.location).toContain('accessToken=jwt_access_token_value');
+      expect(res.headers.location).toContain('/auth/callback?code=');
       expect(oauthService.authenticateWithProvider).toHaveBeenCalledWith(
         'github',
         'valid_code',
@@ -139,6 +139,7 @@ describe('OAuthController', () => {
     });
 
     it('should return 400 for unknown provider in callback', async () => {
+      oauthService.authenticateWithProvider.mockRejectedValueOnce(new InvalidOAuthState());
       const stateToken = oauthStateService.sign('valid-state');
 
       await request(app.getHttpServer())
