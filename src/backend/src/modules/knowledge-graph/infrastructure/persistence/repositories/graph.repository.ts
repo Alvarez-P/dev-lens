@@ -23,7 +23,7 @@ export interface PersistedGraph {
 }
 
 export interface FindNodesOptions {
-  type?: NodeType;
+  type?: NodeType | NodeType[];
   offset?: number;
   limit?: number;
   includeDeprecated?: boolean;
@@ -123,7 +123,7 @@ export class GraphRepository {
     const where: FindOptionsWhere<GraphNodeEntity> = { repoId, version };
 
     if (options.type !== undefined) {
-      where.type = options.type;
+      where.type = Array.isArray(options.type) ? In(options.type) : options.type;
     }
 
     if (!options.includeDeprecated) {

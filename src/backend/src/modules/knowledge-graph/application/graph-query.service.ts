@@ -26,7 +26,7 @@ export interface NeighborhoodResult {
 
 export interface GraphNodesQueryOptions {
   version?: number;
-  type?: NodeType;
+  type?: NodeType | NodeType[];
   page?: number;
   limit?: number;
 }

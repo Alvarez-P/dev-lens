@@ -132,6 +132,23 @@ describe('GraphQueryService DB-backed', () => {
 
       await expect(service.getNodes('repo-1', {})).resolves.toEqual({ data: [], total: 0 });
     });
+
+    it('should pass an array of types through to the repository', async () => {
+      graphRepository.findLatestByRepo.mockResolvedValue(buildLatest());
+      graphRepository.findNodes.mockResolvedValue({ data: [], total: 0 });
+
+      await service.getNodes('repo-1', {
+        type: [NodeType.CONTROLLER, NodeType.SERVICE],
+        page: 1,
+        limit: 50,
+      });
+
+      expect(graphRepository.findNodes).toHaveBeenCalledWith('repo-1', 2, {
+        type: [NodeType.CONTROLLER, NodeType.SERVICE],
+        offset: 0,
+        limit: 50,
+      });
+    });
   });
 
   describe('getNodeWithEdges', () => {

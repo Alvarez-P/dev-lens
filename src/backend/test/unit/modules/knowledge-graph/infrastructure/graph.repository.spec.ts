@@ -282,6 +282,25 @@ describe('GraphRepository', () => {
       const options = nodesRepo.findAndCount.mock.calls[0][0] as { where: Record<string, unknown> };
       expect(options.where).toEqual({ repoId: 'repo-1', version: 1 });
     });
+
+    it('should filter by multiple types using an IN clause', async () => {
+      const { repository, nodesRepo } = buildHarness();
+      nodesRepo.findAndCount.mockResolvedValue([[], 0]);
+
+      await repository.findNodes('repo-1', 2, {
+        type: [NodeType.CONTROLLER, NodeType.SERVICE],
+        offset: 0,
+        limit: 50,
+      });
+
+      const options = nodesRepo.findAndCount.mock.calls[0][0] as {
+        where: Record<string, unknown>;
+      };
+      expect(options.where.type).toEqual(expect.objectContaining({ _type: 'in' }));
+      expect((options.where.type as { value: unknown[] }).value).toEqual(
+        expect.arrayContaining([NodeType.CONTROLLER, NodeType.SERVICE]),
+      );
+    });
   });
 
   describe('findEdges', () => {
