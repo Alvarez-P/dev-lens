@@ -134,32 +134,36 @@
 
 ### Work Unit C4-W1: `feat(viz): breadcrumb trail and detail panel`
 
-- [ ] C4-01: Create `GraphBreadcrumbs` — BELONGS_TO chain from navigationSlice, `.glass-subtle`, clickable segments navigate back
+- [x] C4-01: Create `GraphBreadcrumbs` — BELONGS_TO chain from navigationSlice, `.glass-subtle`, clickable segments navigate back
   - Files: `src/frontend/src/components/graph/graph-breadcrumbs.tsx` (new)
   - Spec: GN-003
   - Tests: `graph-breadcrumbs.test.tsx` — trail render, segment click re-centers + truncates
   - Est. lines: 150 | Depends on: C2-05
-- [ ] C4-02: Create `GraphDetailPanel` — type icon, FQN (mono), props table, "5 In / 3 Out", Show Dependencies/Dependents buttons, `.animate-slide-in`
+  - NOTE (C4 apply): implemented per launch prompt at `components/graph/graph-breadcrumbs.tsx` (not the tasks.md path); click truncates via new store action `truncateBreadcrumbs(index)` + optional `onNavigateTo(index)` callback. Empty state shows "Graph".
+- [x] C4-02: Create `GraphDetailPanel` — type icon, FQN (mono), props table, "5 In / 3 Out", Show Dependencies/Dependents buttons, `.animate-slide-in`
   - Files: `src/frontend/src/components/graph/graph-detail-panel.tsx` (new)
   - Spec: VI-001
   - Tests: `graph-detail-panel.test.tsx` — edge counts render, buttons fire neighborhood actions, switch node updates without re-animation
   - Est. lines: 240 | Depends on: C2-05, C3-06
+  - NOTE (C4 apply): pure helpers exported (`titleCaseKey`, `countEdgeStats`); icons/badges from `canvas/nodes/node-style.ts` (C3-06 mapping). Action buttons set `focusNodeId` in store + fire `onShowNeighborhood(id, 'in'|'out')`. Edge-detail variant + loading skeleton + close included.
 
 ### Work Unit C4-W2: `feat(viz): progressive chunk loading with snapshot polling`
 
-- [ ] C4-03: Create `GraphWorkspace` orchestrator — snapshot-first → 200-node chunk streaming, empty state ("No graph data yet — sync first" + sync action), 30s version poll → `animate-pulse` glow on changed nodes
-  - Files: `src/frontend/src/components/graph/graph-workspace.tsx` (new)
+- [x] C4-03: Create `useProgressiveLoad` hook — snapshot-first → 200-node chunk streaming, progress tracking, snapshot version polling → changed-node diff for `animate-pulse`
+  - Files: `src/frontend/src/lib/visualization/hooks/use-progressive-load.ts` (new)
   - Spec: GN-001, GN-005
-  - Tests: `graph-workspace.test.tsx` — snapshot-then-chunks order, empty state + sync button, version bump triggers pulse
+  - Tests: `hooks/__tests__/use-progressive-load.test.tsx` — snapshot-then-chunks order, sequential chunk merge, progress 0..1 in store, version bump diff, refresh
   - Est. lines: 290 | Depends on: C2-04, C3-05
+  - NOTE (C4 apply): launch prompt's C4-03 is the hook, NOT the `GraphWorkspace` component in tasks.md — GraphWorkspace (empty state + sync button + pulse wiring) remains for the C5 route slice. Hook gates chunks on snapshot success (`enabled`), uses `getGraphNodes(repoId, {page, limit})` directly (mirrors `useGraphNodes` config without modifying it), reports changed ids via `computeChangedNodes(nodes, version)` + `onVersionChange`. Poll interval comes from `useGraphSnapshot` (30s per REQ-GN-005); added `loadingSlice` (`loadProgress` + `setLoadProgress`) to the store.
 
 ### Work Unit C4-W3: `feat(viz): drill-down and focus mode`
 
-- [ ] C4-04: Implement drill-down (click → `getNodeDetail(direction=out)` + center + breadcrumb push) and focus mode (double-click/context → neighbors visible, others opacity 0.15, outgoing solid vs incoming dashed)
-  - Files: `src/frontend/src/lib/store/use-graph-store.ts` (navigationSlice), `src/frontend/src/components/graph/graph-canvas.tsx`
+- [x] C4-04: Implement drill-down (click → `getNodeDetail(direction=out)` + center + breadcrumb push) and focus mode (double-click/context → neighbors visible, others opacity 0.15, outgoing solid vs incoming dashed)
+  - Files: `src/frontend/src/lib/visualization/hooks/use-drill-down.ts` (new)
   - Spec: GN-002 (Repo→Module→Class), GN-004 (focus dimming)
-  - Tests: `use-graph-store.test.ts` (navigation) — drill-down pushes breadcrumb + loads neighborhood, focus dims non-neighbors, center preserves zoom
+  - Tests: `hooks/__tests__/use-drill-down.test.tsx` — double-click expands + pushes breadcrumb + loads neighborhood, goBack restores previous focus, navigateTo truncates, popstate back, backToOverview, `applyFocusMode` 1-hop filter
   - Est. lines: 210 | Depends on: C4-02, C4-03, C2-02
+  - NOTE (C4 apply): launch prompt's C4-04 is the `useDrillDown` hook (not store/graph-canvas edits in tasks.md). Pure `applyFocusMode` (1-hop neighbors, dimmed ids) exported for the workspace to wire. Adapter wiring (`onNodeDoubleClick → handleNodeDoubleClick`) lands with GraphWorkspace in the C5 route slice.
 
 ## Slice C5: Views & Filtering — PR #5
 
