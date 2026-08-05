@@ -137,3 +137,30 @@ export interface GraphNodeDetail {
   node: GraphNode;
   edges: GraphEdge[];
 }
+
+/** A positioned graph node produced by a layout engine (VE-002). */
+export interface NodePosition {
+  id: string;
+  x: number;
+  y: number;
+}
+
+/** A positioned edge (source/target node ids) produced by a layout engine. */
+export interface EdgePosition {
+  id: string;
+  source: string;
+  target: string;
+}
+
+/** Layout engine output: node/edge positions ready for the renderer. */
+export interface LayoutResult {
+  nodes: NodePosition[];
+  edges: EdgePosition[];
+}
+
+/** Layout engine signature injected into renderer adapters (VE-002). */
+export type LayoutEngine = (
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  layout: LayoutType,
+) => LayoutResult;

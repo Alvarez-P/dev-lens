@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",
+    "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.0.0",
     "@types/d3-force": "^3.0.10",
     "@types/d3-selection": "^3.0.11",
