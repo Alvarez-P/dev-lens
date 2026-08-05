@@ -35,6 +35,11 @@ import { Snapshot, SnapshotId, RepositoryId, SnapshotStatus } from '@/modules/re
 import { SharedModule } from '@/shared/shared.module';
 import { InMemoryDomainEventDispatcher } from '@/shared/domain/domain-event-dispatcher';
 import { AnalysisCompletedEvent } from '@/modules/analysis/domain/analysis-events';
+import { UserTypeOrmEntity } from '@/modules/identity/infrastructure/persistence/typeorm/user.typeorm-entity';
+import { OrganizationTypeOrmEntity } from '@/modules/identity/infrastructure/persistence/typeorm/organization.typeorm-entity';
+import { WorkspaceTypeOrmEntity } from '@/modules/identity/infrastructure/persistence/typeorm/workspace.typeorm-entity';
+import { MemberTypeOrmEntity } from '@/modules/identity/infrastructure/persistence/typeorm/member.typeorm-entity';
+import { ExternalIdentityTypeormEntity } from '@/modules/identity/infrastructure/persistence/typeorm/external-identity.typeorm-entity';
 
 const mockOrmRepo = { findOne: jest.fn(), find: jest.fn(), save: jest.fn() };
 
@@ -221,6 +226,16 @@ describe('Knowledge Graph Pipeline (E2E)', () => {
       .overrideProvider(getRepositoryToken(RepositoryTypeOrmEntity))
       .useValue(mockOrmRepo)
       .overrideProvider(getRepositoryToken(CredentialTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(UserTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(OrganizationTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(WorkspaceTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(MemberTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(ExternalIdentityTypeormEntity))
       .useValue(mockOrmRepo)
       .overrideProvider(AnalysisRepository)
       .useValue(analysisRepository)

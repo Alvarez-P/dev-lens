@@ -25,6 +25,12 @@ import { SnapshotRepository } from '@/modules/repositories/infrastructure/persis
 import { GitService } from '@/modules/repositories/infrastructure/git/git.service';
 import { SharedModule } from '@/shared/shared.module';
 import { InMemoryDomainEventDispatcher } from '@/shared/domain/domain-event-dispatcher';
+import { UserTypeOrmEntity } from '@/modules/identity/infrastructure/persistence/typeorm/user.typeorm-entity';
+import { OrganizationTypeOrmEntity } from '@/modules/identity/infrastructure/persistence/typeorm/organization.typeorm-entity';
+import { WorkspaceTypeOrmEntity } from '@/modules/identity/infrastructure/persistence/typeorm/workspace.typeorm-entity';
+import { MemberTypeOrmEntity } from '@/modules/identity/infrastructure/persistence/typeorm/member.typeorm-entity';
+import { ExternalIdentityTypeormEntity } from '@/modules/identity/infrastructure/persistence/typeorm/external-identity.typeorm-entity';
+import { RepoMembershipGuard } from '@/modules/knowledge-graph/guards/repo-membership.guard';
 
 const mockOrmRepo = { findOne: jest.fn(), find: jest.fn(), save: jest.fn() };
 
@@ -66,6 +72,16 @@ describe('KnowledgeGraphModule', () => {
       .useValue(mockOrmRepo)
       .overrideProvider(getRepositoryToken(CredentialTypeOrmEntity))
       .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(UserTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(OrganizationTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(WorkspaceTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(MemberTypeOrmEntity))
+      .useValue(mockOrmRepo)
+      .overrideProvider(getRepositoryToken(ExternalIdentityTypeormEntity))
+      .useValue(mockOrmRepo)
       .overrideProvider(AnalysisRepository)
       .useValue({ findById: jest.fn() })
       .overrideProvider(SnapshotRepository)
@@ -90,6 +106,11 @@ describe('KnowledgeGraphModule', () => {
   it('should expose the query service', () => {
     const queryService = moduleRef.get(GraphQueryService);
     expect(queryService).toBeInstanceOf(GraphQueryService);
+  });
+
+  it('should provide the repository membership guard with its dependencies', () => {
+    const guard = moduleRef.get(RepoMembershipGuard);
+    expect(guard).toBeInstanceOf(RepoMembershipGuard);
   });
 
   it('should register an analysis.completed handler that enqueues a knowledge-graph job', async () => {

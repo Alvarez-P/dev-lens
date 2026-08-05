@@ -1,5 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import {
+  ForbiddenException,
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { GraphController } from '@/modules/knowledge-graph/infrastructure/controllers/graph.controller';
 import { GraphQueryService } from '@/modules/knowledge-graph/application/graph-query.service';
@@ -7,6 +13,8 @@ import { GraphNode } from '@/modules/knowledge-graph/domain/graph-node.vo';
 import { GraphEdge } from '@/modules/knowledge-graph/domain/graph-edge.vo';
 import { NodeType } from '@/modules/knowledge-graph/domain/node-type.enum';
 import { EdgeType } from '@/modules/knowledge-graph/domain/edge-type.enum';
+import { JwtAuthGuard } from '@/modules/identity/infrastructure/auth/jwt-auth.guard';
+import { RepoMembershipGuard } from '@/modules/knowledge-graph/guards/repo-membership.guard';
 
 function makeNode(
   fqn: string,
@@ -40,12 +48,19 @@ describe('GraphController', () => {
     getEdges: jest.fn(),
     findAllNodesAndEdges: jest.fn(),
   };
+  const jwtGuard = { canActivate: jest.fn(() => true) };
+  const membershipGuard = { canActivate: jest.fn(() => true) };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [GraphController],
       providers: [{ provide: GraphQueryService, useValue: graphQueryService }],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(jwtGuard)
+      .overrideGuard(RepoMembershipGuard)
+      .useValue(membershipGuard)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
@@ -212,6 +227,33 @@ describe('GraphController', () => {
       await request(app.getHttpServer())
         .get('/api/v1/graph/repo-1/nodes/users-controller?direction=sideways')
         .expect(400);
+    });
+  });
+
+  describe('authentication and authorization', () => {
+    it('returns 401 when the request has no valid token', async () => {
+      (jwtGuard.canActivate as jest.Mock).mockImplementationOnce(() => {
+        throw new UnauthorizedException('Authentication required');
+      });
+
+      await request(app.getHttpServer()).get('/api/v1/graph/repo-1/nodes').expect(401);
+    });
+
+    it('returns 403 when the authenticated user is not a repository member', async () => {
+      (membershipGuard.canActivate as jest.Mock).mockImplementationOnce(() => {
+        throw new ForbiddenException('Access denied to repository "repo-1"');
+      });
+
+      await request(app.getHttpServer()).get('/api/v1/graph/repo-1/nodes').expect(403);
+    });
+
+    it('enforces the JWT and membership guards on graph endpoints', async () => {
+      graphQueryService.getNodes.mockResolvedValue({ data: [], total: 0 });
+
+      await request(app.getHttpServer()).get('/api/v1/graph/repo-1/nodes').expect(200);
+
+      expect(jwtGuard.canActivate).toHaveBeenCalled();
+      expect(membershipGuard.canActivate).toHaveBeenCalled();
     });
   });
 });

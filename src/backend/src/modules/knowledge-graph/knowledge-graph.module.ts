@@ -5,6 +5,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { DomainEventDispatcher } from '../../shared/domain/domain-event-dispatcher';
 import { AnalysisModule } from '../analysis/analysis.module';
 import { RepositoriesModule } from '../repositories/repositories.module';
+import { IdentityModule } from '../identity/identity.module';
 
 import { SemanticModelBuilder } from './application/semantic-model.builder';
 import { GraphBuilder } from './application/graph.builder';
@@ -17,6 +18,7 @@ import { GraphSnapshotEntity } from './infrastructure/persistence/typeorm/graph-
 import { KnowledgeGraphJobProcessor } from './infrastructure/jobs/knowledge-graph.job-processor';
 import { KnowledgeGraphEventHandler } from './infrastructure/events/knowledge-graph-event-handler';
 import { GraphController } from './infrastructure/controllers/graph.controller';
+import { RepoMembershipGuard } from './guards/repo-membership.guard';
 import { KNOWLEDGE_GRAPH_QUEUE, KNOWLEDGE_GRAPH_DLQ } from './knowledge-graph.tokens';
 
 @Module({
@@ -25,6 +27,7 @@ import { KNOWLEDGE_GRAPH_QUEUE, KNOWLEDGE_GRAPH_DLQ } from './knowledge-graph.to
     BullModule.registerQueue({ name: KNOWLEDGE_GRAPH_QUEUE }, { name: KNOWLEDGE_GRAPH_DLQ }),
     AnalysisModule,
     RepositoriesModule,
+    IdentityModule,
   ],
   controllers: [GraphController],
   providers: [
@@ -35,6 +38,7 @@ import { KNOWLEDGE_GRAPH_QUEUE, KNOWLEDGE_GRAPH_DLQ } from './knowledge-graph.to
     KnowledgeGraphService,
     KnowledgeGraphJobProcessor,
     KnowledgeGraphEventHandler,
+    RepoMembershipGuard,
   ],
   exports: [GraphQueryService],
 })

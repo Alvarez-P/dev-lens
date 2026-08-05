@@ -135,6 +135,7 @@ const typeOrmEntities = [
     UserRepository,
     OrganizationRepository,
     WorkspaceRepository,
+    MemberRepository,
     ExternalIdentityRepository,
   ],
 })

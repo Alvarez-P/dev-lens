@@ -1,6 +1,8 @@
-import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GraphQueryService } from '../../application/graph-query.service';
+import { JwtAuthGuard } from '../../../identity/infrastructure/auth/jwt-auth.guard';
+import { RepoMembershipGuard } from '../../guards/repo-membership.guard';
 import {
   GraphNodesQueryDto,
   GraphEdgesQueryDto,
@@ -10,6 +12,8 @@ import {
 } from './graph-query.dto';
 
 @ApiTags('Knowledge Graph')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RepoMembershipGuard)
 @Controller({ path: 'graph', version: '1' })
 export class GraphController {
   constructor(private readonly graphQueryService: GraphQueryService) {}
@@ -17,6 +21,8 @@ export class GraphController {
   @Get(':repoId')
   @ApiOperation({ summary: 'Get the latest graph snapshot for a repository' })
   @ApiResponse({ status: 200, description: 'Latest graph snapshot with node and edge counts' })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({ status: 403, description: 'Not a member of the repository' })
   @ApiResponse({ status: 404, description: 'No graph snapshot exists for the repository' })
   async getLatestSnapshot(@Param('repoId') repoId: string) {
     const snapshot = await this.graphQueryService.getLatestGraphSnapshot(repoId);
@@ -36,6 +42,8 @@ export class GraphController {
     type: ExportResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid version' })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({ status: 403, description: 'Not a member of the repository' })
   async exportGraph(@Param('repoId') repoId: string, @Query() query: GraphExportQueryDto) {
     const result = await this.graphQueryService.findAllNodesAndEdges(repoId, query.version);
 
@@ -61,6 +69,8 @@ export class GraphController {
   @ApiOperation({ summary: 'List graph nodes for a repository' })
   @ApiResponse({ status: 200, description: 'Paginated nodes scoped to a graph version' })
   @ApiResponse({ status: 400, description: 'Invalid type, version, page, or limit' })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({ status: 403, description: 'Not a member of the repository' })
   async getNodes(@Param('repoId') repoId: string, @Query() query: GraphNodesQueryDto) {
     const result = await this.graphQueryService.getNodes(repoId, {
       version: query.version,

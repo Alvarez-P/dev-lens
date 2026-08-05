@@ -1,5 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import {
+  ForbiddenException,
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { Global, Module } from '@nestjs/common';
@@ -27,6 +33,8 @@ import {
 } from '@/modules/analysis/domain';
 import { SnapshotRepository } from '@/modules/repositories/infrastructure/persistence/repositories/snapshot.repository';
 import { Snapshot, SnapshotId, RepositoryId, SnapshotStatus } from '@/modules/repositories/domain';
+import { JwtAuthGuard } from '@/modules/identity/infrastructure/auth/jwt-auth.guard';
+import { RepoMembershipGuard } from '@/modules/knowledge-graph/guards/repo-membership.guard';
 
 type Where = Record<string, unknown>;
 type OrderBy = Record<string, 'ASC' | 'DESC'>;
@@ -259,7 +267,13 @@ describe('Graph Controller (E2E)', () => {
   let store: InMemoryGraphStore;
   let service: KnowledgeGraphService;
 
+  const jwtGuard = { canActivate: jest.fn(() => true) };
+  const membershipGuard = { canActivate: jest.fn(() => true) };
+
   beforeEach(async () => {
+    jwtGuard.canActivate.mockImplementation(() => true);
+    membershipGuard.canActivate.mockImplementation(() => true);
+
     store = new InMemoryGraphStore();
     currentDataSource = store.dataSource;
     const analysisRepository = new InMemoryAnalysisRepository();
@@ -320,7 +334,12 @@ describe('Graph Controller (E2E)', () => {
           },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(jwtGuard)
+      .overrideGuard(RepoMembershipGuard)
+      .useValue(membershipGuard)
+      .compile();
 
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
@@ -459,5 +478,50 @@ describe('Graph Controller (E2E)', () => {
 
   it('should return 400 for an invalid edge filter', async () => {
     await request(app.getHttpServer()).get('/api/v1/graph/repo-1/edges?limit=999').expect(400);
+  });
+
+  it('should return 401 when the request carries no valid token', async () => {
+    (jwtGuard.canActivate as jest.Mock).mockImplementationOnce(() => {
+      throw new UnauthorizedException('Authentication required');
+    });
+
+    await request(app.getHttpServer()).get('/api/v1/graph/repo-1/nodes').expect(401);
+  });
+
+  it('should return 403 when the user is not a repository member', async () => {
+    (membershipGuard.canActivate as jest.Mock).mockImplementationOnce(() => {
+      throw new ForbiddenException('Access denied to repository "repo-1"');
+    });
+
+    await request(app.getHttpServer()).get('/api/v1/graph/repo-1/nodes').expect(403);
+  });
+
+  it('should export all nodes and edges with meta counts and version', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/graph/repo-1/export')
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.nodes).toHaveLength(6);
+    expect(response.body.data.edges).toHaveLength(5);
+    expect(response.body.data.meta).toEqual({ nodeCount: 6, edgeCount: 5, version: 1 });
+  });
+
+  it('should filter a node neighborhood by direction', async () => {
+    const fqn = encodeURIComponent('acme:default:src/users#UsersController');
+    const controller = store.nodes.find(
+      (node) => node.fqn === 'acme:default:src/users#UsersController',
+    )!;
+
+    const response = await request(app.getHttpServer())
+      .get(`/api/v1/graph/repo-1/nodes/${fqn}?direction=out`)
+      .expect(200);
+
+    expect(response.body.data.edges.length).toBeGreaterThan(0);
+    expect(
+      response.body.data.edges.every(
+        (edge: { sourceNodeId: string }) => edge.sourceNodeId === controller.id,
+      ),
+    ).toBe(true);
   });
 });
