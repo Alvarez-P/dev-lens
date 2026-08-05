@@ -90,6 +90,8 @@ export class GraphController {
   @ApiOperation({ summary: 'Get a single graph node with its connected edges' })
   @ApiResponse({ status: 200, description: 'Node with all connected edges' })
   @ApiResponse({ status: 400, description: 'Invalid direction' })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({ status: 403, description: 'Not a member of the repository' })
   @ApiResponse({ status: 404, description: 'No active node exists for the fqn' })
   async getNode(
     @Param('repoId') repoId: string,
@@ -117,6 +119,8 @@ export class GraphController {
   @ApiOperation({ summary: 'List graph edges for a repository' })
   @ApiResponse({ status: 200, description: 'Paginated edges scoped to a graph version' })
   @ApiResponse({ status: 400, description: 'Invalid type, source, target, offset, or limit' })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({ status: 403, description: 'Not a member of the repository' })
   async getEdges(@Param('repoId') repoId: string, @Query() query: GraphEdgesQueryDto) {
     const result = await this.graphQueryService.getEdges(repoId, {
       version: query.version,
