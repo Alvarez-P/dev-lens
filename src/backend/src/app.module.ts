@@ -10,6 +10,8 @@ import { ConfigService } from './config/config.service';
 import { SharedModule } from './shared/shared.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { RepositoriesModule } from './modules/repositories/repositories.module';
+import { AnalysisModule } from './modules/analysis/analysis.module';
+import { KnowledgeGraphModule } from './modules/knowledge-graph/knowledge-graph.module';
 
 @Module({
   imports: [
@@ -68,6 +70,8 @@ import { RepositoriesModule } from './modules/repositories/repositories.module';
 
     IdentityModule,
     RepositoriesModule,
+    AnalysisModule,
+    KnowledgeGraphModule,
   ],
   controllers: [AppController],
   providers: [AppService],
