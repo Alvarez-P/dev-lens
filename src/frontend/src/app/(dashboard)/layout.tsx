@@ -6,7 +6,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import type { SidebarItem } from '@/components/layout/sidebar';
 import { ProtectedRoute } from '@/lib/auth/protected-route';
 import { useAuth } from '@/lib/auth/auth-context';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/atoms/button';
 
 export default function DashboardLayout({ children }: { children: ReactNode }): React.ReactNode {
   const { user, logout } = useAuth();

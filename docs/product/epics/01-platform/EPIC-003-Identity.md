@@ -1,7 +1,9 @@
 ```markdown
 # EPIC-003 — Identity
 
-**Status:** Not Started
+**Status:** Completed
+
+**Completed:** 2026-08-04 — email/password + GitHub OAuth 2.0 auth, JWT + refresh tokens, RBAC (roles + permissions guards), User/Organization/Workspace/Member full domain + controllers + persistence. SDD change `github-oauth` delivered OAuth integration. Follow-ups: password reset, email verification, device management, API keys, rate limiting.
 
 ---
 

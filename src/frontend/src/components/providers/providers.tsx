@@ -3,7 +3,7 @@
 import { type ReactNode } from 'react';
 import { QueryProvider } from './query-provider';
 import { AuthProvider } from '@/lib/auth/auth-context';
-import { ToastProvider } from '@/components/ui/toast-provider';
+import { ToastProvider } from '@/components/molecules/toast-provider';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 

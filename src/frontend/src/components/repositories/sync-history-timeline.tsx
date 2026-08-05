@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx';
 import { GitCommit, Calendar, FileText, HardDrive } from 'lucide-react';
-import type { RepoStatus } from './repo-status-badge';
+import type { RepoStatus } from '@/components/molecules/repo-status-badge';
 
 export interface SnapshotItem {
   id: string;
@@ -28,8 +28,8 @@ export function SyncHistoryTimeline({
 }: SyncHistoryTimelineProps): React.ReactNode {
   if (snapshots.length === 0) {
     return (
-      <div className="rounded-xl border border-surface-800 bg-surface-900 p-8 text-center">
-        <GitCommit className="mx-auto mb-2 h-8 w-8 text-surface-600" />
+      <div className="rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-8 text-center">
+        <GitCommit className="mx-auto mb-2 h-8 w-8 text-surface-600 opacity-30" />
         <p className="text-sm text-surface-500">No syncs yet</p>
       </div>
     );
@@ -40,7 +40,7 @@ export function SyncHistoryTimeline({
       {snapshots.map((snapshot, index) => (
         <div key={snapshot.id} className="relative flex gap-4 pb-8 last:pb-0">
           {index < snapshots.length - 1 && (
-            <div className="absolute left-[11px] top-6 h-full w-0.5 bg-surface-700" />
+            <div className="absolute left-[11px] top-6 h-full w-0.5 bg-white/[0.06]" />
           )}
 
           <div
@@ -50,7 +50,7 @@ export function SyncHistoryTimeline({
                 ? 'bg-success-500/20 text-success-400'
                 : snapshot.status === 'FAILED'
                   ? 'bg-error-500/20 text-error-400'
-                  : 'bg-surface-700 text-surface-400',
+                  : 'bg-white/[0.05] text-surface-400',
             )}
           >
             {snapshot.status === 'PROCESSED' ? (
@@ -62,7 +62,7 @@ export function SyncHistoryTimeline({
             )}
           </div>
 
-          <div className="min-w-0 flex-1 rounded-lg border border-surface-800 bg-surface-900 p-4">
+          <div className="min-w-0 flex-1 rounded-lg border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-mono text-sm font-medium text-surface-200">

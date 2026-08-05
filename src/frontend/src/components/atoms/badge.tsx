@@ -13,7 +13,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: 'bg-surface-700 text-surface-300 border-surface-600',
+  default: 'bg-white/[0.05] text-surface-300 border-white/[0.06]',
   success: 'bg-success-500/10 text-success-400 border-success-500/30',
   warning: 'bg-warning-500/10 text-warning-400 border-warning-500/30',
   error: 'bg-error-500/10 text-error-400 border-error-500/30',

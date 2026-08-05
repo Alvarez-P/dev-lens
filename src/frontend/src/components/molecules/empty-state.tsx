@@ -23,7 +23,9 @@ export function EmptyState({
 }: EmptyStateProps): React.ReactNode {
   return (
     <div className={clsx('flex flex-col items-center justify-center py-16 text-center', className)}>
-      <div className="mb-4 text-surface-600">{icon || <Inbox className="h-12 w-12" />}</div>
+      <div className="mb-4 text-surface-600">
+        {icon || <Inbox className="h-12 w-12 opacity-30" />}
+      </div>
 
       <h3 className="text-lg font-semibold text-surface-300">{title}</h3>
 

@@ -50,7 +50,7 @@ export function Toast({ toast, onDismiss }: ToastProps): React.ReactNode {
     <div
       role="alert"
       className={clsx(
-        'flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg',
+        'flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-md',
         'min-w-[320px] max-w-[420px]',
         'animate-slide-in',
         isExiting && 'animate-fade-in opacity-0',
@@ -61,7 +61,7 @@ export function Toast({ toast, onDismiss }: ToastProps): React.ReactNode {
       <p className="flex-1 text-sm">{message}</p>
       <button
         onClick={handleDismiss}
-        className="shrink-0 rounded p-0.5 opacity-70 transition-opacity hover:opacity-100"
+        className="shrink-0 rounded p-0.5 opacity-60 transition-opacity hover:opacity-100"
         aria-label="Dismiss notification"
       >
         <X className="h-4 w-4" />

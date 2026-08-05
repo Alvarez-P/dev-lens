@@ -29,6 +29,8 @@ export function AppShell({
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface-950">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgb(202_255_58_/_0.04),_transparent_60%)]" />
       {mobileSidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -51,7 +53,7 @@ export function AppShell({
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 items-center justify-between border-b border-surface-800 px-4">
+        <header className="flex h-14 items-center justify-between border-b border-white/[0.04] bg-surface-950/70 backdrop-blur-xl px-4">
           <button
             onClick={() => {
               if (window.innerWidth < 1024) {
@@ -60,7 +62,7 @@ export function AppShell({
                 setSidebarCollapsed((prev) => !prev);
               }
             }}
-            className="rounded-lg p-2 text-surface-400 transition-colors hover:bg-surface-800 hover:text-surface-200 lg:hidden"
+            className="rounded-lg p-2 text-surface-400 transition-colors hover:bg-white/[0.04] hover:text-surface-200 lg:hidden"
             aria-label="Toggle sidebar"
           >
             <Menu className="h-5 w-5" />

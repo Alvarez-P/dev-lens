@@ -1,7 +1,9 @@
 ```markdown
 # EPIC-004 — Repository Management
 
-**Status:** Not Started
+**Status:** Completed
+
+**Completed:** 2026-08-04 — Repository CRUD + status management, 4 Git providers (GitHub, GitLab, Bitbucket, Generic), clone + sync via BullMQ job processors, credential encryption, ProviderFactory, REST controllers (repositories + credentials). Follow-ups: scheduled sync intervals, webhook support, sync history, archive workflow, credential rotation.
 
 ---
 
@@ -127,7 +129,7 @@ The following documents must be reviewed before implementation:
 
 - `docs/product/PRODUCT_CONTEXT.md`
 - `docs/architecture/RFC-002-System-Architecture.md`
-- `docs/architecture/RFC-006-Repository-Lifecycle.md` *(or equivalent RFC)*
+- `docs/architecture/RFC-006-Repository-Lifecycle.md` _(or equivalent RFC)_
 - Relevant ADRs
 
 ---

@@ -2,9 +2,9 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/toast-provider';
+import { Button } from '@/components/atoms/button';
+import { Input } from '@/components/atoms/input';
+import { useToast } from '@/components/molecules/toast-provider';
 import { post } from '@/lib/api-client';
 import { Mail, ArrowLeft } from 'lucide-react';
 

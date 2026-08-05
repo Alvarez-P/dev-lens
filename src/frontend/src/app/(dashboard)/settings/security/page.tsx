@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { PageHeader } from '@/components/layout/page-header';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
+import { Input } from '@/components/atoms/input';
 import { useAuth } from '@/lib/auth/auth-context';
-import { useToast } from '@/components/ui/toast-provider';
+import { useToast } from '@/components/molecules/toast-provider';
 import { KeyRound, ShieldCheck, Github, Unlink, AlertTriangle } from 'lucide-react';
 import type { LinkedIdentity } from '@/lib/auth/auth-types';
 
@@ -60,8 +60,8 @@ export default function SecurityPage(): React.ReactNode {
 
       {/* Linked Identities Section */}
       {!isLoadingIdentities && identities.length > 0 && (
-        <div className="rounded-xl border border-surface-800 bg-surface-900 p-6">
-          <div className="flex items-center gap-3 border-b border-surface-800 pb-4">
+        <div className="rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-6">
+          <div className="flex items-center gap-3 border-b border-white/[0.04] pb-4">
             <ShieldCheck className="h-5 w-5 text-surface-400" />
             <h3 className="text-sm font-semibold text-surface-200">Linked accounts</h3>
           </div>
@@ -70,10 +70,10 @@ export default function SecurityPage(): React.ReactNode {
             {identities.map((identity) => (
               <div
                 key={identity.id}
-                className="flex items-center justify-between rounded-lg bg-surface-800/50 px-4 py-3"
+                className="flex items-center justify-between rounded-lg bg-white/[0.03] px-4 py-3"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-700 text-surface-300">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-surface-300">
                     {providerIcon(identity.provider)}
                   </div>
                   <div>
@@ -103,8 +103,8 @@ export default function SecurityPage(): React.ReactNode {
       )}
 
       {/* Change Password Section */}
-      <div className="rounded-xl border border-surface-800 bg-surface-900 p-6">
-        <div className="flex items-center gap-3 border-b border-surface-800 pb-4">
+      <div className="rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-6">
+        <div className="flex items-center gap-3 border-b border-white/[0.04] pb-4">
           <KeyRound className="h-5 w-5 text-surface-400" />
           <h3 className="text-sm font-semibold text-surface-200">Change password</h3>
         </div>

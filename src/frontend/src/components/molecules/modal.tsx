@@ -76,7 +76,7 @@ export function Modal({
       aria-labelledby={title ? 'modal-title' : undefined}
     >
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 bg-black/70 backdrop-blur-md animate-fade-in"
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
@@ -84,18 +84,18 @@ export function Modal({
       <div
         className={clsx(
           'relative z-10 w-full animate-scale-in',
-          'rounded-xl border border-surface-700 bg-surface-900 shadow-xl',
+          'rounded-xl border border-white/[0.05] bg-surface-900/90 backdrop-blur-xl shadow-xl shadow-black/40',
           sizeClasses[size],
         )}
       >
         {title && (
-          <div className="flex items-center justify-between border-b border-surface-700 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-white/[0.04] px-6 py-4">
             <h2 id="modal-title" className="text-lg font-semibold text-surface-100">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="rounded-lg p-1 text-surface-400 transition-colors hover:bg-surface-800 hover:text-surface-200"
+              className="rounded-lg p-1 text-surface-400 transition-colors hover:bg-white/[0.04] hover:text-surface-200"
               aria-label="Close modal"
             >
               <X className="h-5 w-5" />
@@ -106,7 +106,7 @@ export function Modal({
         <div className="px-6 py-4">{children}</div>
 
         {footer && (
-          <div className="flex items-center justify-end gap-3 border-t border-surface-700 px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-white/[0.04] px-6 py-4">
             {footer}
           </div>
         )}

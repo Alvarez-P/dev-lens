@@ -10,10 +10,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint'],
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-  ],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   rules: {
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/explicit-function-return-type': 'off',
@@ -21,7 +18,7 @@ module.exports = {
     'no-console': 'warn',
     'no-debugger': 'error',
   },
-  ignorePatterns: ['dist', '.next', 'node_modules', 'coverage'],
+  ignorePatterns: ['dist', '.next', 'node_modules', 'coverage', '**/next-env.d.ts'],
   overrides: [
     {
       files: ['*.spec.ts', '*.e2e-spec.ts'],

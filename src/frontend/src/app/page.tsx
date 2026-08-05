@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/atoms/button';
 import { LayoutDashboard, LogIn, UserPlus } from 'lucide-react';
 
 export default function Home(): React.ReactNode {
@@ -16,7 +16,7 @@ export default function Home(): React.ReactNode {
 
         <div className="mt-10 flex items-center justify-center gap-4">
           {isLoading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-surface-600 border-t-primary-400" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/[0.06] border-t-primary-400" />
           ) : isAuthenticated ? (
             <Link href="/">
               <Button leftIcon={<LayoutDashboard className="h-4 w-4" />} size="lg">
@@ -41,19 +41,19 @@ export default function Home(): React.ReactNode {
       </div>
 
       <div className="mt-20 grid gap-8 sm:grid-cols-3">
-        <div className="rounded-xl border border-surface-800 p-6 text-left">
+        <div className="rounded-xl border border-white/[0.04] p-6 text-left">
           <h3 className="text-sm font-semibold text-surface-200">Code Analysis</h3>
           <p className="mt-2 text-xs text-surface-500">
             Transform source code into actionable insights with deep static analysis.
           </p>
         </div>
-        <div className="rounded-xl border border-surface-800 p-6 text-left">
+        <div className="rounded-xl border border-white/[0.04] p-6 text-left">
           <h3 className="text-sm font-semibold text-surface-200">Visualize</h3>
           <p className="mt-2 text-xs text-surface-500">
             Understand your architecture through interactive dependency graphs and metrics.
           </p>
         </div>
-        <div className="rounded-xl border border-surface-800 p-6 text-left">
+        <div className="rounded-xl border border-white/[0.04] p-6 text-left">
           <h3 className="text-sm font-semibold text-surface-200">Collaborate</h3>
           <p className="mt-2 text-xs text-surface-500">
             Share insights across teams with shared workspaces and reports.

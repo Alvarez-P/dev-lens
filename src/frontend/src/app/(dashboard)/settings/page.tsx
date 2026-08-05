@@ -3,10 +3,10 @@
 import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { patch } from '@/lib/api-client';
-import { PageHeader } from '@/components/layout/page-header';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/toast-provider';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
+import { Input } from '@/components/atoms/input';
+import { useToast } from '@/components/molecules/toast-provider';
 import { useAuth } from '@/lib/auth/auth-context';
 import { User, Save, Shield } from 'lucide-react';
 import Link from 'next/link';
@@ -45,8 +45,8 @@ export default function SettingsPage(): React.ReactNode {
     <div className="space-y-6 max-w-2xl">
       <PageHeader title="Settings" description="Manage your account settings" />
 
-      <div className="rounded-xl border border-surface-800 bg-surface-900 p-6">
-        <div className="flex items-center gap-3 border-b border-surface-800 pb-4">
+      <div className="rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-6">
+        <div className="flex items-center gap-3 border-b border-white/[0.04] pb-4">
           <User className="h-5 w-5 text-surface-400" />
           <h3 className="text-sm font-semibold text-surface-200">Profile</h3>
         </div>
@@ -82,7 +82,7 @@ export default function SettingsPage(): React.ReactNode {
 
       <Link
         href="/settings/security"
-        className="flex items-center gap-3 rounded-xl border border-surface-800 bg-surface-900 p-6 transition-colors hover:border-surface-700"
+        className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-6 transition-all duration-200 hover:border-primary-500/20 hover:shadow-glow"
       >
         <Shield className="h-5 w-5 text-surface-400" />
         <div>

@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { get } from '@/lib/api-client';
-import { PageHeader } from '@/components/layout/page-header';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
+import { Spinner } from '@/components/atoms/spinner';
+import { EmptyState } from '@/components/molecules/empty-state';
 import { Building2, Plus } from 'lucide-react';
 import { OrgCard } from '@/components/organizations/org-card';
 import { CreateOrgDialog } from '@/components/organizations/create-org-dialog';

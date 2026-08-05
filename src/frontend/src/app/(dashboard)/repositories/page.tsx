@@ -2,12 +2,12 @@
 
 import { useState, useCallback } from 'react';
 import { Plus, GitBranch } from 'lucide-react';
-import { PageHeader } from '@/components/layout/page-header';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
+import { EmptyState } from '@/components/molecules/empty-state';
 import { RepoCard } from '@/components/repositories/repo-card';
 import { ConnectRepoDialog } from '@/components/repositories/connect-repo-dialog';
-import type { RepoStatus } from '@/components/repositories/repo-status-badge';
+import type { RepoStatus } from '@/components/molecules/repo-status-badge';
 
 interface Repository {
   id: string;
@@ -54,13 +54,13 @@ export default function RepositoriesPage(): React.ReactNode {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="animate-pulse rounded-xl border border-surface-800 bg-surface-900 p-5"
+              className="animate-pulse rounded-xl border border-white/[0.04] bg-surface-900/60 p-5"
             >
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-surface-800" />
+                <div className="h-10 w-10 rounded-lg bg-white/[0.05]" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-surface-800" />
-                  <div className="h-3 w-1/2 rounded bg-surface-800" />
+                  <div className="h-4 w-3/4 rounded bg-white/[0.05]" />
+                  <div className="h-3 w-1/2 rounded bg-white/[0.05]" />
                 </div>
               </div>
             </div>

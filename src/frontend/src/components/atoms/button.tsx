@@ -21,13 +21,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 disabled:bg-primary-600/50',
+    'bg-primary-600 text-surface-950 hover:bg-primary-500 active:bg-primary-700 disabled:bg-primary-600/30 disabled:text-surface-950/50',
   secondary:
-    'bg-surface-700 text-surface-100 hover:bg-surface-600 active:bg-surface-500 disabled:bg-surface-700/50',
+    'bg-white/[0.05] text-surface-200 hover:bg-white/[0.08] active:bg-white/[0.03] disabled:bg-white/[0.05]/50',
   outline:
-    'border border-surface-600 text-surface-200 hover:bg-surface-800 active:bg-surface-700 disabled:border-surface-600/50 disabled:text-surface-500',
+    'border border-white/[0.08] text-surface-200 hover:bg-white/[0.04] active:bg-white/[0.02] disabled:border-white/[0.04] disabled:text-surface-500',
   ghost:
-    'text-surface-300 hover:bg-surface-800 hover:text-surface-100 active:bg-surface-700 disabled:text-surface-600',
+    'text-surface-300 hover:bg-white/[0.04] hover:text-surface-100 active:bg-white/[0.02] disabled:text-surface-600',
   danger: 'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 disabled:bg-error-600/50',
 };
 

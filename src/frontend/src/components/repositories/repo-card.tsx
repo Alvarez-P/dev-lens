@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { clsx } from 'clsx';
 import { GitBranch, ExternalLink, Clock } from 'lucide-react';
-import { RepoStatusBadge, type RepoStatus } from './repo-status-badge';
+import { RepoStatusBadge, type RepoStatus } from '@/components/molecules/repo-status-badge';
 
 export interface RepoCardProps {
   id: string;
@@ -34,8 +34,8 @@ export function RepoCard({
     <Link
       href={`/repositories/${id}`}
       className={clsx(
-        'block rounded-xl border border-surface-800 bg-surface-900 p-5 transition-all',
-        'hover:border-primary-500/30 hover:shadow-sm hover:shadow-primary-500/5',
+        'block rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-5 transition-all duration-300',
+        'hover:border-primary-500/20 hover:shadow-glow',
         className,
       )}
     >
@@ -67,7 +67,7 @@ export function RepoCard({
             {fileCount} files
           </span>
         )}
-        <span className="ml-auto rounded-md bg-surface-800 px-2 py-0.5 text-xs text-surface-400">
+        <span className="ml-auto rounded-md bg-white/[0.04] px-2 py-0.5 text-xs text-surface-400">
           {provider}
         </span>
       </div>

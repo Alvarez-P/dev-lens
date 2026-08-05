@@ -28,7 +28,7 @@ const statusConfig: Record<RepoStatus, { label: string; className: string }> = {
   },
   ARCHIVED: {
     label: 'Archived',
-    className: 'bg-surface-700 text-surface-400 border-surface-600',
+    className: 'bg-white/[0.04] text-surface-400 border-white/[0.06]',
   },
 };
 

@@ -2,7 +2,7 @@
 
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from './button';
+import { Button } from '@/components/atoms/button';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

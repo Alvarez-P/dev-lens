@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { PageHeader } from '@/components/layout/page-header';
-import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
 import {
   SyncHistoryTimeline,
   type SnapshotItem,
@@ -40,12 +40,12 @@ export default function SyncHistoryPage(): React.ReactNode {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-24 animate-pulse rounded-xl border border-surface-800 bg-surface-900"
+              className="h-24 animate-pulse rounded-xl border border-white/[0.04] bg-surface-900/60"
             />
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-surface-800 bg-surface-950 p-6">
+        <div className="rounded-xl border border-white/[0.04] bg-surface-950/60 backdrop-blur-sm p-6">
           <SyncHistoryTimeline snapshots={snapshots} />
         </div>
       )}

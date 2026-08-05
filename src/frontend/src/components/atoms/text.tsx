@@ -19,7 +19,7 @@ const variantStyles: Record<TextVariant, string> = {
   body: 'text-base',
   caption: 'text-sm',
   label: 'text-sm font-medium',
-  code: 'text-sm font-mono rounded bg-surface-800 px-1.5 py-0.5',
+  code: 'text-sm font-mono rounded bg-white/[0.05] px-1.5 py-0.5',
 };
 
 const defaultTags: Record<TextVariant, ElementType> = {

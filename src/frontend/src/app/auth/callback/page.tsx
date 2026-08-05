@@ -45,7 +45,7 @@ export default function OAuthCallbackPage(): React.ReactNode {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-950">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-surface-600 border-t-primary-400" />
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/[0.06] border-t-primary-400" />
     </div>
   );
 }

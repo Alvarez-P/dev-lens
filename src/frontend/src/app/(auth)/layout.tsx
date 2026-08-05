@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: ReactNode }): React
         <h1 className="text-3xl font-bold tracking-tight text-primary-400">DevLens</h1>
         <p className="mt-1 text-sm text-surface-400">Software Intelligence Platform</p>
       </div>
-      <div className="w-full max-w-md rounded-xl border border-surface-800 bg-surface-900 p-8 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-white/[0.05] bg-surface-900/80 backdrop-blur-xl p-8 shadow-xl shadow-black/30">
         {children}
       </div>
     </div>

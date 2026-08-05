@@ -21,7 +21,7 @@ export const Spinner = forwardRef<HTMLDivElement, SpinnerProps>(
         role="status"
         aria-label="Loading"
         className={clsx(
-          'animate-spin rounded-full border-surface-700 border-t-primary-500',
+          'animate-spin rounded-full border-white/[0.06] border-t-primary-500',
           sizeClasses[size],
           className,
         )}

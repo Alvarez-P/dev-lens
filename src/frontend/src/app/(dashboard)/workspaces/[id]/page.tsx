@@ -3,10 +3,10 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { get, del } from '@/lib/api-client';
-import { PageHeader } from '@/components/layout/page-header';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-import { useToast } from '@/components/ui/toast-provider';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
+import { Spinner } from '@/components/atoms/spinner';
+import { useToast } from '@/components/molecules/toast-provider';
 import { Trash2, Users } from 'lucide-react';
 import Link from 'next/link';
 import { MemberList } from '@/components/organizations/member-list';
@@ -113,12 +113,12 @@ export default function WorkspaceDetailPage(): React.ReactNode {
         }
       />
 
-      <div className="rounded-xl border border-surface-800">
-        <div className="flex items-center justify-between border-b border-surface-800 px-6 py-4">
+      <div className="rounded-xl border border-white/[0.04] backdrop-blur-sm">
+        <div className="flex items-center justify-between border-b border-white/[0.04] px-6 py-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-surface-400" />
             <h3 className="text-sm font-semibold text-surface-200">Members</h3>
-            <span className="rounded-full bg-surface-800 px-2 py-0.5 text-xs text-surface-400">
+            <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-xs text-surface-400">
               {members.length}
             </span>
           </div>

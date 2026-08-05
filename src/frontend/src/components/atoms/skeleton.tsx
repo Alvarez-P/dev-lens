@@ -28,7 +28,7 @@ export function Skeleton({
 }: SkeletonProps): React.ReactNode {
   return (
     <div
-      className={clsx('animate-pulse bg-surface-700', roundedClasses[rounded], className)}
+      className={clsx('animate-pulse bg-white/[0.05]', roundedClasses[rounded], className)}
       style={{
         width: typeof width === 'number' ? `${width}px` : width,
         height: typeof height === 'number' ? `${height}px` : height,

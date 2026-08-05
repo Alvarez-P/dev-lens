@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/atoms/badge';
 
 interface Member {
   id: string;
@@ -29,7 +29,7 @@ export function MemberList({ members }: { members: Member[] }): React.ReactNode 
   }
 
   return (
-    <div className="divide-y divide-surface-800">
+    <div className="divide-y divide-white/[0.04]">
       {members.map((member) => (
         <div key={member.id} className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">

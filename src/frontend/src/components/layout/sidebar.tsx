@@ -31,7 +31,7 @@ export function Sidebar({ items, collapsed, header, className }: SidebarProps): 
   return (
     <aside
       className={clsx(
-        'flex flex-col border-r border-surface-800 bg-surface-950 transition-all duration-200',
+        'flex flex-col border-r border-white/[0.04] bg-surface-950/75 backdrop-blur-xl transition-all duration-300',
         collapsed ? 'w-16' : 'w-60',
         className,
       )}
@@ -39,7 +39,7 @@ export function Sidebar({ items, collapsed, header, className }: SidebarProps): 
       {header && (
         <div
           className={clsx(
-            'flex h-14 items-center border-b border-surface-800 px-4',
+            'flex h-14 items-center border-b border-white/[0.04] px-4',
             collapsed && 'justify-center px-0',
           )}
         >
@@ -61,7 +61,7 @@ export function Sidebar({ items, collapsed, header, className }: SidebarProps): 
                     collapsed && 'justify-center px-2',
                     isActive
                       ? 'bg-primary-500/10 text-primary-400'
-                      : 'text-surface-400 hover:bg-surface-800 hover:text-surface-200',
+                      : 'text-surface-400 hover:bg-white/[0.04] hover:text-surface-200',
                   )}
                   title={collapsed ? item.label : undefined}
                 >

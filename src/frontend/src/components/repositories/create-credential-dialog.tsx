@@ -2,10 +2,10 @@
 
 import { useState, useCallback } from 'react';
 import { Key, Eye, EyeOff } from 'lucide-react';
-import { Modal } from '@/components/ui/modal';
-import { Input } from '@/components/ui/input';
-import { Select, type SelectOption } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/molecules/modal';
+import { Input } from '@/components/atoms/input';
+import { Select, type SelectOption } from '@/components/atoms/select';
+import { Button } from '@/components/atoms/button';
 
 const providerOptions: SelectOption[] = [
   { value: 'GITHUB', label: 'GitHub' },

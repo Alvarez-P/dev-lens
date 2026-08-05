@@ -1,7 +1,25 @@
 ```markdown
 # EPIC-006 — Knowledge Graph
 
-**Status:** Not Started
+**Status:** Completed
+
+**Completed:** 2026-08-04 — branch `feat/knowledge-graph`
+
+---
+
+# Completion Summary
+
+| Metric                  | Value                                         |
+| ----------------------- | --------------------------------------------- |
+| Tasks                   | 27 across 4 slices (C1–C4, chained PRs #1–#4) |
+| Unit tests              | 440 passing (60 suites)                       |
+| E2E tests               | 27 passing (6 suites)                         |
+| New global capabilities | 5 specs synced to `openspec/specs/`           |
+| Verification verdict    | PASS WITH WARNINGS                            |
+
+Delivered capabilities: Knowledge Graph domain model (typed nodes, directed edges, snapshots, events, errors), deterministic two-stage construction (Semantic Model → typed graph with integrity validation), PostgreSQL persistence (graph_nodes/graph_edges/graph_snapshots, JSONB properties, soft-deprecation), event-driven build pipeline (analysis.completed → BullMQ → 7-stage build with retries + DLQ), incremental updates (versioned snapshots, deprecated_at), and a read-only query API (GraphQueryService + REST controller with pagination and version filtering).
+
+**Open warnings (non-blocking, candidates for follow-up):** no JWT guard / repo-membership authorization on `GraphController`; neighborhood direction and multi-type filters not exposed in the REST DTOs; `findLatestByRepo` computes `Math.max(version)` in JS instead of `SELECT MAX(version)`.
 
 ---
 

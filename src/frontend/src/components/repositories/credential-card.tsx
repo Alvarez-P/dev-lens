@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx';
 import { Key, Github, Gitlab, Globe, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/atoms/button';
 
 export interface CredentialCardProps {
   id: string;
@@ -42,10 +42,15 @@ export function CredentialCard({
   const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
 
   return (
-    <div className={clsx('rounded-xl border border-surface-800 bg-surface-900 p-4', className)}>
+    <div
+      className={clsx(
+        'rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-4',
+        className,
+      )}
+    >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-500/10 text-warning-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500/10 text-primary-400">
             {providerIcons[provider] || <Key className="h-5 w-5" />}
           </div>
           <div>
@@ -67,7 +72,7 @@ export function CredentialCard({
       </div>
 
       <div className="mt-3 flex items-center gap-3 text-xs text-surface-500">
-        <span className="rounded-md bg-surface-800 px-2 py-0.5">{provider}</span>
+        <span className="rounded-md bg-white/[0.04] px-2 py-0.5">{provider}</span>
         <span>Created {new Date(createdAt).toLocaleDateString()}</span>
         {expiresAt && (
           <span className={isExpired ? 'text-error-400' : ''}>

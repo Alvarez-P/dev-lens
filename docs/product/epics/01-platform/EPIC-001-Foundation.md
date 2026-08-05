@@ -1,7 +1,9 @@
 ```markdown
 # EPIC-001 — Foundation
 
-**Status:** Not Started
+**Status:** Completed
+
+**Completed:** 2026-08-04 — monorepo, Docker, CI/CD, tooling, and dev environment fully operational. Built without formal SDD tracking (pre-SDD adoption).
 
 ---
 

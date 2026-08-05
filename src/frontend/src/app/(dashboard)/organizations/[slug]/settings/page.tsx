@@ -4,11 +4,11 @@ import { useState, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { get, patch, del } from '@/lib/api-client';
-import { PageHeader } from '@/components/layout/page-header';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
-import { useToast } from '@/components/ui/toast-provider';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
+import { Input } from '@/components/atoms/input';
+import { Spinner } from '@/components/atoms/spinner';
+import { useToast } from '@/components/molecules/toast-provider';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -122,7 +122,7 @@ export default function OrganizationSettingsPage(): React.ReactNode {
 
       <form
         onSubmit={handleSave}
-        className="space-y-4 rounded-xl border border-surface-800 bg-surface-900 p-6"
+        className="space-y-4 rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-6"
       >
         <Input
           label="Organization name"

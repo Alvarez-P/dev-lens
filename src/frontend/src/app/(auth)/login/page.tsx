@@ -3,10 +3,10 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/atoms/button';
+import { Input } from '@/components/atoms/input';
 import { useAuth } from '@/lib/auth/auth-context';
-import { useToast } from '@/components/ui/toast-provider';
+import { useToast } from '@/components/molecules/toast-provider';
 import { LogIn, Github } from 'lucide-react';
 
 const showOAuthButtons = !!process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
@@ -76,7 +76,7 @@ export default function LoginPage(): React.ReactNode {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-surface-700" />
+              <div className="w-full border-t border-white/[0.06]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-surface-900 px-2 text-surface-400">or continue with</span>

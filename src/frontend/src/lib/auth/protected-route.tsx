@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './auth-context';
-import { Spinner } from '@/components/ui/spinner';
+import { Spinner } from '@/components/atoms/spinner';
 
 export function ProtectedRoute({ children }: { children: ReactNode }): React.ReactNode {
   const { isAuthenticated, isLoading } = useAuth();

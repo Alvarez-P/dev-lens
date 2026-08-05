@@ -20,8 +20,9 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const variantClasses: Record<InputVariant, string> = {
-  default: 'bg-surface-900 border-surface-700 text-surface-100 placeholder:text-surface-500',
-  filled: 'bg-surface-800 border-transparent text-surface-100 placeholder:text-surface-500',
+  default:
+    'bg-surface-900/60 backdrop-blur-sm border-white/[0.06] text-surface-100 placeholder:text-surface-500',
+  filled: 'bg-white/[0.04] border-transparent text-surface-100 placeholder:text-surface-500',
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -71,7 +72,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               rightIcon && 'pr-10',
               error
                 ? 'border-error-500 focus:border-error-500 focus:ring-error-500/30'
-                : 'focus:border-primary-500',
+                : 'focus:border-primary-500/50',
               className,
             )}
             aria-invalid={error ? 'true' : 'false'}

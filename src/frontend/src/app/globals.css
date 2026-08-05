@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #6366f1;
-  --color-surface-900: #0f172a;
-  --color-surface-950: #020617;
+  --color-accent: #caff3a;
+  --color-accent-dim: #94b926;
+  --color-surface-900: #0c0c0f;
+  --color-surface-950: #08090b;
 }
 
 @layer base {
@@ -24,23 +25,36 @@
     text-wrap: balance;
   }
 
-  /* Focus ring utility */
+  /* Glass surfaces */
+  .glass {
+    @apply bg-surface-950/75 backdrop-blur-xl border border-white/[0.04];
+  }
+
+  .glass-elevated {
+    @apply bg-surface-900/80 backdrop-blur-xl border border-white/[0.05] shadow-lg shadow-black/30;
+  }
+
+  .glass-subtle {
+    @apply bg-white/[0.03] backdrop-blur-md border border-white/[0.04];
+  }
+
+  /* Focus ring utility — green accent */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-surface-950;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 focus:ring-offset-surface-950;
   }
 
   .focus-ring-light {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 focus:ring-offset-white;
   }
 
-  /* Card surface */
+  /* Card surface — dark glass */
   .card {
-    @apply rounded-lg border border-surface-800 bg-surface-900 p-4 shadow-sm;
+    @apply rounded-xl bg-surface-900/70 backdrop-blur-sm border border-white/[0.04] p-5;
   }
 
   /* Interactive surface (hover state for cards/rows) */
   .interactive-surface {
-    @apply transition-colors duration-150 hover:bg-surface-800;
+    @apply transition-colors duration-200 hover:bg-white/[0.04];
   }
 
   /* Text variants */

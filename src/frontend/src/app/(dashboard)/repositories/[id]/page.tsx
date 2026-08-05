@@ -13,10 +13,10 @@ import {
   FileText,
 } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/layout/page-header';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { RepoStatusBadge, type RepoStatus } from '@/components/repositories/repo-status-badge';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
+import { Badge } from '@/components/atoms/badge';
+import { RepoStatusBadge, type RepoStatus } from '@/components/molecules/repo-status-badge';
 import {
   SyncHistoryTimeline,
   type SnapshotItem,
@@ -64,8 +64,8 @@ export default function RepositoryDetailPage(): React.ReactNode {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-surface-800" />
-        <div className="h-32 animate-pulse rounded-xl bg-surface-900" />
+        <div className="h-8 w-48 animate-pulse rounded bg-white/[0.05]" />
+        <div className="h-32 animate-pulse rounded-xl bg-surface-900/60" />
       </div>
     );
   }
@@ -121,7 +121,7 @@ export default function RepositoryDetailPage(): React.ReactNode {
         }
       />
 
-      <div className="rounded-xl border border-surface-800 bg-surface-900 p-6">
+      <div className="rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-6">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-surface-500">Status</p>
@@ -161,7 +161,7 @@ export default function RepositoryDetailPage(): React.ReactNode {
         </div>
 
         {repo.lastSyncCommit && (
-          <div className="mt-4 border-t border-surface-800 pt-4">
+          <div className="mt-4 border-t border-white/[0.04] pt-4">
             <p className="text-xs font-medium uppercase tracking-wider text-surface-500">
               Last Commit
             </p>
@@ -172,7 +172,7 @@ export default function RepositoryDetailPage(): React.ReactNode {
         )}
 
         {(repo.sizeBytes !== null || repo.fileCount !== null) && (
-          <div className="mt-4 flex gap-6 border-t border-surface-800 pt-4">
+          <div className="mt-4 flex gap-6 border-t border-white/[0.04] pt-4">
             {repo.sizeBytes !== null && (
               <span className="flex items-center gap-1.5 text-sm text-surface-400">
                 <HardDrive className="h-4 w-4" />

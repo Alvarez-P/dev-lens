@@ -1,7 +1,9 @@
 ```markdown
 # EPIC-002 — Core Platform
 
-**Status:** Not Started
+**Status:** Completed
+
+**Completed:** 2026-08-04 — shared kernel (AggregateRoot, DomainEvent, Result, ValueObject, UoW, Dispatcher), error handling, guards, interceptors, pagination, and configuration module. Built without formal SDD tracking (pre-SDD adoption). EPIC-005 and 006 depend on this foundation.
 
 ---
 
@@ -118,7 +120,7 @@ The following documents must be reviewed before implementation:
 
 - `docs/product/PRODUCT_CONTEXT.md`
 - `docs/architecture/RFC-002-System-Architecture.md`
-- `docs/architecture/RFC-003-Domain-Driven-Design.md` *(when available)*
+- `docs/architecture/RFC-003-Domain-Driven-Design.md` _(when available)_
 - Relevant ADRs
 
 ---

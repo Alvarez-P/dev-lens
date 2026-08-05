@@ -3,12 +3,12 @@
 import { Suspense, useState, type FormEvent, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/toast-provider';
+import { Button } from '@/components/atoms/button';
+import { Input } from '@/components/atoms/input';
+import { useToast } from '@/components/molecules/toast-provider';
 import { post } from '@/lib/api-client';
 import { KeyRound, ArrowLeft } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
+import { Spinner } from '@/components/atoms/spinner';
 
 function ResetPasswordForm(): React.ReactNode {
   const searchParams = useSearchParams();

@@ -39,13 +39,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             id={selectId}
             disabled={disabled}
             className={clsx(
-              'block w-full appearance-none rounded-lg border bg-surface-900 px-3 py-2 pr-10 text-sm text-surface-100',
+              'block w-full appearance-none rounded-lg border bg-surface-900/60 backdrop-blur-sm px-3 py-2 pr-10 text-sm text-surface-100',
               'transition-colors duration-150',
               'focus-ring',
               'disabled:cursor-not-allowed disabled:opacity-50',
               error
                 ? 'border-error-500 focus:border-error-500 focus:ring-error-500/30'
-                : 'border-surface-700 focus:border-primary-500',
+                : 'border-white/[0.06] focus:border-primary-500/50',
               className,
             )}
             aria-invalid={error ? 'true' : 'false'}
