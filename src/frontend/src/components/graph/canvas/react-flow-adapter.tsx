@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -36,6 +36,8 @@ export interface ReactFlowAdapterProps {
   edgeTypes?: EdgeTypes;
   /** Cull off-screen elements (REQ-VE-001 / VV-004). Default true. */
   onlyRenderVisibleElements?: boolean;
+  /** Node id to mark as `selected` (visual selection feedback, VI-001). */
+  selectedNodeId?: string | null;
   /** Extra classes applied to the dark canvas wrapper. */
   className?: string;
 }
@@ -127,7 +129,7 @@ ReactFlowAdapter.displayName = 'ReactFlowAdapter';
 
 const ReactFlowAdapterInner = forwardRef<GraphRendererAdapter, ReactFlowAdapterProps>(
   function ReactFlowAdapterInner(
-    { layoutEngine, nodeTypes, edgeTypes, onlyRenderVisibleElements = true },
+    { layoutEngine, nodeTypes, edgeTypes, onlyRenderVisibleElements = true, selectedNodeId },
     ref,
   ) {
     const reactFlow = useReactFlow();
@@ -144,6 +146,13 @@ const ReactFlowAdapterInner = forwardRef<GraphRendererAdapter, ReactFlowAdapterP
     });
 
     const engine = layoutEngine ?? gridLayout;
+
+    // Selection feedback: re-mark `selected` without re-running the layout.
+    useEffect(() => {
+      setFlowNodes((previous) =>
+        previous.map((node) => ({ ...node, selected: node.id === selectedNodeId })),
+      );
+    }, [selectedNodeId]);
 
     const visibleEdges = useMemo(
       () => flowEdges.map((edge) => ({ ...edge, hidden: edge.hidden || panning })),

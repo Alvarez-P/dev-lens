@@ -383,4 +383,19 @@ describe('ReactFlowAdapter — config surface', () => {
     expect(screen.getByTestId('rf-controls')).toBeInTheDocument();
     expect(screen.getByTestId('rf-background')).toBeInTheDocument();
   });
+
+  it('marks the selectedNodeId node as selected on re-render', () => {
+    const ref = createRef<GraphRendererAdapter>();
+    const { rerender } = render(
+      <ReactFlowAdapter ref={ref} layoutEngine={fakeLayoutEngine} selectedNodeId="n2" />,
+    );
+
+    act(() => {
+      ref.current?.render([makeNode('n1'), makeNode('n2')], [], LayoutType.FORCE);
+    });
+    rerender(<ReactFlowAdapter ref={ref} layoutEngine={fakeLayoutEngine} selectedNodeId="n1" />);
+
+    expect(screen.getByTestId('rf-node-n1').getAttribute('data-selected')).toBe('true');
+    expect(screen.getByTestId('rf-node-n2').getAttribute('data-selected')).not.toBe('true');
+  });
 });

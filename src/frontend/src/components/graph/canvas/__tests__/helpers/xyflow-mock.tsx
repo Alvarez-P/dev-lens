@@ -50,6 +50,7 @@ interface MockFlowNode {
   position: { x: number; y: number };
   className?: string;
   hidden?: boolean;
+  selected?: boolean;
   data?: { node?: { label?: string } };
 }
 
@@ -111,6 +112,7 @@ export const ReactFlow = forwardRef<unknown, CapturedReactFlowProps>(
               data-testid={`rf-node-${node.id}`}
               data-node-type={node.type}
               data-dimmed={node.className?.includes('dimmed') ? 'true' : undefined}
+              data-selected={node.selected ? 'true' : undefined}
               onClick={(event) => onNodeClick?.(event, node)}
               onDoubleClick={(event) => onNodeDoubleClick?.(event, node)}
             >
@@ -154,9 +156,7 @@ export function Handle(): ReactNode {
   return <div data-testid="rf-handle" />;
 }
 
-export function Position(): null {
-  return null;
-}
+export const Position = { Left: 'left', Top: 'top', Right: 'right', Bottom: 'bottom' } as const;
 
 export const MarkerType = { ArrowClosed: 'arrowclosed' } as const;
 
@@ -173,9 +173,11 @@ export function BaseEdge({ id, path, style, markerEnd }: MockBaseEdgeProps): Rea
   return (
     <path
       data-testid={id ? `edge-path-${id}` : 'edge-path'}
+      data-has-marker={markerEnd ? 'true' : undefined}
+      data-dash={style?.strokeDasharray}
+      data-stroke={style?.stroke}
       d={path}
       style={style}
-      markerEnd={typeof markerEnd === 'string' ? markerEnd : undefined}
     />
   );
 }
