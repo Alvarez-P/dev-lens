@@ -161,13 +161,10 @@ describe('useProgressiveLoad — sequential chunk loading (GN-001)', () => {
       success: true,
       data: { version: 1, nodeCount: 400, edgeCount: 0 },
     });
-    getGraphNodesMock.mockImplementation(async (_repoId: string, params: { page?: number }) => {
-      const page = params.page ?? 1;
-      return {
-        success: true,
-        data: Array.from({ length: 200 }, (_, index) => makeNode(`shared-${index}`, 1)),
-      };
-    });
+    getGraphNodesMock.mockImplementation(async () => ({
+      success: true,
+      data: Array.from({ length: 200 }, (_, index) => makeNode(`shared-${index}`, 1)),
+    }));
 
     const { result } = renderHook(({ repoId }) => useProgressiveLoad(repoId), {
       wrapper,

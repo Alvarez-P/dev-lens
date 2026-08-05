@@ -64,7 +64,6 @@ export function GraphDetailPanel({
 }: GraphDetailPanelProps): React.ReactNode {
   const selectedNodeId = useGraphStore((state) => state.selectedNodeId);
   const selectedEdgeId = useGraphStore((state) => state.selectedEdgeId);
-  const setFocusNode = useGraphStore((state) => state.setFocusNode);
   const clearSelection = useGraphStore((state) => state.clearSelection);
 
   const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? null;
