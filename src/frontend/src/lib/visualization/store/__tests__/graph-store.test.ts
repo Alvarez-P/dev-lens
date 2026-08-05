@@ -212,3 +212,25 @@ describe('navigationSlice', () => {
     expect(useGraphStore.getState().breadcrumbs).toEqual([]);
   });
 });
+
+describe('loadingSlice', () => {
+  it('starts with zero load progress', () => {
+    expect(useGraphStore.getState().loadProgress).toBe(0);
+  });
+
+  it('setLoadProgress stores the 0..1 progress value', () => {
+    useGraphStore.getState().setLoadProgress(0.66);
+    expect(useGraphStore.getState().loadProgress).toBeCloseTo(0.66);
+
+    useGraphStore.getState().setLoadProgress(1);
+    expect(useGraphStore.getState().loadProgress).toBe(1);
+  });
+
+  it('clamps the stored progress to the 0..1 range', () => {
+    useGraphStore.getState().setLoadProgress(-0.5);
+    expect(useGraphStore.getState().loadProgress).toBe(0);
+
+    useGraphStore.getState().setLoadProgress(1.4);
+    expect(useGraphStore.getState().loadProgress).toBe(1);
+  });
+});

@@ -52,7 +52,14 @@ export interface NavigationSlice {
   clearFocus: () => void;
 }
 
-export interface GraphStore extends SelectionSlice, ViewSlice, FilterSlice, NavigationSlice {}
+/** Progressive chunk-loading progress (GN-001): 0..1 fraction of nodes loaded. */
+export interface LoadingSlice {
+  loadProgress: number;
+  setLoadProgress: (progress: number) => void;
+}
+
+export interface GraphStore
+  extends SelectionSlice, ViewSlice, FilterSlice, NavigationSlice, LoadingSlice {}
 
 const createSelectionSlice: StateCreator<GraphStore, [], [], SelectionSlice> = (set) => ({
   selectedNodeId: null,
@@ -114,6 +121,12 @@ const createNavigationSlice: StateCreator<GraphStore, [], [], NavigationSlice> =
   clearFocus: () => set({ focusNodeId: null }),
 });
 
+const createLoadingSlice: StateCreator<GraphStore, [], [], LoadingSlice> = (set) => ({
+  loadProgress: 0,
+
+  setLoadProgress: (loadProgress) => set({ loadProgress: Math.min(Math.max(loadProgress, 0), 1) }),
+});
+
 /**
  * Single Zustand store combining the four slices (VI-001 selection,
  * VV-001 view, VV-002 filters, GN-003/004/005 navigation).
@@ -123,4 +136,5 @@ export const useGraphStore = create<GraphStore>()((set, get, api) => ({
   ...createViewSlice(set, get, api),
   ...createFilterSlice(set, get, api),
   ...createNavigationSlice(set, get, api),
+  ...createLoadingSlice(set, get, api),
 }));
