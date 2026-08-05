@@ -183,4 +183,32 @@ describe('navigationSlice', () => {
     useGraphStore.getState().clearFocus();
     expect(useGraphStore.getState().focusNodeId).toBeNull();
   });
+
+  it('truncateBreadcrumbs keeps segments up to and including the clicked index', () => {
+    useGraphStore.getState().pushBreadcrumb('my-repo');
+    useGraphStore.getState().pushBreadcrumb('my-pkg');
+    useGraphStore.getState().pushBreadcrumb('AuthModule');
+
+    useGraphStore.getState().truncateBreadcrumbs(1);
+
+    expect(useGraphStore.getState().breadcrumbs).toEqual(['my-repo', 'my-pkg']);
+  });
+
+  it('truncateBreadcrumbs at index 0 collapses the trail to the root segment', () => {
+    useGraphStore.getState().pushBreadcrumb('my-repo');
+    useGraphStore.getState().pushBreadcrumb('my-pkg');
+
+    useGraphStore.getState().truncateBreadcrumbs(0);
+
+    expect(useGraphStore.getState().breadcrumbs).toEqual(['my-repo']);
+  });
+
+  it('clearBreadcrumbs empties the trail', () => {
+    useGraphStore.getState().pushBreadcrumb('my-repo');
+    useGraphStore.getState().pushBreadcrumb('my-pkg');
+
+    useGraphStore.getState().clearBreadcrumbs();
+
+    expect(useGraphStore.getState().breadcrumbs).toEqual([]);
+  });
 });

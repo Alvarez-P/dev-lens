@@ -45,6 +45,9 @@ export interface NavigationSlice {
   focusNodeId: string | null;
   pushBreadcrumb: (segment: string) => void;
   popBreadcrumb: () => void;
+  /** Keep segments 0..index — clicking a breadcrumb segment navigates back to it (GN-003). */
+  truncateBreadcrumbs: (index: number) => void;
+  clearBreadcrumbs: () => void;
   setFocusNode: (id: string | null) => void;
   clearFocus: () => void;
 }
@@ -104,6 +107,9 @@ const createNavigationSlice: StateCreator<GraphStore, [], [], NavigationSlice> =
 
   pushBreadcrumb: (segment) => set((state) => ({ breadcrumbs: [...state.breadcrumbs, segment] })),
   popBreadcrumb: () => set((state) => ({ breadcrumbs: state.breadcrumbs.slice(0, -1) })),
+  truncateBreadcrumbs: (index) =>
+    set((state) => ({ breadcrumbs: state.breadcrumbs.slice(0, index + 1) })),
+  clearBreadcrumbs: () => set({ breadcrumbs: [] }),
   setFocusNode: (focusNodeId) => set({ focusNodeId }),
   clearFocus: () => set({ focusNodeId: null }),
 });
