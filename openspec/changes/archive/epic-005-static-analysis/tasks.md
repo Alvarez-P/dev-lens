@@ -44,33 +44,33 @@ Layers (D/A/I/K) under `src/backend/src/modules/analysis/`; tests mirror src at 
 
 ## Phase 2 — C2 (PR #2)
 
-- [ ] 2.1 (D) `ir-nodes.ts` 10 VOs, fqn, immutable. Dep: 1.1
-- [ ] 2.2 (D) `services/ir-validator.service.ts` 4 checks, batch. Dep: 2.1
-- [ ] 2.3 (I) `parsers/typescript/typescript-ir-builder.ts` ParseResults→IrProject. Dep: 1.2,1.9,2.1
-- [ ] 2.4 (D) `analysis.entity.ts`+`analysis-id.vo.ts`+`analysis-status.enum.ts`+`analysis-errors.ts`
-- [ ] 2.5 (I) `persistence/typeorm/analysis.typeorm-entity.ts` (JSONB)+`persistence/repositories/analysis.repository.ts`. Dep: 2.4
-- [ ] Verify: build, unit, lint
+- [x] 2.1 (D) `ir-nodes.ts` 10 VOs, fqn, immutable. Dep: 1.1
+- [x] 2.2 (D) `services/ir-validator.service.ts` 4 checks, batch. Dep: 2.1
+- [x] 2.3 (I) `parsers/typescript/typescript-ir-builder.ts` ParseResults→IrProject. Dep: 1.2,1.9,2.1
+- [x] 2.4 (D) `analysis.entity.ts`+`analysis-id.vo.ts`+`analysis-status.enum.ts`+`analysis-errors.ts`
+- [x] 2.5 (I) `persistence/typeorm/analysis.typeorm-entity.ts` (JSONB)+`persistence/repositories/analysis.repository.ts`. Dep: 2.4
+- [x] Verify: build, unit, lint
 
 ## Phase 3 — C3 (PR #3)
 
-- [ ] 3.1 (K) `repositories.module.ts` export `SnapshotRepository`
-- [ ] 3.2 (A) `application/static-analysis.service.ts` pipeline, idempotent, failed. Dep: 1.4–1.9,2.2,2.3,2.5,3.1
-- [ ] 3.3 (I) `jobs/analysis.job-processor.ts` queue, retry3, DLQ. Dep: 3.2
-- [ ] 3.4 (I) `analysis-event-handler.ts` subscribe+enqueue. Dep: 1.4, 3.3
-- [ ] 3.5 (I) `analysis.module.ts` wiring (forFeature, queue, providers). Dep: 3.1–3.4
-- [ ] 3.6 (K) pkg `typescript`→deps; `app.module.ts` import. Dep: 3.5
-- [ ] 3.7 (I) `OnModuleInit` registerHandler (no SharedModule cycle). Dep: 3.4,3.5
-- [ ] 3.8 (E2E) `test/e2e/analysis/analysis.e2e-spec.ts`+`fixtures/mini-nestjs/`; recreate jest-e2e.json. Dep: 3.5–3.7
-- [ ] Verify: build, unit, e2e, lint
+- [x] 3.1 (K) `repositories.module.ts` export `SnapshotRepository`
+- [x] 3.2 (A) `application/static-analysis.service.ts` pipeline, idempotent, failed. Dep: 1.4–1.9,2.2,2.3,2.5,3.1
+- [x] 3.3 (I) `jobs/analysis.job-processor.ts` queue, retry3, DLQ. Dep: 3.2
+- [x] 3.4 (I) `analysis-event-handler.ts` subscribe+enqueue. Dep: 1.4, 3.3
+- [x] 3.5 (I) `analysis.module.ts` wiring (forFeature, queue, providers). Dep: 3.1–3.4
+- [x] 3.6 (K) pkg `typescript`→deps; `app.module.ts` import. Dep: 3.5
+- [x] 3.7 (I) `OnModuleInit` registerHandler (no SharedModule cycle). Dep: 3.4,3.5
+- [x] 3.8 (E2E) `test/e2e/analysis/analysis.e2e-spec.ts`+`fixtures/mini-nestjs/`; recreate jest-e2e.json. Dep: 3.5–3.7
+- [x] Verify: build, unit, e2e, lint
 
 ## Phase 4 — C4 (PR #4)
 
-- [ ] 4.1 (I) `analysis.repository.ts` add `findLatestByRepo`. Dep: 2.5
-- [ ] 4.2 (A) `application/file-manifest.service.ts` SHA-256+diff
-- [ ] 4.3 (K) `config/configuration.ts` `STATIC_ANALYSIS_THRESHOLD`=0.5
-- [ ] 4.4 (A) `static-analysis.service.ts` incremental, reuseRatio, fallback. Dep: 3.2,4.1,4.2,4.3
-- [ ] 4.5 (E2E) `test/e2e/analysis/incremental.e2e-spec.ts`+`fixtures/repo-v1|repo-v2`, reuse>0. Dep: 4.4
-- [ ] Verify: build, unit, e2e, lint
+- [x] 4.1 (I) `analysis.repository.ts` add `findLatestByRepo`. Dep: 2.5
+- [x] 4.2 (A) `application/file-manifest.service.ts` SHA-256+diff
+- [x] 4.3 (K) `config/configuration.ts` `STATIC_ANALYSIS_THRESHOLD`=0.5
+- [x] 4.4 (A) `static-analysis.service.ts` incremental, reuseRatio, fallback. Dep: 3.2,4.1,4.2,4.3
+- [x] 4.5 (E2E) `test/e2e/analysis/incremental.e2e-spec.ts`+`fixtures/repo-v1|repo-v2`, reuse>0. Dep: 4.4
+- [x] Verify: build, unit, e2e, lint
 
 ## Dependency Graph
 

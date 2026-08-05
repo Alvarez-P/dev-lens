@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { Language } from '../language.vo';
 
 const EXTENSION_TO_LANGUAGE: ReadonlyMap<string, string> = new Map([
@@ -7,6 +8,7 @@ const EXTENSION_TO_LANGUAGE: ReadonlyMap<string, string> = new Map([
   ['.jsx', 'javascript'],
 ]);
 
+@Injectable()
 export class LanguageDetector {
   detect(filePath: string): Language | null {
     const dotIndex = filePath.lastIndexOf('.');

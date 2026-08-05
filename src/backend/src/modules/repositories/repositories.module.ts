@@ -60,6 +60,13 @@ const jobs = [SyncJobProcessor, CloneJobProcessor];
 
     ...jobs,
   ],
-  exports: [RepositoryService, SyncService, CredentialService, RepositoryRepository],
+  exports: [
+    RepositoryService,
+    SyncService,
+    CredentialService,
+    RepositoryRepository,
+    SnapshotRepository,
+    GitService,
+  ],
 })
 export class RepositoriesModule {}

@@ -1,5 +1,6 @@
 import configuration, {
   AppConfiguration,
+  AnalysisConfig,
   OAuthConfig,
   OAuthProviderConfig,
 } from '@/config/configuration';
@@ -89,6 +90,30 @@ describe('Configuration', () => {
       const config: AppConfiguration = configuration();
 
       expect(config.oauth.tokenEncryptionKey).toBe('custom-encryption-key');
+    });
+  });
+
+  describe('AnalysisConfig', () => {
+    it('should define an AnalysisConfig with a staticAnalysisThreshold', () => {
+      const analysis: AnalysisConfig = { staticAnalysisThreshold: 0.5 };
+
+      expect(analysis.staticAnalysisThreshold).toBe(0.5);
+    });
+
+    it('should default staticAnalysisThreshold to 0.5', () => {
+      delete process.env.STATIC_ANALYSIS_THRESHOLD;
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.analysis.staticAnalysisThreshold).toBe(0.5);
+    });
+
+    it('should load staticAnalysisThreshold from the STATIC_ANALYSIS_THRESHOLD env var', () => {
+      process.env.STATIC_ANALYSIS_THRESHOLD = '0.8';
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.analysis.staticAnalysisThreshold).toBe(0.8);
     });
   });
 });

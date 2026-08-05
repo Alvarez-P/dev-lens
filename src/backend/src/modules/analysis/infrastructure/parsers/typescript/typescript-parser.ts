@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { Project, SourceFile, ClassDeclaration } from 'ts-morph';
 import { ParsedFile } from '../../../domain/parsed-file.vo';
 import { Diagnostic, DiagnosticSeverity, ParseResult } from '../../../domain/parse-result.vo';
@@ -16,6 +17,7 @@ const ROLE_INTERFACES: ReadonlyMap<string, string> = new Map([
   ['PipeTransform', 'pipe'],
 ]);
 
+@Injectable()
 export class TypeScriptParser implements LanguageParser {
   private readonly project: Project;
 

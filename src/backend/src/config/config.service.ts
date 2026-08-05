@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 import {
   AppConfiguration,
+  AnalysisConfig,
   DatabaseConfig,
   RedisConfig,
   MinioConfig,
@@ -52,6 +53,10 @@ export class ConfigService {
 
   get oauth(): OAuthConfig {
     return this.configService.getOrThrow<OAuthConfig>('oauth');
+  }
+
+  get analysis(): AnalysisConfig {
+    return this.configService.getOrThrow<AnalysisConfig>('analysis');
   }
 
   get logLevel(): string {

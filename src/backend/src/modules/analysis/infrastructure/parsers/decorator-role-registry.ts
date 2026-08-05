@@ -1,3 +1,6 @@
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
 export class DecoratorRoleRegistry {
   private readonly rolesByDecorator: Map<string, string> = new Map([
     ['Module', 'module'],

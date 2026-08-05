@@ -42,6 +42,10 @@ export interface OAuthConfig {
   stateSecret: string;
 }
 
+export interface AnalysisConfig {
+  staticAnalysisThreshold: number;
+}
+
 export interface AppConfiguration {
   nodeEnv: string;
   port: number;
@@ -53,6 +57,7 @@ export interface AppConfiguration {
   auth: AuthConfig;
   repo: RepoConfig;
   oauth: OAuthConfig;
+  analysis: AnalysisConfig;
   logLevel: string;
 }
 
@@ -99,6 +104,9 @@ export default (): AppConfiguration => ({
     tokenEncryptionKey: process.env.AUTH_TOKEN_ENCRYPTION_KEY || 'change-me-in-production',
     stateSecret:
       process.env.OAUTH_STATE_SECRET || process.env.JWT_SECRET || 'change-me-in-production',
+  },
+  analysis: {
+    staticAnalysisThreshold: parseFloat(process.env.STATIC_ANALYSIS_THRESHOLD || '0.5'),
   },
   logLevel: process.env.LOG_LEVEL || 'debug',
 });

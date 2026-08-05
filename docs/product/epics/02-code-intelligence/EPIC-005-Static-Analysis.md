@@ -1,7 +1,25 @@
 ```markdown
 # EPIC-005 — Static Analysis
 
-**Status:** Not Started
+**Status:** Completed
+
+**Completed:** 2026-08-04 — branch `feat/static-analysis`
+
+---
+
+# Completion Summary
+
+| Metric                  | Value                                         |
+| ----------------------- | --------------------------------------------- |
+| Tasks                   | 28 across 4 slices (C1–C4, chained PRs #1–#4) |
+| Unit tests              | 254 passing (36 suites)                       |
+| E2E tests               | 10 passing (3 suites)                         |
+| New global capabilities | 6 specs synced to `openspec/specs/`           |
+| Verification verdict    | PASS WITH WARNINGS                            |
+
+Delivered capabilities: language detection, parser abstraction, TypeScript parser (ts-morph + NestJS decorator classification), intermediate representation (IR), static analysis pipeline (snapshot → detect → parse → build → validate → persist → publish), and incremental analysis (content-hash manifest, partial re-parse).
+
+**Open warnings (non-blocking, candidates for follow-up):** reuse ratio stored on the `Analysis` entity but not propagated to `analysis.completed` event metadata (spec says SHOULD); `LanguageDetector` skips unknown extensions without a logged warning (spec says SHALL).
 
 ---
 
