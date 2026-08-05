@@ -1,7 +1,13 @@
 import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GraphQueryService } from '../../application/graph-query.service';
-import { GraphNodesQueryDto, GraphEdgesQueryDto } from './graph-query.dto';
+import {
+  GraphNodesQueryDto,
+  GraphEdgesQueryDto,
+  GraphExportQueryDto,
+  GraphQueryNodeDetailDto,
+  ExportResponseDto,
+} from './graph-query.dto';
 
 @ApiTags('Knowledge Graph')
 @Controller({ path: 'graph', version: '1' })
@@ -20,6 +26,35 @@ export class GraphController {
     }
 
     return { success: true, data: snapshot };
+  }
+
+  @Get(':repoId/export')
+  @ApiOperation({ summary: 'Export the full graph for a repository' })
+  @ApiResponse({
+    status: 200,
+    description: 'All nodes and edges with meta counts and version',
+    type: ExportResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid version' })
+  async exportGraph(@Param('repoId') repoId: string, @Query() query: GraphExportQueryDto) {
+    const result = await this.graphQueryService.findAllNodesAndEdges(repoId, query.version);
+
+    if (result === null) {
+      return { success: true, data: null };
+    }
+
+    return {
+      success: true,
+      data: {
+        nodes: result.nodes.map((node) => node.toJSON()),
+        edges: result.edges.map((edge) => edge.toJSON()),
+        meta: {
+          nodeCount: result.nodes.length,
+          edgeCount: result.edges.length,
+          version: result.version,
+        },
+      },
+    };
   }
 
   @Get(':repoId/nodes')
@@ -44,9 +79,16 @@ export class GraphController {
   @Get(':repoId/nodes/:fqn')
   @ApiOperation({ summary: 'Get a single graph node with its connected edges' })
   @ApiResponse({ status: 200, description: 'Node with all connected edges' })
+  @ApiResponse({ status: 400, description: 'Invalid direction' })
   @ApiResponse({ status: 404, description: 'No active node exists for the fqn' })
-  async getNode(@Param('repoId') repoId: string, @Param('fqn') fqn: string) {
-    const result = await this.graphQueryService.getNodeWithEdges(repoId, fqn);
+  async getNode(
+    @Param('repoId') repoId: string,
+    @Param('fqn') fqn: string,
+    @Query() query: GraphQueryNodeDetailDto,
+  ) {
+    const result = await this.graphQueryService.getNodeWithEdges(repoId, fqn, {
+      direction: query.direction,
+    });
 
     if (result === null) {
       throw new NotFoundException(`No graph node found for fqn "${fqn}"`);

@@ -49,6 +49,7 @@ describe('GraphQueryService DB-backed', () => {
     findEdges: jest.fn(),
     findNodeByFqn: jest.fn(),
     findEdgesByNodeId: jest.fn(),
+    findAllNodesAndEdges: jest.fn(),
   };
 
   let service: GraphQueryService;
@@ -162,7 +163,7 @@ describe('GraphQueryService DB-backed', () => {
       const result = await service.getNodeWithEdges('repo-1', 'acme:users');
 
       expect(graphRepository.findNodeByFqn).toHaveBeenCalledWith('repo-1', 2, 'acme:users');
-      expect(graphRepository.findEdgesByNodeId).toHaveBeenCalledWith(node.id);
+      expect(graphRepository.findEdgesByNodeId).toHaveBeenCalledWith(node.id, undefined);
       expect(result).toEqual({ node, edges: [edge] });
     });
 
@@ -177,6 +178,52 @@ describe('GraphQueryService DB-backed', () => {
       graphRepository.findLatestByRepo.mockResolvedValue(null);
 
       await expect(service.getNodeWithEdges('repo-1', 'acme:users')).resolves.toBeNull();
+    });
+
+    it('should pass the direction filter through to the repository', async () => {
+      graphRepository.findLatestByRepo.mockResolvedValue(buildLatest());
+      const node = makeNode('acme:users');
+      graphRepository.findNodeByFqn.mockResolvedValue(node);
+      graphRepository.findEdgesByNodeId.mockResolvedValue([]);
+
+      await service.getNodeWithEdges('repo-1', 'acme:users', { direction: 'out' });
+
+      expect(graphRepository.findEdgesByNodeId).toHaveBeenCalledWith(node.id, 'out');
+    });
+  });
+
+  describe('findAllNodesAndEdges', () => {
+    it('should return all nodes and edges for the latest version with its version number', async () => {
+      graphRepository.findLatestByRepo.mockResolvedValue(buildLatest());
+      graphRepository.findAllNodesAndEdges.mockResolvedValue({
+        nodes: [makeNode('acme:users'), makeNode('acme:orders')],
+        edges: [makeEdge(makeNode('acme:users'), makeNode('acme:orders'))],
+      });
+
+      const result = await service.findAllNodesAndEdges('repo-1');
+
+      expect(graphRepository.findAllNodesAndEdges).toHaveBeenCalledWith('repo-1', 2);
+      expect(result).toEqual({
+        nodes: [expect.any(GraphNode), expect.any(GraphNode)],
+        edges: [expect.any(GraphEdge)],
+        version: 2,
+      });
+    });
+
+    it('should use the explicitly requested version without resolving the latest', async () => {
+      graphRepository.findAllNodesAndEdges.mockResolvedValue({ nodes: [], edges: [] });
+
+      const result = await service.findAllNodesAndEdges('repo-1', 2);
+
+      expect(graphRepository.findLatestByRepo).not.toHaveBeenCalled();
+      expect(graphRepository.findAllNodesAndEdges).toHaveBeenCalledWith('repo-1', 2);
+      expect(result).toEqual({ nodes: [], edges: [], version: 2 });
+    });
+
+    it('should return null when no graph exists for the repository', async () => {
+      graphRepository.findLatestByRepo.mockResolvedValue(null);
+
+      await expect(service.findAllNodesAndEdges('repo-1')).resolves.toBeNull();
     });
   });
 

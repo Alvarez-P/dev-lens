@@ -9,6 +9,7 @@ import {
   PersistedGraph,
   GraphNodePage,
   GraphEdgePage,
+  EdgeDirection,
 } from '../infrastructure/persistence/repositories/graph.repository';
 
 export type NeighborhoodDirection = 'incoming' | 'outgoing' | 'both';
@@ -166,9 +167,9 @@ export class GraphQueryService {
   async getNodeWithEdges(
     repoId: string,
     fqn: string,
-    version?: number,
+    options: { version?: number; direction?: EdgeDirection } = {},
   ): Promise<GraphNodeWithEdges | null> {
-    const resolvedVersion = await this.resolveVersion(repoId, version);
+    const resolvedVersion = await this.resolveVersion(repoId, options.version);
 
     if (resolvedVersion === null) {
       return null;
@@ -180,9 +181,27 @@ export class GraphQueryService {
       return null;
     }
 
-    const edges = await this.graphRepository.findEdgesByNodeId(node.id);
+    const edges = await this.graphRepository.findEdgesByNodeId(node.id, options.direction);
 
     return { node, edges };
+  }
+
+  async findAllNodesAndEdges(
+    repoId: string,
+    version?: number,
+  ): Promise<{ nodes: GraphNode[]; edges: GraphEdge[]; version: number } | null> {
+    const resolvedVersion = await this.resolveVersion(repoId, version);
+
+    if (resolvedVersion === null) {
+      return null;
+    }
+
+    const { nodes, edges } = await this.graphRepository.findAllNodesAndEdges(
+      repoId,
+      resolvedVersion,
+    );
+
+    return { nodes, edges, version: resolvedVersion };
   }
 
   async getEdges(repoId: string, options: GraphEdgesQueryOptions = {}): Promise<GraphEdgePage> {

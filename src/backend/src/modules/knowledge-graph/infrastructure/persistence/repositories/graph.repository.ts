@@ -37,6 +37,8 @@ export interface FindEdgesOptions {
   limit?: number;
 }
 
+export type EdgeDirection = 'in' | 'out' | 'both';
+
 export interface GraphNodePage {
   data: GraphNode[];
   total: number;
@@ -107,12 +109,25 @@ export class GraphRepository {
     return entities.map((entity) => this.nodeToDomain(entity));
   }
 
-  async findEdgesByNodeId(nodeId: string): Promise<GraphEdge[]> {
-    const entities = await this.edgesRepo.find({
-      where: [{ sourceNodeId: nodeId }, { targetNodeId: nodeId }],
-    });
+  async findEdgesByNodeId(nodeId: string, direction: EdgeDirection = 'both'): Promise<GraphEdge[]> {
+    const entities = await this.edgesRepo.find({ where: this.nodeEdgeWhere(nodeId, direction) });
 
     return entities.map((entity) => this.edgeToDomain(entity));
+  }
+
+  async findAllNodesAndEdges(
+    repoId: string,
+    version: number,
+  ): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] }> {
+    const [nodeEntities, edgeEntities] = await Promise.all([
+      this.nodesRepo.find({ where: { repoId, version, deprecatedAt: IsNull() } }),
+      this.edgesRepo.find({ where: { version } }),
+    ]);
+
+    return {
+      nodes: nodeEntities.map((entity) => this.nodeToDomain(entity)),
+      edges: edgeEntities.map((entity) => this.edgeToDomain(entity)),
+    };
   }
 
   async findNodes(
@@ -189,6 +204,21 @@ export class GraphRepository {
     const entity = await this.nodesRepo.findOne({ where });
 
     return entity === null ? null : this.nodeToDomain(entity);
+  }
+
+  private nodeEdgeWhere(
+    nodeId: string,
+    direction: EdgeDirection,
+  ): FindOptionsWhere<GraphEdgeEntity> | FindOptionsWhere<GraphEdgeEntity>[] {
+    if (direction === 'in') {
+      return { targetNodeId: nodeId };
+    }
+
+    if (direction === 'out') {
+      return { sourceNodeId: nodeId };
+    }
+
+    return [{ sourceNodeId: nodeId }, { targetNodeId: nodeId }];
   }
 
   private nodeToEntity(node: GraphNode, sourceAnalysisId: string): GraphNodeEntity {

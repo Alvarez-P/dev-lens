@@ -244,6 +244,54 @@ describe('GraphRepository', () => {
       expect(result[0]).toBeInstanceOf(GraphEdge);
       expect(result[0].sourceNodeId).toBe('node-1');
     });
+
+    it('should return only outgoing edges when direction=out', async () => {
+      const { repository, edgesRepo } = buildHarness();
+      edgesRepo.find.mockResolvedValue([]);
+
+      await repository.findEdgesByNodeId('node-1', 'out');
+
+      expect(edgesRepo.find).toHaveBeenCalledWith({
+        where: { sourceNodeId: 'node-1' },
+      });
+    });
+
+    it('should return only incoming edges when direction=in', async () => {
+      const { repository, edgesRepo } = buildHarness();
+      edgesRepo.find.mockResolvedValue([]);
+
+      await repository.findEdgesByNodeId('node-1', 'in');
+
+      expect(edgesRepo.find).toHaveBeenCalledWith({
+        where: { targetNodeId: 'node-1' },
+      });
+    });
+  });
+
+  describe('findAllNodesAndEdges', () => {
+    it('should return every active node and edge for the version without pagination', async () => {
+      const { repository, nodesRepo, edgesRepo } = buildHarness();
+      nodesRepo.find.mockResolvedValue([
+        nodeEntity({ id: 'node-1' }),
+        nodeEntity({ id: 'node-2' }),
+      ]);
+      edgesRepo.find.mockResolvedValue([edgeEntity()]);
+
+      const result = await repository.findAllNodesAndEdges('repo-1', 3);
+
+      expect(nodesRepo.find).toHaveBeenCalledWith({
+        where: {
+          repoId: 'repo-1',
+          version: 3,
+          deprecatedAt: expect.objectContaining({ _type: 'isNull' }),
+        },
+      });
+      expect(edgesRepo.find).toHaveBeenCalledWith({ where: { version: 3 } });
+      expect(result.nodes).toHaveLength(2);
+      expect(result.nodes[0]).toBeInstanceOf(GraphNode);
+      expect(result.edges).toHaveLength(1);
+      expect(result.edges[0]).toBeInstanceOf(GraphEdge);
+    });
   });
 
   describe('findNodes', () => {
