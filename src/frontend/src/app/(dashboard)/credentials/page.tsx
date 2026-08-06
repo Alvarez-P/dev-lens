@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Plus, Key } from 'lucide-react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { get, post, del, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
+import { Spinner } from '@/components/atoms/spinner';
 import { EmptyState } from '@/components/molecules/empty-state';
 import { CredentialCard } from '@/components/repositories/credential-card';
 import { CreateCredentialDialog } from '@/components/repositories/create-credential-dialog';
+import { Plus, Key } from 'lucide-react';
 
 interface Credential {
   id: string;
@@ -19,20 +22,48 @@ interface Credential {
 
 export default function CredentialsPage(): React.ReactNode {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [credentials, setCredentials] = useState<Credential[]>([]);
-  const [isLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleCreate = useCallback(
-    async (data: { provider: string; name: string; type: string; value: string }) => {
-      console.log('Create credential:', data);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['credentials'],
+    queryFn: async () => {
+      const response = await get<Credential[]>('/api/v1/credentials');
+      if (isSuccessResponse(response)) {
+        return Array.isArray(response.data) ? response.data : [];
+      }
+      throw new Error('Failed to fetch credentials');
     },
-    [],
-  );
+  });
 
-  const handleDelete = useCallback(async (id: string) => {
-    console.log('Delete credential:', id);
-  }, []);
+  const credentials = data ?? [];
+
+  async function handleCreate(formData: {
+    provider: string;
+    name: string;
+    type: string;
+    value: string;
+  }): Promise<void> {
+    const response = await post<Credential>('/api/v1/credentials', {
+      provider: formData.provider,
+      name: formData.name,
+      type: formData.type,
+      value: formData.value,
+    });
+
+    if (!isSuccessResponse(response)) {
+      throw new Error('Failed to create credential');
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ['credentials'] });
+  }
+
+  async function handleDelete(id: string): Promise<void> {
+    const response = await del<void>(`/api/v1/credentials/${id}`);
+    if (!isSuccessResponse(response)) {
+      throw new Error('Failed to delete credential');
+    }
+    await queryClient.invalidateQueries({ queryKey: ['credentials'] });
+  }
 
   return (
     <div className="space-y-6">
@@ -47,13 +78,15 @@ export default function CredentialsPage(): React.ReactNode {
       />
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-xl border border-white/[0.04] bg-surface-900/60"
-            />
-          ))}
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-error-500/30 bg-error-500/5 p-6 text-center">
+          <p className="text-sm text-error-400">Failed to load credentials. Please try again.</p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+            Retry
+          </Button>
         </div>
       ) : credentials.length === 0 ? (
         <EmptyState

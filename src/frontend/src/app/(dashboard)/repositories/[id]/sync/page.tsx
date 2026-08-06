@@ -1,32 +1,38 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { get, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
+import { Spinner } from '@/components/atoms/spinner';
 import {
   SyncHistoryTimeline,
   type SnapshotItem,
 } from '@/components/repositories/sync-history-timeline';
+import { ArrowLeft } from 'lucide-react';
 
 export default function SyncHistoryPage(): React.ReactNode {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
-  const [snapshots, setSnapshots] = useState<SnapshotItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [id]);
+  const { data: snapshots = [], isLoading } = useQuery({
+    queryKey: ['repository-snapshots', id],
+    queryFn: async () => {
+      const response = await get<SnapshotItem[]>(`/api/v1/repositories/${id}/snapshots`);
+      if (isSuccessResponse(response)) {
+        return Array.isArray(response.data) ? response.data : [];
+      }
+      return [];
+    },
+  });
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Sync History"
-        description={`All snapshots for this repository`}
+        description="All snapshots for this repository"
         actions={
           <Button variant="outline" onClick={() => router.push(`/repositories/${id}`)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -36,13 +42,8 @@ export default function SyncHistoryPage(): React.ReactNode {
       />
 
       {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-xl border border-white/[0.04] bg-surface-900/60"
-            />
-          ))}
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
         </div>
       ) : (
         <div className="rounded-xl border border-white/[0.04] bg-surface-950/60 backdrop-blur-sm p-6">

@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Plus, GitBranch } from 'lucide-react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { get, post, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
+import { Spinner } from '@/components/atoms/spinner';
 import { EmptyState } from '@/components/molecules/empty-state';
 import { RepoCard } from '@/components/repositories/repo-card';
 import { ConnectRepoDialog } from '@/components/repositories/connect-repo-dialog';
+import { Plus, GitBranch } from 'lucide-react';
 import type { RepoStatus } from '@/components/molecules/repo-status-badge';
 
 interface Repository {
@@ -22,17 +25,40 @@ interface Repository {
 
 export default function RepositoriesPage(): React.ReactNode {
   const [showConnectDialog, setShowConnectDialog] = useState(false);
-  const [repositories] = useState<Repository[]>([]);
-  const [isLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleConnectRepo = useCallback(
-    async (data: { name: string; url: string; provider: string; defaultBranch?: string }) => {
-      console.log('Connect repo:', data);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['repositories'],
+    queryFn: async () => {
+      const response = await get<Repository[]>('/api/v1/repositories');
+      if (isSuccessResponse(response)) {
+        return Array.isArray(response.data) ? response.data : [];
+      }
+      throw new Error('Failed to fetch repositories');
     },
-    [],
-  );
+  });
+
+  const repositories = data ?? [];
+
+  async function handleConnectRepo(formData: {
+    name: string;
+    url: string;
+    provider: string;
+    defaultBranch?: string;
+  }): Promise<void> {
+    const response = await post<Repository>('/api/v1/repositories', {
+      name: formData.name,
+      url: formData.url,
+      provider: formData.provider,
+      defaultBranch: formData.defaultBranch,
+    });
+
+    if (!isSuccessResponse(response)) {
+      throw new Error('Failed to connect repository');
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ['repositories'] });
+  }
 
   return (
     <div className="space-y-6">
@@ -50,21 +76,15 @@ export default function RepositoriesPage(): React.ReactNode {
       />
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="animate-pulse rounded-xl border border-white/[0.04] bg-surface-900/60 p-5"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-white/[0.05]" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-white/[0.05]" />
-                  <div className="h-3 w-1/2 rounded bg-white/[0.05]" />
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-error-500/30 bg-error-500/5 p-6 text-center">
+          <p className="text-sm text-error-400">Failed to load repositories. Please try again.</p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+            Retry
+          </Button>
         </div>
       ) : repositories.length === 0 ? (
         <EmptyState

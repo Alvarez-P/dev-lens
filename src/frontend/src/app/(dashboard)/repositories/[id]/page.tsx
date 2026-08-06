@@ -1,10 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { get, post, del, isSuccessResponse } from '@/lib/api-client';
+import { PageHeader } from '@/components/molecules/page-header';
+import { Button } from '@/components/atoms/button';
+import { Badge } from '@/components/atoms/badge';
+import { Spinner } from '@/components/atoms/spinner';
+import { RepoStatusBadge, type RepoStatus } from '@/components/molecules/repo-status-badge';
+import {
+  SyncHistoryTimeline,
+  type SnapshotItem,
+} from '@/components/repositories/sync-history-timeline';
 import {
   GitBranch,
-  ExternalLink,
   Clock,
   RefreshCw,
   Archive,
@@ -14,14 +23,6 @@ import {
   Share2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/molecules/page-header';
-import { Button } from '@/components/atoms/button';
-import { Badge } from '@/components/atoms/badge';
-import { RepoStatusBadge, type RepoStatus } from '@/components/molecules/repo-status-badge';
-import {
-  SyncHistoryTimeline,
-  type SnapshotItem,
-} from '@/components/repositories/sync-history-timeline';
 
 interface RepositoryDetail {
   id: string;
@@ -40,38 +41,71 @@ interface RepositoryDetail {
 export default function RepositoryDetailPage(): React.ReactNode {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const id = params.id as string;
 
-  const [repo, setRepo] = useState<RepositoryDetail | null>(null);
-  const [snapshots, setSnapshots] = useState<SnapshotItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const {
+    data: repo,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['repository', id],
+    queryFn: async () => {
+      const response = await get<RepositoryDetail>(`/api/v1/repositories/${id}`);
+      if (isSuccessResponse(response) && response.data) {
+        return response.data as RepositoryDetail;
+      }
+      throw new Error('Repository not found');
+    },
+  });
 
-  useEffect(() => {
-    setIsLoading(false);
-  }, [id]);
+  const { data: snapshots = [] } = useQuery({
+    queryKey: ['repository-snapshots', id],
+    queryFn: async () => {
+      const response = await get<SnapshotItem[]>(`/api/v1/repositories/${id}/snapshots`);
+      if (isSuccessResponse(response)) {
+        return Array.isArray(response.data) ? response.data : [];
+      }
+      return [];
+    },
+    enabled: !!repo,
+  });
 
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const response = await post<void>(`/api/v1/repositories/${id}/sync`);
+      if (!isSuccessResponse(response)) {
+        throw new Error('Failed to trigger sync');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repository', id] });
+      queryClient.invalidateQueries({ queryKey: ['repository-snapshots', id] });
+    },
+  });
 
-  const handleArchive = async () => {};
+  const archiveMutation = useMutation({
+    mutationFn: async () => {
+      const response = await del<void>(`/api/v1/repositories/${id}`);
+      if (!isSuccessResponse(response)) {
+        throw new Error('Failed to archive repository');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repositories'] });
+      router.push('/repositories');
+    },
+  });
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-white/[0.05]" />
-        <div className="h-32 animate-pulse rounded-xl bg-surface-900/60" />
+      <div className="flex justify-center py-12">
+        <Spinner size="lg" />
       </div>
     );
   }
 
-  if (!repo) {
+  if (error || !repo) {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -116,13 +150,21 @@ export default function RepositoryDetailPage(): React.ReactNode {
               View Graph
             </Link>
             <Button
-              onClick={handleSync}
-              isLoading={isSyncing}
+              onClick={() => syncMutation.mutate()}
+              isLoading={syncMutation.isPending}
               leftIcon={<RefreshCw className="h-4 w-4" />}
             >
               Sync Now
             </Button>
-            <Button variant="ghost" onClick={handleArchive}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (window.confirm('Archive this repository? This action cannot be undone.')) {
+                  archiveMutation.mutate();
+                }
+              }}
+              isLoading={archiveMutation.isPending}
+            >
               <Archive className="h-4 w-4" />
             </Button>
           </div>
