@@ -60,7 +60,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               </option>
             )}
             {options.map((option) => (
-              <option key={option.value} value={option.value}>
+              <option
+                key={option.value}
+                value={option.value}
+                className="bg-surface-900 text-surface-100"
+              >
                 {option.label}
               </option>
             ))}

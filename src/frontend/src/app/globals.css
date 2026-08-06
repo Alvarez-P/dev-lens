@@ -137,3 +137,9 @@
   @apply rounded-lg border border-white/[0.06] !important;
   background: #0c0c0f !important;
 }
+
+/* Native select dropdown — browser defaults are white, override with dark theme */
+select option {
+  background: #0c0c0f;
+  color: #f4f4f5;
+}
