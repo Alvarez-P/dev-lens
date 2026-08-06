@@ -13,12 +13,16 @@ export class ResponseTransformInterceptor<T> implements NestInterceptor<T, Succe
   intercept(_context: ExecutionContext, next: CallHandler): Observable<SuccessResponse<T>> {
     return next.handle().pipe(
       map((data) => {
-        if (data && typeof data === 'object' && 'data' in data && 'meta' in data) {
-          return {
-            success: true,
-            data: data.data as T,
-            meta: data.meta as Record<string, unknown>,
-          };
+        // If the controller already returned a { success, data } envelope,
+        // pass it through unchanged to avoid double-wrapping.
+        if (
+          data &&
+          typeof data === 'object' &&
+          'success' in data &&
+          (data as Record<string, unknown>).success === true &&
+          'data' in data
+        ) {
+          return data as unknown as SuccessResponse<T>;
         }
 
         return {
