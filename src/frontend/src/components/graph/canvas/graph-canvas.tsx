@@ -37,6 +37,7 @@ export function GraphCanvas({
   const visibleEdgeTypes = useGraphStore((state) => state.visibleEdgeTypes);
   const showExternal = useGraphStore((state) => state.showExternal);
   const showDeprecated = useGraphStore((state) => state.showDeprecated);
+  const layerFilter = useGraphStore((state) => state.layerFilter);
   const searchQuery = useGraphStore((state) => state.searchQuery);
   const layout = useGraphStore((state) => state.layout);
   const viewport = useGraphStore((state) => state.viewport);
@@ -49,9 +50,19 @@ export function GraphCanvas({
         visibleEdgeTypes,
         showExternal,
         showDeprecated,
+        layerFilter,
         searchQuery,
       }),
-    [nodes, edges, visibleNodeTypes, visibleEdgeTypes, showExternal, showDeprecated, searchQuery],
+    [
+      nodes,
+      edges,
+      visibleNodeTypes,
+      visibleEdgeTypes,
+      showExternal,
+      showDeprecated,
+      layerFilter,
+      searchQuery,
+    ],
   );
 
   // Render the visible graph (re-runs the layout engine) whenever the

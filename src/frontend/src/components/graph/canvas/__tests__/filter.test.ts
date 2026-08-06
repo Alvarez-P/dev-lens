@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { NodeType, EdgeType } from '@/lib/visualization/types';
 import type { GraphNode, GraphEdge } from '@/lib/visualization/types';
-import { filterGraph, type ResolvedGraphFilter } from '../filter';
+import {
+  filterGraph,
+  countActiveFilters,
+  deriveNodeLayer,
+  type ResolvedGraphFilter,
+} from '../filter';
 
 function makeNode(
   id: string,
@@ -37,11 +42,19 @@ function makeEdge(
   };
 }
 
+function makePathNode(id: string, filePath: string, type: NodeType = NodeType.SERVICE): GraphNode {
+  return {
+    ...makeNode(id, type),
+    properties: { filePath },
+  };
+}
+
 const ALL: ResolvedGraphFilter = {
   visibleNodeTypes: Object.values(NodeType),
   visibleEdgeTypes: Object.values(EdgeType),
   showExternal: true,
   showDeprecated: true,
+  layerFilter: null,
   searchQuery: '',
 };
 
@@ -153,5 +166,62 @@ describe('filterGraph — combined', () => {
     const result = filterGraph(nodes, [], { ...ALL, searchQuery: 'zzz-no-match' });
 
     expect(result.nodes).toEqual([]);
+  });
+});
+
+describe('filterGraph — layer filter (VV-003)', () => {
+  it('keeps only nodes whose derived layer matches', () => {
+    const nodes = [
+      makePathNode('ctrl', '/src/presentation/controllers/AuthController.ts', NodeType.CONTROLLER),
+      makePathNode('svc', '/src/domain/services/AuthService.ts'),
+      makePathNode('repo', '/src/infrastructure/repos/UserRepository.ts', NodeType.REPOSITORY),
+    ];
+
+    const result = filterGraph(nodes, [], { ...ALL, layerFilter: 'domain' });
+
+    expect(result.nodes.map((n) => n.id)).toEqual(['svc']);
+  });
+
+  it('falls back to the fqn when the node has no filePath property', () => {
+    const withPath = makePathNode('a', '/src/application/use-cases/CreateOrder.ts');
+    const withoutPath = {
+      ...makeNode('b', NodeType.SERVICE, 'B'),
+      properties: {},
+      fqn: 'src/infrastructure/b',
+    };
+
+    const result = filterGraph([withPath, withoutPath], [], { ...ALL, layerFilter: 'application' });
+
+    expect(result.nodes.map((n) => n.id)).toEqual(['a']);
+  });
+});
+
+describe('deriveNodeLayer', () => {
+  it('derives the layer from the filePath property', () => {
+    const node = makePathNode('a', '/src/domain/entities/User.ts');
+    expect(deriveNodeLayer(node)).toBe('domain');
+  });
+
+  it('returns unknown when neither path property nor fqn carry a layer keyword', () => {
+    const node = { ...makeNode('b'), properties: {} };
+    expect(deriveNodeLayer(node)).toBe('unknown');
+  });
+});
+
+describe('countActiveFilters (VV-002 badge)', () => {
+  it('counts each non-default filter', () => {
+    const state: ResolvedGraphFilter = {
+      ...ALL,
+      visibleNodeTypes: Object.values(NodeType).filter((type) => type !== NodeType.CONTROLLER),
+      visibleEdgeTypes: Object.values(EdgeType).filter((edge) => edge !== EdgeType.EXPOSES),
+      showExternal: false,
+      layerFilter: 'domain',
+    };
+
+    expect(countActiveFilters(state)).toBe(4);
+  });
+
+  it('counts zero when everything is at its default', () => {
+    expect(countActiveFilters(ALL)).toBe(0);
   });
 });

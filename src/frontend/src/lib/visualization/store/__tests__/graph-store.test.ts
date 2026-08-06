@@ -143,6 +143,25 @@ describe('filterSlice', () => {
     useGraphStore.getState().setSearchQuery('Auth');
     expect(useGraphStore.getState().searchQuery).toBe('Auth');
   });
+
+  it('resetFilters restores every filter to its default (VV-002)', () => {
+    useGraphStore.getState().setVisibleNodeTypes([]);
+    useGraphStore.getState().setVisibleEdgeTypes([]);
+    useGraphStore.getState().setShowExternal(false);
+    useGraphStore.getState().setShowDeprecated(false);
+    useGraphStore.getState().setLayerFilter('domain');
+    useGraphStore.getState().setSearchQuery('Auth');
+
+    useGraphStore.getState().resetFilters();
+
+    const state = useGraphStore.getState();
+    expect(state.visibleNodeTypes).toEqual(Object.values(NodeType));
+    expect(state.visibleEdgeTypes).toEqual(Object.values(EdgeType));
+    expect(state.showExternal).toBe(true);
+    expect(state.showDeprecated).toBe(true);
+    expect(state.layerFilter).toBeNull();
+    expect(state.searchQuery).toBe('');
+  });
 });
 
 describe('navigationSlice', () => {

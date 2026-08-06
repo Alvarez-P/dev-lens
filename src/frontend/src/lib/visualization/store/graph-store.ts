@@ -38,6 +38,8 @@ export interface FilterSlice {
   setShowDeprecated: (show: boolean) => void;
   setLayerFilter: (layer: string | null) => void;
   setSearchQuery: (query: string) => void;
+  /** Restore every filter to its default (VV-002 "Reset filters"). */
+  resetFilters: () => void;
 }
 
 export interface NavigationSlice {
@@ -106,6 +108,15 @@ const createFilterSlice: StateCreator<GraphStore, [], [], FilterSlice> = (set) =
   setShowDeprecated: (showDeprecated) => set({ showDeprecated }),
   setLayerFilter: (layerFilter) => set({ layerFilter }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
+  resetFilters: () =>
+    set({
+      visibleNodeTypes: [...ALL_NODE_TYPES],
+      visibleEdgeTypes: [...ALL_EDGE_TYPES],
+      showExternal: true,
+      showDeprecated: true,
+      layerFilter: null,
+      searchQuery: '',
+    }),
 });
 
 const createNavigationSlice: StateCreator<GraphStore, [], [], NavigationSlice> = (set) => ({
