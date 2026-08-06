@@ -1,5 +1,8 @@
 # Tasks: EPIC-007 Visualization
 
+> **ARCHIVED**: 2026-08-05 — C1–C5 COMPLETE (all 20 tasks `[x]`). C6 GATED — WebGL scale engine deferred pending real-repo perf testing (>2k nodes); tasks C6-01..C6-03 remain open and are NOT part of this archive's completion scope.
+> **Test results**: backend 492 passing (63 suites), frontend 318 passing (24 files).
+
 > **STRICT TDD**: For every task, write the failing test first (RED) → implement (GREEN) → refactor. Backend: Jest (`src/backend/src/**/*.spec.ts`). Frontend: Vitest (`src/frontend/src/**/*.test.ts`). Commit each work unit with a conventional commit including its tests.
 > **Spec refs**: VE=visualization-engine, GN=graph-navigation, VV=visualization-views, VI=visualization-interaction, KG=knowledge-graph-query-api delta.
 
@@ -227,7 +230,7 @@
   - Est. lines: 220 | Depends on: C5-06, C5-07, C3-05
   - NOTE (C5 apply): GraphWorkspace (launch C5-07) created + route shell + View Graph link. E2E NOT added: the route sits behind ProtectedRoute (client auth) + the KG API — no backend/auth seed exists in this env, so a Playwright spec would be red-on-green; the full flow is covered by `graph-workspace.test.tsx` (9 tests: loading/data/error/empty/no-results/Event-Flow) + component tests.
 
-## Slice C6: WebGL Scale Engine — PR #6 (GATED)
+## Slice C6: WebGL Scale Engine — PR #6 (GATED — DEFERRED at archive 2026-08-05, pending real-repo perf gate >2k nodes)
 
 ### Work Unit C6-W1: `docs(viz): record real-repo perf gate decision`
 

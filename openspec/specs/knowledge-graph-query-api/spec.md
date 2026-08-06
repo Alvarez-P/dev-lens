@@ -1,6 +1,7 @@
 # knowledge-graph-query-api Specification
 
 > **Archived from**: `epic-006-knowledge-graph` (2026-08-04)
+> **Updated by**: `epic-007-visualization` (2026-08-05) — C1 delta merged: export endpoint, JWT guard, neighborhood direction param, multi-type filter
 
 ## Purpose
 
@@ -58,9 +59,7 @@ The API SHALL support listing edges filtered by source node ID, target node ID, 
 
 ### Requirement: Query Node Neighborhood
 
-The API SHALL support querying a node's neighborhood — all incoming edges, all outgoing edges, or both — in a single call. The result SHALL include the neighbor nodes referenced by those edges.
-
-> **Note (implementation)**: `GraphQueryService.getNeighborhood` supports direction filtering; the REST endpoint currently returns both directions (verified W8).
+The API SHALL support querying a node's neighborhood — all incoming edges, all outgoing edges, or both — in a single call. The `direction` query param SHALL accept `in`, `out`, or `both` (default). The result SHALL include the neighbor nodes referenced by those edges.
 
 #### Scenario: Full neighborhood returned
 
@@ -72,26 +71,60 @@ The API SHALL support querying a node's neighborhood — all incoming edges, all
 #### Scenario: Outgoing-only neighborhood
 
 - GIVEN a node with 3 incoming and 4 outgoing edges
-- WHEN querying the neighborhood with direction `outgoing`
+- WHEN querying the neighborhood with `direction=out`
 - THEN only the 4 outgoing edges and their target nodes are returned
+
+#### Scenario: Incoming-only neighborhood
+
+- GIVEN a node with 3 incoming and 4 outgoing edges
+- WHEN querying the neighborhood with `direction=in`
+- THEN only the 3 incoming edges and their source nodes are returned
 
 ### Requirement: Filter by Node Type
 
-The query API SHALL support filtering results by node type. Multiple types MAY be specified in a single query.
-
-> **Note (implementation)**: The static core supports `NodeType[]`; the REST DTO currently accepts a single `string` type (verified W9).
+The query API SHALL support filtering results by node type. Multiple types MUST be accepted via repeated `type[]` query parameters. The existing single `type` param SHALL remain supported for backward compatibility.
 
 #### Scenario: Filter nodes by single type
 
 - GIVEN a graph with 5 Controllers, 12 Services, and 3 Repositories
-- WHEN querying nodes with `type = 'Controller'`
+- WHEN querying nodes with `type=Controller`
 - THEN exactly 5 nodes are returned
 
 #### Scenario: Filter nodes by multiple types
 
 - GIVEN a graph with 5 Controllers, 12 Services, and 3 Repositories
-- WHEN querying nodes with `type IN ('Controller', 'Service')`
+- WHEN querying nodes with `type[]=Controller&type[]=Service`
 - THEN 17 nodes are returned
+
+#### Scenario: Invalid node type returns 400
+
+- GIVEN a query with `type=NonExistentType`
+- WHEN the query executes
+- THEN a 400 response is returned
+
+### Requirement: Graph Export Endpoint
+
+The API SHALL expose `GET /api/v1/graph/:repoId/export?version=` returning all nodes and edges in a single JSON response without pagination. The response SHALL include a `meta` object with `nodeCount`, `edgeCount`, and `version`.
+
+#### Scenario: Export full graph for visualization
+
+- GIVEN a repository graph with 500 nodes and 1200 edges at version 3
+- WHEN calling `GET /api/v1/graph/:repoId/export`
+- THEN the response contains all 500 nodes and 1200 edges
+- AND `meta.nodeCount` is 500, `meta.edgeCount` is 1200, `meta.version` is 3
+
+#### Scenario: Export specific version
+
+- GIVEN a repository with graph versions 2 (300 nodes) and 3 (500 nodes)
+- WHEN calling `GET /api/v1/graph/:repoId/export?version=2`
+- THEN only nodes and edges from version 2 are returned
+- AND `meta.version` is 2
+
+#### Scenario: Export on empty graph returns null
+
+- GIVEN a repository with no graph data
+- WHEN calling the export endpoint
+- THEN `null` is returned (not an error)
 
 ### Requirement: JSON-Serializable Results
 
@@ -106,9 +139,9 @@ All query results SHALL be plain objects serializable via `JSON.stringify`. No c
 
 ### Requirement: Error Responses
 
-Invalid query parameters (unknown type, negative limit) SHALL return a 400 Bad Request with a descriptive error message. Repository-scoped queries SHALL enforce that the requesting user has access to the repository.
+Invalid query parameters (unknown type, negative limit) SHALL return a 400 Bad Request with a descriptive error message. All `GraphController` endpoints SHALL enforce JWT authentication; unauthenticated requests SHALL return 401, and unauthorized (non-member) requests SHALL return 403.
 
-> **Note (implementation)**: 400/404 responses are implemented via class-validator DTOs. Repository access enforcement requires auth + repo-membership, flagged as a follow-up (no JWT guard on `GraphController`, verified S5/W5).
+> **Note (implementation)**: 400/404 responses are implemented via class-validator DTOs. JWT + repo-membership enforcement implemented in C1 of EPIC-007 (`@UseGuards(JwtAuthGuard, RepoMembershipGuard)` at controller class level).
 
 #### Scenario: Invalid node type returns 400
 
@@ -116,6 +149,34 @@ Invalid query parameters (unknown type, negative limit) SHALL return a 400 Bad R
 - WHEN the query executes
 - THEN a 400 response is returned
 - AND the error message indicates the type is not recognized
+
+#### Scenario: Unauthenticated request returns 401
+
+- GIVEN no JWT token
+- WHEN accessing any graph endpoint
+- THEN a 401 response is returned
+
+### Requirement: JWT Guard on Graph Endpoints
+
+All `GraphController` endpoints SHALL be protected by a JWT guard enforcing repo-membership. Unauthenticated requests SHALL return 401; unauthorized (non-member) requests SHALL return 403.
+
+#### Scenario: Authenticated member accesses graph
+
+- GIVEN a user authenticated via JWT who is a member of repository R
+- WHEN accessing any `/api/v1/graph/R/*` endpoint
+- THEN the request succeeds
+
+#### Scenario: Unauthenticated request returns 401
+
+- GIVEN no JWT token in the request
+- WHEN accessing `/api/v1/graph/:repoId/nodes`
+- THEN a 401 response is returned
+
+#### Scenario: Non-member returns 403
+
+- GIVEN a user authenticated but not a member of repository R
+- WHEN accessing any `/api/v1/graph/R/*` endpoint
+- THEN a 403 response is returned
 
 ### Requirement: Pagination
 
@@ -132,3 +193,4 @@ Queries that may return large result sets (neighborhood, edge listing) SHALL sup
 
 - RFC-007 §9 (Query API), §9.2 (API Principles), §14 (Security)
 - EPIC-006 §2.5 (Query API), Exploration §5 (Key Design Decisions)
+- EPIC-007 C1 (Backend extensions: export endpoint, JWT guard, direction, multi-type)
