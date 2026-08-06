@@ -213,18 +213,18 @@ function NodeDetails({
       </div>
 
       {properties.length > 0 && (
-        <table className="w-full text-sm">
+        <table className="w-full table-fixed text-sm">
           <caption className="sr-only">Node properties</caption>
           <tbody>
             {properties.map(([key, value]) => (
               <tr key={key} className="border-b border-white/[0.04] last:border-0">
                 <th
                   scope="row"
-                  className="py-1.5 pr-3 text-left align-top text-xs font-medium text-surface-500"
+                  className="w-2/5 py-1.5 pr-4 text-left align-top text-xs font-medium whitespace-nowrap text-surface-500"
                 >
                   {titleCaseKey(key)}
                 </th>
-                <td className="py-1.5 text-right align-top font-mono text-xs text-surface-200">
+                <td className="w-3/5 py-1.5 text-right align-top font-mono text-xs break-all text-surface-200">
                   {String(value)}
                 </td>
               </tr>
@@ -258,18 +258,18 @@ function EdgeDetails({ edge, nodes }: { edge: GraphEdge; nodes: GraphNode[] }): 
       </Badge>
 
       {properties.length > 0 && (
-        <table className="w-full text-sm">
+        <table className="w-full table-fixed text-sm">
           <caption className="sr-only">Edge properties</caption>
           <tbody>
             {properties.map(([key, value]) => (
               <tr key={key} className="border-b border-white/[0.04] last:border-0">
                 <th
                   scope="row"
-                  className="py-1.5 pr-3 text-left align-top text-xs font-medium text-surface-500"
+                  className="w-2/5 py-1.5 pr-4 text-left align-top text-xs font-medium whitespace-nowrap text-surface-500"
                 >
                   {titleCaseKey(key)}
                 </th>
-                <td className="py-1.5 text-right align-top font-mono text-xs text-surface-200">
+                <td className="w-3/5 py-1.5 text-right align-top font-mono text-xs break-all text-surface-200">
                   {String(value)}
                 </td>
               </tr>
