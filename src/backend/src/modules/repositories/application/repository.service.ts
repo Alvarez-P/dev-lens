@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Repository, RepositoryId, RepositoryUrl, GitProvider, detectProvider } from '../domain';
@@ -22,6 +22,8 @@ import { PaginatedResult } from '../../../shared/infrastructure/pagination/pagin
 
 @Injectable()
 export class RepositoryService {
+  private readonly logger = new Logger(RepositoryService.name);
+
   constructor(
     private readonly repositoryRepo: RepositoryRepository,
     private readonly snapshotRepo: SnapshotRepository,
@@ -59,6 +61,10 @@ export class RepositoryService {
       repositoryId: repository.id.toString(),
       userId,
     });
+
+    this.logger.log(
+      `Repository "${dto.name}" created and initial sync queued (job in "repository-sync")`,
+    );
 
     return this.toResponse(repository);
   }
@@ -163,6 +169,10 @@ export class RepositoryService {
       repositoryId: id,
       userId,
     });
+
+    this.logger.log(
+      `Sync triggered for repository "${repo.name}" (${id}) — status: ${repo.status}, job queued`,
+    );
   }
 
   async getSyncHistory(
