@@ -1,11 +1,24 @@
 'use client';
 
-import { Maximize, ZoomIn, ZoomOut } from 'lucide-react';
+import { clsx } from 'clsx';
+import {
+  Maximize,
+  ZoomIn,
+  ZoomOut,
+  Network,
+  FolderTree,
+  GitBranch,
+  Braces,
+  Layers,
+  Globe,
+  Activity,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useGraphStore } from '@/lib/visualization/store/graph-store';
 import { LayoutType, ViewMode } from '@/lib/visualization/types';
+import { VIEWS, applyViewMode } from '@/lib/visualization/views';
 import type { GraphRendererAdapter } from '@/lib/visualization/adapter';
 import { Button } from '@/components/atoms/button';
-import { Badge } from '@/components/atoms/badge';
 import { Select } from '@/components/atoms/select';
 import { zoomBy } from './canvas/viewport';
 
@@ -16,25 +29,26 @@ const LAYOUT_OPTIONS = [
   { value: LayoutType.CIRCULAR, label: 'Circular' },
 ];
 
-const VIEW_MODE_LABELS: Record<ViewMode, string> = {
-  [ViewMode.OVERVIEW]: 'Overview',
-  [ViewMode.MODULES]: 'Module Dependencies',
-  [ViewMode.DEPENDENCY_TREE]: 'Dependency Tree',
-  [ViewMode.API_EXPLORER]: 'API Explorer',
-  [ViewMode.LAYER_ARCHITECTURE]: 'Layer Architecture',
-  [ViewMode.DOMAIN_RELATIONSHIPS]: 'Domain Relationships',
-  [ViewMode.EVENT_FLOW]: 'Event Flow',
+const VIEW_ICONS: Record<ViewMode, LucideIcon> = {
+  [ViewMode.OVERVIEW]: Network,
+  [ViewMode.MODULES]: FolderTree,
+  [ViewMode.DEPENDENCY_TREE]: GitBranch,
+  [ViewMode.API_EXPLORER]: Braces,
+  [ViewMode.LAYER_ARCHITECTURE]: Layers,
+  [ViewMode.DOMAIN_RELATIONSHIPS]: Globe,
+  [ViewMode.EVENT_FLOW]: Activity,
 };
 
 export interface GraphToolbarProps {
-  /** Shared adapter ref (drives fit view); provided by the workspace in C4. */
+  /** Shared adapter ref (drives fit view); provided by the workspace. */
   adapterRef?: React.RefObject<GraphRendererAdapter | null>;
   className?: string;
 }
 
 /**
- * Graph controls: layout switcher, fit view, ±10% zoom (REQ-VE-003). The
- * view-mode chip is a placeholder — full view switching lands in C5.
+ * Graph controls: 7 view-mode chips (REQ-VV-001, active chip gets the
+ * `primary-500` accent border), a manual layout override, fit view and
+ * ±10% zoom buttons (REQ-VE-003).
  */
 export function GraphToolbar({ adapterRef, className }: GraphToolbarProps): React.ReactNode {
   const layout = useGraphStore((state) => state.layout);
@@ -45,9 +59,35 @@ export function GraphToolbar({ adapterRef, className }: GraphToolbarProps): Reac
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className ?? ''}`}>
-      <Badge variant="info" title="View switching arrives with the C5 view presets">
-        {VIEW_MODE_LABELS[viewMode]}
-      </Badge>
+      <div
+        role="group"
+        aria-label="View modes"
+        className="flex flex-wrap items-center gap-1 rounded-lg bg-white/[0.03] p-1 backdrop-blur-md"
+      >
+        {VIEWS.map((view) => {
+          const Icon = VIEW_ICONS[view.mode];
+          const active = view.mode === viewMode;
+
+          return (
+            <button
+              key={view.mode}
+              type="button"
+              aria-pressed={active}
+              title={view.description}
+              onClick={() => applyViewMode(view.mode)}
+              className={clsx(
+                'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium transition-colors',
+                active
+                  ? 'border-primary-500 bg-primary-500/10 text-primary-200'
+                  : 'border-transparent text-surface-300 hover:bg-white/[0.04] hover:text-surface-100',
+              )}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {view.label}
+            </button>
+          );
+        })}
+      </div>
 
       <Select
         label="Layout"
