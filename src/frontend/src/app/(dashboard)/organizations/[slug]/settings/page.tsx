@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { get, patch, del } from '@/lib/api-client';
+import { get, patch, del, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
@@ -29,9 +29,9 @@ export default function OrganizationSettingsPage(): React.ReactNode {
   const { data: org, isLoading } = useQuery({
     queryKey: ['organization-settings', slug],
     queryFn: async () => {
-      const allOrgs = await get<OrganizationDetail[]>('/api/v1/organizations');
-      if ('success' in allOrgs && allOrgs.success) {
-        const orgs = allOrgs.data as unknown as OrganizationDetail[];
+      const allOrgsResponse = await get<OrganizationDetail[]>('/api/v1/organizations');
+      if (isSuccessResponse(allOrgsResponse)) {
+        const orgs = Array.isArray(allOrgsResponse.data) ? allOrgsResponse.data : [];
         const found = orgs.find((o) => o.slug === slug);
         if (found) return found;
       }

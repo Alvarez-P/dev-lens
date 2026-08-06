@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { get, del } from '@/lib/api-client';
+import { get, del, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
@@ -41,8 +41,8 @@ export default function WorkspaceDetailPage(): React.ReactNode {
     queryKey: ['workspace', id],
     queryFn: async () => {
       const response = await get<WorkspaceDetail>(`/api/v1/workspaces/${id}`);
-      if ('success' in response && response.success) {
-        return response.data as unknown as WorkspaceDetail;
+      if (isSuccessResponse(response) && response.data) {
+        return response.data as WorkspaceDetail;
       }
       throw new Error('Workspace not found');
     },
@@ -52,8 +52,8 @@ export default function WorkspaceDetailPage(): React.ReactNode {
     queryKey: ['workspace-members', id],
     queryFn: async () => {
       const response = await get<Member[]>(`/api/v1/workspaces/${id}/members`);
-      if ('success' in response && response.success) {
-        return response.data as unknown as Member[];
+      if (isSuccessResponse(response)) {
+        return Array.isArray(response.data) ? response.data : [];
       }
       return [];
     },

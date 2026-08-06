@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { get } from '@/lib/api-client';
+import { get, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
@@ -41,9 +41,9 @@ export default function OrganizationDetailPage(): React.ReactNode {
   const orgQuery = useQuery({
     queryKey: ['organization', slug],
     queryFn: async () => {
-      const allOrgs = await get<OrganizationDetail[]>('/api/v1/organizations');
-      if ('success' in allOrgs && allOrgs.success) {
-        const orgs = allOrgs.data as unknown as OrganizationDetail[];
+      const allOrgsResponse = await get<OrganizationDetail[]>('/api/v1/organizations');
+      if (isSuccessResponse(allOrgsResponse)) {
+        const orgs = Array.isArray(allOrgsResponse.data) ? allOrgsResponse.data : [];
         const found = orgs.find((o) => o.slug === slug);
         if (found) return found;
       }
@@ -56,8 +56,8 @@ export default function OrganizationDetailPage(): React.ReactNode {
     queryFn: async () => {
       if (!orgQuery.data?.id) return [];
       const response = await get<Member[]>(`/api/v1/organizations/${orgQuery.data.id}/members`);
-      if ('success' in response && response.success) {
-        return response.data as unknown as Member[];
+      if (isSuccessResponse(response)) {
+        return Array.isArray(response.data) ? response.data : [];
       }
       return [];
     },

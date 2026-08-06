@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { get } from '@/lib/api-client';
+import { get, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
@@ -29,8 +29,8 @@ export default function OrganizationsPage(): React.ReactNode {
     queryKey: ['organizations'],
     queryFn: async () => {
       const response = await get<Organization[]>('/api/v1/organizations');
-      if ('success' in response && response.success) {
-        return response.data as unknown as Organization[];
+      if (isSuccessResponse(response)) {
+        return Array.isArray(response.data) ? response.data : [];
       }
       throw new Error('Failed to fetch organizations');
     },
