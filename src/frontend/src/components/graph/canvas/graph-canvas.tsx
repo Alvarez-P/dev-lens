@@ -16,6 +16,10 @@ export interface GraphCanvasProps {
   edges: GraphEdge[];
   /** Shared ref so the toolbar can drive fit/zoom on the adapter. */
   adapterRef?: React.RefObject<GraphRendererAdapter | null>;
+  /** Replaces the default select-on-double-click (drill-down, GN-002). */
+  onNodeDoubleClick?: (nodeId: string) => void;
+  /** Right-click on a node with the cursor position (REQ-VI-004). */
+  onNodeContextMenu?: (nodeId: string, position: { x: number; y: number }) => void;
   className?: string;
 }
 
@@ -28,6 +32,8 @@ export function GraphCanvas({
   nodes,
   edges,
   adapterRef,
+  onNodeDoubleClick,
+  onNodeContextMenu,
   className,
 }: GraphCanvasProps): React.ReactNode {
   const internalRef = useRef<GraphRendererAdapter>(null);
@@ -82,18 +88,34 @@ export function GraphCanvas({
     }
   }, [viewport, ref]);
 
+  // Latest prop callbacks for the stable adapter handlers (double-click
+  // defaults to selection unless the workspace supplies drill-down).
+  const handlerRef = useRef<{
+    onNodeDoubleClick?: (nodeId: string) => void;
+    onNodeContextMenu?: (nodeId: string, position: { x: number; y: number }) => void;
+  }>({});
+  handlerRef.current = { onNodeDoubleClick, onNodeContextMenu };
+
   useEffect(() => {
     const adapter = ref.current;
     if (!adapter) return;
 
     adapter.onNodeClick((nodeId) => useGraphStore.getState().setSelectedNode(nodeId));
-    adapter.onNodeDoubleClick((nodeId) => useGraphStore.getState().setSelectedNode(nodeId));
+    adapter.onNodeDoubleClick((nodeId) => {
+      if (handlerRef.current.onNodeDoubleClick) {
+        handlerRef.current.onNodeDoubleClick(nodeId);
+      } else {
+        useGraphStore.getState().setSelectedNode(nodeId);
+      }
+    });
+    adapter.onNodeContextMenu((nodeId, position) =>
+      handlerRef.current.onNodeContextMenu?.(nodeId, position),
+    );
     adapter.onEdgeClick((edgeId) => useGraphStore.getState().setSelectedEdge(edgeId));
     adapter.onPaneClick(() => useGraphStore.getState().clearSelection());
     adapter.onViewportChange((nextViewport) => useGraphStore.getState().setViewport(nextViewport));
 
     return () => adapter.dispose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref]);
 
   return (

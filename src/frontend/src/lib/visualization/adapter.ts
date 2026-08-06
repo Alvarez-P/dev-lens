@@ -44,6 +44,9 @@ export interface GraphRendererAdapter {
 
   onNodeDoubleClick(handler: (nodeId: string) => void): void;
 
+  /** Right-click on a node with the cursor position (REQ-VI-004). */
+  onNodeContextMenu(handler: (nodeId: string, position: { x: number; y: number }) => void): void;
+
   onEdgeClick(handler: (edgeId: string) => void): void;
 
   onPaneClick(handler: () => void): void;

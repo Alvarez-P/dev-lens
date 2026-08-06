@@ -148,6 +148,35 @@ describe('GraphCanvas — store to adapter wiring', () => {
     expect(screen.getByTestId('rf-node-mod').getAttribute('data-selected')).toBe('true');
     expect(screen.getByTestId('rf-node-ctrl').getAttribute('data-selected')).not.toBe('true');
   });
+
+  it('selects a node on double-click by default', async () => {
+    renderCanvas();
+
+    fireEvent.doubleClick(await screen.findByTestId('rf-node-mod'));
+
+    expect(useGraphStore.getState().selectedNodeId).toBe('mod');
+  });
+
+  it('forwards double-clicks to the onNodeDoubleClick prop when provided', async () => {
+    const onNodeDoubleClick = vi.fn();
+    render(<GraphCanvas nodes={nodes} edges={edges} onNodeDoubleClick={onNodeDoubleClick} />);
+
+    fireEvent.doubleClick(await screen.findByTestId('rf-node-mod'));
+
+    expect(onNodeDoubleClick).toHaveBeenCalledWith('mod');
+  });
+
+  it('forwards right-clicks to onNodeContextMenu with the cursor position', async () => {
+    const onNodeContextMenu = vi.fn();
+    render(<GraphCanvas nodes={nodes} edges={edges} onNodeContextMenu={onNodeContextMenu} />);
+
+    fireEvent.contextMenu(await screen.findByTestId('rf-node-mod'), {
+      clientX: 320,
+      clientY: 180,
+    });
+
+    expect(onNodeContextMenu).toHaveBeenCalledWith('mod', { x: 320, y: 180 });
+  });
 });
 
 describe('GraphCanvas — viewport sync', () => {

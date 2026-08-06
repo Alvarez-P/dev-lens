@@ -45,6 +45,7 @@ export interface ReactFlowAdapterProps {
 interface AdapterHandlers {
   nodeClick: (nodeId: string) => void;
   nodeDoubleClick: (nodeId: string) => void;
+  nodeContextMenu: (nodeId: string, position: { x: number; y: number }) => void;
   edgeClick: (edgeId: string) => void;
   paneClick: () => void;
   viewportChange: (viewport: Viewport) => void;
@@ -55,6 +56,7 @@ const noop = (): void => undefined;
 const EMPTY_HANDLERS: AdapterHandlers = {
   nodeClick: noop,
   nodeDoubleClick: noop,
+  nodeContextMenu: noop,
   edgeClick: noop,
   paneClick: noop,
   viewportChange: noop,
@@ -239,6 +241,10 @@ const ReactFlowAdapterInner = forwardRef<GraphRendererAdapter, ReactFlowAdapterP
           handlersRef.current = { ...handlersRef.current, nodeDoubleClick: handler };
         },
 
+        onNodeContextMenu(handler) {
+          handlersRef.current = { ...handlersRef.current, nodeContextMenu: handler };
+        },
+
         onEdgeClick(handler) {
           handlersRef.current = { ...handlersRef.current, edgeClick: handler };
         },
@@ -275,6 +281,9 @@ const ReactFlowAdapterInner = forwardRef<GraphRendererAdapter, ReactFlowAdapterP
         proOptions={{ hideAttribution: true }}
         onNodeClick={(_, node) => handlersRef.current.nodeClick(node.id)}
         onNodeDoubleClick={(_, node) => handlersRef.current.nodeDoubleClick(node.id)}
+        onNodeContextMenu={(event, node) =>
+          handlersRef.current.nodeContextMenu(node.id, { x: event.clientX, y: event.clientY })
+        }
         onEdgeClick={(_, edge) => handlersRef.current.edgeClick(edge.id)}
         onPaneClick={() => handlersRef.current.paneClick()}
         onMoveStart={() => setPanning(true)}

@@ -72,6 +72,7 @@ export interface CapturedReactFlowProps {
   edgeTypes?: Record<string, unknown>;
   onNodeClick?: (event: unknown, node: MockFlowNode) => void;
   onNodeDoubleClick?: (event: unknown, node: MockFlowNode) => void;
+  onNodeContextMenu?: (event: unknown, node: MockFlowNode) => void;
   onEdgeClick?: (event: unknown, edge: MockFlowEdge) => void;
   onPaneClick?: () => void;
   onMoveStart?: (event: unknown, viewport: { x: number; y: number; zoom: number }) => void;
@@ -90,6 +91,7 @@ export const ReactFlow = forwardRef<unknown, CapturedReactFlowProps>(
       edges = [],
       onNodeClick,
       onNodeDoubleClick,
+      onNodeContextMenu,
       onEdgeClick,
       onPaneClick,
       minZoom,
@@ -115,6 +117,7 @@ export const ReactFlow = forwardRef<unknown, CapturedReactFlowProps>(
               data-selected={node.selected ? 'true' : undefined}
               onClick={(event) => onNodeClick?.(event, node)}
               onDoubleClick={(event) => onNodeDoubleClick?.(event, node)}
+              onContextMenu={(event) => onNodeContextMenu?.(event, node)}
             >
               {node.data?.node?.label ?? node.id}
             </div>
