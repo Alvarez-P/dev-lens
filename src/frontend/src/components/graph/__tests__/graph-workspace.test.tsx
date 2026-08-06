@@ -50,7 +50,7 @@ import { useDrillDown } from '@/lib/visualization/hooks/use-drill-down';
 import { useGraphSearch } from '@/lib/visualization/hooks/use-graph-search';
 import { useNodeDetail } from '@/lib/visualization/hooks/use-node-detail';
 
-import { GraphWorkspace } from '../graph-workspace';
+import { GraphWorkspace, mergeEdges } from '../graph-workspace';
 
 const useProgressiveLoadMock = useProgressiveLoad as unknown as Mock;
 const useGraphExportMock = useGraphExport as unknown as Mock;
@@ -140,6 +140,23 @@ function mockLoad(overrides: Record<string, unknown> = {}): void {
     ...overrides,
   });
 }
+
+describe('mergeEdges (workspace graph merging)', () => {
+  it('dedupes by id keeping the incoming edge', () => {
+    const updated = { ...edge, properties: { weight: 2 } };
+
+    expect(mergeEdges([edge, makeEdge('e2', 'svc-1', 'mod-1')], [updated])).toEqual([
+      updated,
+      makeEdge('e2', 'svc-1', 'mod-1'),
+    ]);
+  });
+
+  it('merges disjoint edge lists preserving order', () => {
+    const e2 = makeEdge('e2', 'svc-1', 'mod-1');
+
+    expect(mergeEdges([edge], [e2])).toEqual([edge, e2]);
+  });
+});
 
 describe('GraphWorkspace — loading state', () => {
   it('renders a loading skeleton while the graph is loading', () => {

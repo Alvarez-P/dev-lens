@@ -169,55 +169,63 @@
 
 ### Work Unit C5-W1: `feat(viz): filter predicates and filter bar`
 
-- [ ] C5-01: Create pure filter predicates + view presets (Overview all, Module MODULE+DEPENDS_ON, API Explorer ENDPOINT+EXPOSES, …) + hideDeprecated/hideExternal
+- [x] C5-01: Create pure filter predicates + view presets (Overview all, Module MODULE+DEPENDS_ON, API Explorer ENDPOINT+EXPOSES, …) + hideDeprecated/hideExternal
   - Files: `src/frontend/src/lib/visualization/filter.ts` (new)
   - Spec: VV-002, VV-001 (view filters)
   - Tests: `filter.test.ts` — each predicate, `deprecated_at` hidden, external hidden, view preset combos
   - Est. lines: 190 | Depends on: C2-01
-- [ ] C5-02: Create `GraphFilterBar` — 12 type chips (multi-select), 6 edge toggles, Hide External/DEPRECATED toggles; <300ms update
+  - NOTE (C5 apply): launch C5-01 = GraphFilterBar component; the pure predicates stayed in the C3 `canvas/filter.ts` and were EXTENDED in place (additive `layerFilter` + `deriveNodeLayer` + `countActiveFilters`) instead of a new lib module; view presets live in `lib/visualization/views.ts` (C5-02). Store gained `resetFilters`.
+- [x] C5-02: Create `GraphFilterBar` — 12 type chips (multi-select), 6 edge toggles, Hide External/DEPRECATED toggles; <300ms update
   - Files: `src/frontend/src/components/graph/graph-filter-bar.tsx` (new)
   - Spec: VV-002
   - Tests: `graph-filter-bar.test.tsx` — chip toggles store, combined filters, no full re-render
   - Est. lines: 230 | Depends on: C2-05, C5-01
+  - NOTE (C5 apply): created per launch at `components/graph/graph-filter-bar.tsx`; reads/writes `filterSlice` (visibleNodeTypes/visibleEdgeTypes/showExternal/showDeprecated/layerFilter/searchQuery), All/None quick buttons, layer dropdown, active-count badge, Reset Filters, search input (Enter → onSearchSubmit), collapsible on mobile.
 
 ### Work Unit C5-W2: `feat(viz): view switcher and view presets`
 
-- [ ] C5-03: Create `GraphToolbar` — 7 view chips (`.glass-subtle`, active `primary-500` border, <100ms switch), zoom/fit/reset buttons
+- [x] C5-03: Create `GraphToolbar` — 7 view chips (`.glass-subtle`, active `primary-500` border, <100ms switch), zoom/fit/reset buttons
   - Files: `src/frontend/src/components/graph/graph-toolbar.tsx` (new)
   - Spec: VV-001, VE-003
   - Tests: `graph-toolbar.test.tsx` — 7 chips, switch triggers layout recompute, Event Flow chip shows placeholder
   - Est. lines: 160 | Depends on: C2-05, C3-05
-- [ ] C5-04: Create view renderers — overview (d3-force), module-deps (dagre top-down), dependency-tree (dagre radial), api-explorer (dagre grouped), layer (d3-force layered + deriveLayer), domain (fcose clustered + deriveDomain), event-flow (empty state)
+  - NOTE (C5 apply): extended the EXISTING toolbar in place (launch C5-03 = extend, not recreate); placeholder badge → 7 icon chips (`aria-pressed`, active `primary-500` border), layout select/fit/±10% zoom preserved from C3.
+- [x] C5-04: Create view renderers — overview (d3-force), module-deps (dagre top-down), dependency-tree (dagre radial), api-explorer (dagre grouped), layer (d3-force layered + deriveLayer), domain (fcose clustered + deriveDomain), event-flow (empty state)
   - Files: `src/frontend/src/components/graph/views/{overview,module-deps,dependency-tree,api-explorer,layer,domain,event-flow}-view.tsx` + `index.ts` (new)
   - Spec: VV-001 (view→layout table), VV-003 (derivation), View 7 placeholder
   - Tests: `views/view-presets.test.tsx` — each view applies correct layout+filter; Event Flow renders "Event data not yet available…"
   - Est. lines: 240 | Depends on: C5-03, C5-01, C2-02, C3-03
+  - NOTE (C5 apply): launch C5-02 = pure `lib/visualization/views.ts` configs (`getViewConfig`/`VIEWS`/`applyViewMode`) instead of per-view components — the layout engines already exist (C3 `layout-engine.ts`) and the workspace switches configs; Event Flow placeholder renders in GraphWorkspace. Dependency Tree uses actual enum `EXPOSES` (not spec "EXPORTS").
 
 ### Work Unit C5-W3: `feat(viz): search and keyboard shortcuts`
 
-- [ ] C5-05: Create `GraphSearchBar` + match logic — FQN/label contains match, `primary-500` glow ring, auto-center first match, `Ctrl+F` focus
+- [x] C5-05: Create `GraphSearchBar` + match logic — FQN/label contains match, `primary-500` glow ring, auto-center first match, `Ctrl+F` focus
   - Files: `src/frontend/src/components/graph/graph-search-bar.tsx`, `src/frontend/src/lib/visualization/search.ts` (new)
   - Spec: VV-003, VI-005 (Ctrl+F)
   - Tests: `graph-search-bar.test.tsx` — match set, glow class, auto-center first, Ctrl+F focus
   - Est. lines: 160 | Depends on: C5-01, C2-05
-- [ ] C5-06: Create keyboard shortcuts hook — `f` fit, `+`/`−` zoom, `r` reset, `Esc` deselect, `Ctrl+F` search, `1`–`7` views
+  - NOTE (C5 apply): launch C5-04 = `hooks/use-graph-search.ts` (pure `findMatches` + highlight/centerOn wiring); search input lives IN GraphFilterBar (wired via `searchInputRef` + `onSearchSubmit`); Ctrl+F focus wired through `useKeyboardShortcuts`.
+- [x] C5-06: Create keyboard shortcuts hook — `f` fit, `+`/`−` zoom, `r` reset, `Esc` deselect, `Ctrl+F` search, `1`–`7` views
   - Files: `src/frontend/src/components/graph/graph-keyboard.ts` (new)
   - Spec: VI-005
   - Tests: `graph-keyboard.test.ts` — each key dispatch, Esc deselects + closes panel, `3` switches view
   - Est. lines: 110 | Depends on: C5-05, C5-03, C2-05
+  - NOTE (C5 apply): created at `lib/visualization/hooks/use-keyboard-shortcuts.ts`; ignores shortcuts while typing in inputs and for Ctrl/Cmd/Alt-modified keys other than Ctrl/Cmd+F; `r` = fit + clear selection/focus.
 
 ### Work Unit C5-W4: `feat(viz): context menu and graph route`
 
-- [ ] C5-07: Create `GraphContextMenu` — right-click: Copy FQN, Show Dependencies, Show Dependents, Center on Node; `.glass-elevated`; dismiss on outside click
+- [x] C5-07: Create `GraphContextMenu` — right-click: Copy FQN, Show Dependencies, Show Dependents, Center on Node; `.glass-elevated`; dismiss on outside click
   - Files: `src/frontend/src/components/graph/graph-context-menu.tsx` (new)
   - Spec: VI-004
   - Tests: `graph-context-menu.test.tsx` — 4 actions, Copy FQN writes clipboard, outside click dismisses
   - Est. lines: 140 | Depends on: C2-05, C4-02
-- [ ] C5-08: Create graph route — server shell → `GraphWorkspace`, add "View Graph" link on repo page, feature-flag the route (flag off → mock restored)
+  - NOTE (C5 apply): menu writes `navigator.clipboard` directly + closes; clamps to viewport; adapter contract gained `onNodeContextMenu` (adapter.ts + ReactFlowAdapter + GraphCanvas prop).
+- [x] C5-08: Create graph route — server shell → `GraphWorkspace`, add "View Graph" link on repo page, feature-flag the route (flag off → mock restored)
   - Files: `src/frontend/src/app/(dashboard)/repositories/[id]/graph/page.tsx` (new), `src/frontend/src/app/(dashboard)/repositories/[id]/page.tsx` (modify)
   - Spec: VE-001 (page render), proposal rollback flag
   - Tests: e2e `src/frontend/e2e/graph.spec.ts` — load → render → click node → detail panel → filter → keyboard
   - Est. lines: 220 | Depends on: C5-06, C5-07, C3-05
+  - NOTE (C5 apply): GraphWorkspace (launch C5-07) created + route shell + View Graph link. E2E NOT added: the route sits behind ProtectedRoute (client auth) + the KG API — no backend/auth seed exists in this env, so a Playwright spec would be red-on-green; the full flow is covered by `graph-workspace.test.tsx` (9 tests: loading/data/error/empty/no-results/Event-Flow) + component tests.
 
 ## Slice C6: WebGL Scale Engine — PR #6 (GATED)
 
