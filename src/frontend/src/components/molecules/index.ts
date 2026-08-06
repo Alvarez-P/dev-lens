@@ -12,3 +12,6 @@ export type { PageHeaderProps } from './page-header';
 
 export { RepoStatusBadge } from './repo-status-badge';
 export type { RepoStatusBadgeProps, RepoStatus } from './repo-status-badge';
+
+export { LoadingState } from './loading-state';
+export type { LoadingStateProps } from './loading-state';

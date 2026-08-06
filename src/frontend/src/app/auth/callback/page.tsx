@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { post, isSuccessResponse } from '@/lib/api-client';
 import { OAUTH_ENDPOINTS, STORAGE_KEYS } from '@/lib/constants';
+import { Spinner } from '@/components/atoms/spinner';
 
 export default function OAuthCallbackPage(): React.ReactNode {
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export default function OAuthCallbackPage(): React.ReactNode {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-950">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/[0.06] border-t-primary-400" />
+      <Spinner size="lg" />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { get, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 import { Settings, Users, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { MemberList } from '@/components/organizations/member-list';
@@ -68,11 +69,7 @@ export default function OrganizationDetailPage(): React.ReactNode {
   const members = membersQuery.data ?? [];
 
   if (orgQuery.isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <LoadingState variant="page" />;
   }
 
   if (!org) {

@@ -8,7 +8,7 @@ import { Input } from '@/components/atoms/input';
 import { useToast } from '@/components/molecules/toast-provider';
 import { post } from '@/lib/api-client';
 import { KeyRound, ArrowLeft } from 'lucide-react';
-import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 
 function ResetPasswordForm(): React.ReactNode {
   const searchParams = useSearchParams();
@@ -170,13 +170,7 @@ function ResetPasswordForm(): React.ReactNode {
 
 export default function ResetPasswordPage(): React.ReactNode {
   return (
-    <Suspense
-      fallback={
-        <div className="flex justify-center py-12">
-          <Spinner />
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingState />}>
       <ResetPasswordForm />
     </Suspense>
   );

@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { get, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
-import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 import {
   SyncHistoryTimeline,
   type SnapshotItem,
@@ -42,9 +42,7 @@ export default function SyncHistoryPage(): React.ReactNode {
       />
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
+        <LoadingState variant="page" />
       ) : (
         <div className="rounded-xl border border-white/[0.04] bg-surface-950/60 backdrop-blur-sm p-6">
           <SyncHistoryTimeline snapshots={snapshots} />

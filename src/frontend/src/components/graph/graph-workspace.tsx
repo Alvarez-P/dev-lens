@@ -24,7 +24,7 @@ import { GraphDetailPanel } from './graph-detail-panel';
 import { GraphContextMenu } from './graph-context-menu';
 import { EmptyState } from '@/components/molecules/empty-state';
 import { Button } from '@/components/atoms/button';
-import { Skeleton } from '@/components/atoms/skeleton';
+import { LoadingState } from '@/components/molecules/loading-state';
 import { Badge } from '@/components/atoms/badge';
 
 /** Merge two edge lists by id, keeping the incoming edge for duplicates. */
@@ -194,11 +194,10 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
 
     if (load.isLoading) {
       return (
-        <div aria-label="Loading graph" className="flex h-full flex-col gap-4 p-4">
-          <Skeleton width="35%" height="0.75rem" className="mb-1" />
-          <Skeleton width="100%" height="2.5rem" />
-          <Skeleton className="min-h-0 flex-1" />
-        </div>
+        <LoadingState
+          variant="overlay"
+          label={`Loading ${load.nodeCount > 0 ? `${load.nodeCount} nodes...` : 'graph...'}`}
+        />
       );
     }
 

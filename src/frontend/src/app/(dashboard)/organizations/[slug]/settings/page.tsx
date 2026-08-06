@@ -7,7 +7,7 @@ import { get, patch, del, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
-import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 import { useToast } from '@/components/molecules/toast-provider';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -91,11 +91,7 @@ export default function OrganizationSettingsPage(): React.ReactNode {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <LoadingState variant="page" />;
   }
 
   if (!org) {

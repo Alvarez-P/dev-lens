@@ -6,7 +6,7 @@ import { get, post, del, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Badge } from '@/components/atoms/badge';
-import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 import { useToast } from '@/components/molecules/toast-provider';
 import { RepoStatusBadge, type RepoStatus } from '@/components/molecules/repo-status-badge';
 import {
@@ -110,11 +110,7 @@ export default function RepositoryDetailPage(): React.ReactNode {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <LoadingState variant="page" />;
   }
 
   if (error || !repo) {

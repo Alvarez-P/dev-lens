@@ -6,6 +6,7 @@ import { get, del, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 import { useToast } from '@/components/molecules/toast-provider';
 import { Trash2, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -78,11 +79,7 @@ export default function WorkspaceDetailPage(): React.ReactNode {
   }
 
   if (workspaceQuery.isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <LoadingState variant="page" />;
   }
 
   if (!workspace) {

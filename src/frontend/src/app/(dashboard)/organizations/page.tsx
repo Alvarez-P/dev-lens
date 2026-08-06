@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { get, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
-import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 import { EmptyState } from '@/components/molecules/empty-state';
 import { Building2, Plus } from 'lucide-react';
 import { OrgCard } from '@/components/organizations/org-card';
@@ -51,9 +51,7 @@ export default function OrganizationsPage(): React.ReactNode {
       />
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
+        <LoadingState />
       ) : error ? (
         <div className="rounded-xl border border-error-500/30 bg-error-500/5 p-6 text-center">
           <p className="text-sm text-error-400">Failed to load organizations. Please try again.</p>

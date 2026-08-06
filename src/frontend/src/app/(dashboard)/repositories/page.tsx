@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { get, post, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
-import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 import { EmptyState } from '@/components/molecules/empty-state';
 import { RepoCard } from '@/components/repositories/repo-card';
 import { ConnectRepoDialog } from '@/components/repositories/connect-repo-dialog';
@@ -83,9 +83,7 @@ export default function RepositoriesPage(): React.ReactNode {
       />
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
+        <LoadingState />
       ) : error ? (
         <div className="rounded-xl border border-error-500/30 bg-error-500/5 p-6 text-center">
           <p className="text-sm text-error-400">Failed to load repositories. Please try again.</p>

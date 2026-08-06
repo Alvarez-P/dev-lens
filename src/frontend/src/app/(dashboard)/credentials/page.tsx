@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { get, post, del, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
-import { Spinner } from '@/components/atoms/spinner';
+import { LoadingState } from '@/components/molecules/loading-state';
 import { EmptyState } from '@/components/molecules/empty-state';
 import { CredentialCard } from '@/components/repositories/credential-card';
 import { CreateCredentialDialog } from '@/components/repositories/create-credential-dialog';
@@ -78,9 +78,7 @@ export default function CredentialsPage(): React.ReactNode {
       />
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
+        <LoadingState />
       ) : error ? (
         <div className="rounded-xl border border-error-500/30 bg-error-500/5 p-6 text-center">
           <p className="text-sm text-error-400">Failed to load credentials. Please try again.</p>

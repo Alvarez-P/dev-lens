@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Button } from '@/components/atoms/button';
 import { LayoutDashboard, LogIn, UserPlus } from 'lucide-react';
+import { Spinner } from '@/components/atoms/spinner';
 
 export default function Home(): React.ReactNode {
   const { isAuthenticated, isLoading } = useAuth();
@@ -20,7 +21,7 @@ export default function Home(): React.ReactNode {
   if (isLoading || isAuthenticated) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-surface-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/[0.06] border-t-primary-400" />
+        <Spinner size="lg" />
       </main>
     );
   }
