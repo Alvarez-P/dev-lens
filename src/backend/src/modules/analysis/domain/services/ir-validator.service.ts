@@ -180,6 +180,10 @@ export class IrValidator {
   }
 
   private isInternalReference(value: string): boolean {
+    // FQNs use colons as separators (project:package:module#Class).
+    // Built-in / external prefixes that also contain colons should NOT be
+    // treated as internal references — they don't live in our graph.
+    if (value.startsWith('node:')) return false;
     return value.includes(':');
   }
 }

@@ -355,6 +355,9 @@ export class TypeScriptIrBuilder {
 
     for (const mod of modules) {
       for (const specifier of mod.imports) {
+        // Skip Node.js built-in modules — they don't live in our graph
+        if (specifier.startsWith('node:')) continue;
+
         const target = this.resolveImportTarget(specifier, mod.filePath, modulePathToFqn);
         const key = `${mod.moduleFqn}|${target}|import`;
 
