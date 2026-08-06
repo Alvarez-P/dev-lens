@@ -211,7 +211,7 @@ export function Select({
               : clsx(
                   'border-white/[0.08]',
                   focused || open
-                    ? 'border-primary-500/50 bg-surface-800'
+                    ? 'bg-surface-800'
                     : 'bg-surface-900/60 backdrop-blur-sm hover:border-white/[0.14]',
                 ),
             currentValue ? 'text-surface-100' : 'text-surface-500',

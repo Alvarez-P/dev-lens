@@ -70,9 +70,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               variantClasses[variant],
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
-              error
-                ? 'border-error-500 focus:border-error-500 focus:ring-error-500/30'
-                : 'focus:border-primary-500/50',
+              error ? 'border-error-500 focus:border-error-500 focus:ring-error-500/30' : '',
               className,
             )}
             aria-invalid={error ? 'true' : 'false'}
