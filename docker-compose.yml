@@ -123,6 +123,33 @@ services:
     networks:
       - devlens-network
 
+  adminer:
+    image: adminer:latest
+    container_name: devlens-adminer
+    restart: unless-stopped
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: dracula
+    depends_on:
+      - postgres
+    networks:
+      - devlens-network
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: devlens-redis-commander
+    restart: unless-stopped
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - devlens-network
+
   # Kafka is optional — uncomment the lines below when needed
   # kafka:
   #   image: bitnami/kafka:latest

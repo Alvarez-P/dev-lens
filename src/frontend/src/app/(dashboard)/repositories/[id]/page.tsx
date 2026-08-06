@@ -60,6 +60,11 @@ export default function RepositoryDetailPage(): React.ReactNode {
       }
       throw new Error('Repository not found');
     },
+    refetchInterval: (query) => {
+      const r = query.state.data;
+      if (!r) return false;
+      return r.status === 'SYNCING' || r.status === 'CLONING' ? 3000 : false;
+    },
   });
 
   const { data: snapshots = [] } = useQuery({
