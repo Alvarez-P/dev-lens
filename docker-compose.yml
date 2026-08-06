@@ -81,6 +81,7 @@ services:
       - ./src/backend/nest-cli.json:/app/src/backend/nest-cli.json
       - ./src/backend/jest.config.js:/app/src/backend/jest.config.js
       - backend-node-modules:/app/src/backend/node_modules
+      - devlens-repos:/tmp/devlens/repos
     depends_on:
       postgres:
         condition: service_healthy
@@ -180,6 +181,8 @@ volumes:
     name: devlens-backend-node-modules
   frontend-node-modules:
     name: devlens-frontend-node-modules
+  devlens-repos:
+    name: devlens-repos
 
 networks:
   devlens-network:

@@ -20,8 +20,8 @@ export default async function GraphPage({ params }: GraphPageProps): Promise<Rea
   const { id } = await params;
 
   return (
-    <main className="h-[calc(100vh-7rem)] min-h-0">
+    <div className="-m-6 h-[calc(100%+3rem)] overflow-hidden">
       <GraphWorkspace repoId={id} className="h-full" />
-    </main>
+    </div>
   );
 }

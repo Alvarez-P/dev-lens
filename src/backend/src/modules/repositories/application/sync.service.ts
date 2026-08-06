@@ -94,8 +94,10 @@ export class SyncService {
     const url = repo.url.toString();
 
     const isFirstSync = !repo.lastSyncAt;
+    const repoExists = await this.gitService.exists(repoPath).catch(() => false);
 
-    if (isFirstSync) {
+    // Clone if first sync OR if the directory was lost (e.g., container rebuild without persistent volume)
+    if (isFirstSync || !repoExists) {
       await this.gitService.clone(url, repoPath, repo.defaultBranch, credential);
     } else {
       await this.gitService.pull(repoPath, repo.defaultBranch, credential);
