@@ -22,6 +22,8 @@ export class KnowledgeGraphEventHandler {
   ) {}
 
   async handle(event: DomainEvent): Promise<void> {
+    this.logger.log(`Received event: ${event.eventType}`);
+
     if (event.eventType !== ANALYSIS_COMPLETED_EVENT) {
       return;
     }
@@ -30,6 +32,8 @@ export class KnowledgeGraphEventHandler {
     const jobData: KnowledgeGraphJobData = {
       analysisId: payload.analysisId,
     };
+
+    this.logger.log(`Enqueuing knowledge-graph job for analysis ${payload.analysisId}`);
 
     await this.graphQueue.add('build-graph', jobData, {
       attempts: RETRY_ATTEMPTS,

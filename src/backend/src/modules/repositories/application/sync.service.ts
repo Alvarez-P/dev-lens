@@ -64,6 +64,10 @@ export class SyncService {
 
       repo.completeSync(commitInfo.sha, snapshot.id.toString(), sizeBytes, fileCount);
       await this.repositoryRepo.save(repo);
+
+      this.logger.log(
+        `Dispatching ${repo.domainEvents.length} domain events (${repo.domainEvents.map((e) => e.eventType).join(', ')})`,
+      );
       await this.eventDispatcher.dispatchBatch(repo.domainEvents);
 
       this.logger.log(`Sync completed for repository ${repo.name} (${commitInfo.sha})`);

@@ -22,6 +22,8 @@ export class AnalysisEventHandler {
   ) {}
 
   async handle(event: DomainEvent): Promise<void> {
+    this.logger.log(`Received event: ${event.eventType}`);
+
     if (event.eventType !== REPOSITORY_SYNCHRONIZED_EVENT) {
       return;
     }
@@ -31,6 +33,10 @@ export class AnalysisEventHandler {
       snapshotId: payload.snapshotId,
       repositoryId: payload.repositoryId,
     };
+
+    this.logger.log(
+      `Enqueuing analysis job for snapshot ${payload.snapshotId} (repo ${payload.repositoryId})`,
+    );
 
     await this.analysisQueue.add('analyze', jobData, {
       attempts: RETRY_ATTEMPTS,
