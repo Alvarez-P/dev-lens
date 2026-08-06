@@ -171,7 +171,7 @@ export function Select({
   }, [activeIndex, open, scrollActiveIntoView]);
 
   return (
-    <div className="w-full" ref={containerRef}>
+    <div ref={containerRef} className={className}>
       {label && (
         <label htmlFor={selectId} className="mb-1.5 block text-sm font-medium text-surface-300">
           {label}
@@ -215,7 +215,6 @@ export function Select({
                     : 'bg-surface-900/60 backdrop-blur-sm hover:border-white/[0.14]',
                 ),
             currentValue ? 'text-surface-100' : 'text-surface-500',
-            className,
           )}
           {...props}
         >
