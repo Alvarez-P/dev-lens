@@ -43,6 +43,8 @@ export interface ProgressiveLoadResult {
   progress: number;
   loadedCount: number;
   nodeCount: number;
+  /** Snapshot version the loaded chunks belong to (drives the export query). */
+  snapshotVersion: number | undefined;
   /** Accumulated, deduped nodes across all loaded chunks. */
   nodes: GraphNode[];
   hasMore: boolean;
@@ -189,6 +191,7 @@ export function useProgressiveLoad(
     progress,
     loadedCount: loadedNodes.length,
     nodeCount,
+    snapshotVersion: snapshotQuery.data?.version,
     nodes: loadedNodes,
     hasMore,
     error,
