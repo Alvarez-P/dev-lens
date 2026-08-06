@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import type { NodeProps } from '@xyflow/react';
 import {
   FolderGit2,
@@ -121,5 +121,22 @@ describe('custom node components (12 types)', () => {
     render(<Component {...makeNodeProps(makeNode(NodeType.SERVICE))} />);
 
     expect(screen.queryByTestId('node-deprecated')).not.toBeInTheDocument();
+  });
+
+  it('renders hover tooltip with type icon, label and FQN (REQ-VI-003)', () => {
+    const node = makeNode(NodeType.CONTROLLER, 'AuthController');
+    node.fqn = 'com.example.auth.AuthController';
+    const Component = nodeTypes[NodeType.CONTROLLER];
+
+    render(<Component {...makeNodeProps(node)} />);
+
+    // Tooltip is always in the DOM (opacity-0 by default, group-hover:opacity-100 via CSS)
+    const tooltip = screen.getByTestId('node-tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip).toHaveTextContent('AuthController');
+    expect(tooltip).toHaveTextContent('Controller');
+    expect(tooltip).toHaveTextContent('com.example.auth.AuthController');
+    // Verify the tooltip has an SVG icon (lucide)
+    expect(tooltip.querySelector('svg')).not.toBeNull();
   });
 });

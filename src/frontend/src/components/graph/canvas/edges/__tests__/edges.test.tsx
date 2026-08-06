@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import type { EdgeProps } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 
@@ -115,4 +115,26 @@ describe('custom edge components (6 types)', () => {
       }
     });
   }
+
+  it('thickens and shows type label on hover (REQ-VI-002)', () => {
+    const Component = edgeTypes[EdgeType.DEPENDS_ON];
+    const edge = makeEdge(EdgeType.DEPENDS_ON);
+
+    render(<Component {...makeEdgeProps(edge)} />);
+
+    const group = screen.getByTestId(`edge-group-${edge.id}`);
+    expect(group.getAttribute('data-hovered')).toBeFalsy();
+    expect(screen.queryByTestId(`edge-label-${edge.id}`)).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(group);
+
+    expect(group.getAttribute('data-hovered')).toBe('true');
+    expect(screen.getByTestId(`edge-label-${edge.id}`)).toBeInTheDocument();
+    expect(screen.getByTestId(`edge-label-${edge.id}`)).toHaveTextContent('DEPENDS_ON');
+
+    fireEvent.mouseLeave(group);
+
+    expect(group.getAttribute('data-hovered')).toBeFalsy();
+    expect(screen.queryByTestId(`edge-label-${edge.id}`)).not.toBeInTheDocument();
+  });
 });
