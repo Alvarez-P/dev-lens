@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Button } from '@/components/atoms/button';
@@ -7,6 +9,21 @@ import { LayoutDashboard, LogIn, UserPlus } from 'lucide-react';
 
 export default function Home(): React.ReactNode {
   const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace('/organizations');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading || isAuthenticated) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-surface-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/[0.06] border-t-primary-400" />
+      </main>
+    );
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
@@ -15,28 +32,16 @@ export default function Home(): React.ReactNode {
         <p className="mt-4 text-lg text-surface-400">Software Intelligence Platform</p>
 
         <div className="mt-10 flex items-center justify-center gap-4">
-          {isLoading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/[0.06] border-t-primary-400" />
-          ) : isAuthenticated ? (
-            <Link href="/">
-              <Button leftIcon={<LayoutDashboard className="h-4 w-4" />} size="lg">
-                Go to Dashboard
-              </Button>
-            </Link>
-          ) : (
-            <>
-              <Link href="/login">
-                <Button variant="outline" size="lg" leftIcon={<LogIn className="h-4 w-4" />}>
-                  Sign in
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button size="lg" leftIcon={<UserPlus className="h-4 w-4" />}>
-                  Sign up
-                </Button>
-              </Link>
-            </>
-          )}
+          <Link href="/login">
+            <Button variant="outline" size="lg" leftIcon={<LogIn className="h-4 w-4" />}>
+              Sign in
+            </Button>
+          </Link>
+          <Link href="/register">
+            <Button size="lg" leftIcon={<UserPlus className="h-4 w-4" />}>
+              Sign up
+            </Button>
+          </Link>
         </div>
       </div>
 

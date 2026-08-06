@@ -23,7 +23,7 @@ export default function OAuthCallbackPage(): React.ReactNode {
         }
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken);
         localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken);
-        window.location.href = '/';
+        window.location.href = '/organizations';
       })
       .catch(() => {
         setError('Authentication failed. Please try again.');

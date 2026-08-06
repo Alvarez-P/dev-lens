@@ -78,7 +78,7 @@ export default function RegisterPage(): React.ReactNode {
         lastName: formData.lastName,
       });
       toast('Account created successfully!', 'success');
-      router.push('/');
+      router.push('/organizations');
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Registration failed. Please try again.';

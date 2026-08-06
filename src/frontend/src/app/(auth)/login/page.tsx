@@ -46,7 +46,7 @@ export default function LoginPage(): React.ReactNode {
     try {
       await login({ email, password });
       toast('Welcome back!', 'success');
-      router.push('/');
+      router.push('/organizations');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed. Please try again.';
       toast(message, 'error');
