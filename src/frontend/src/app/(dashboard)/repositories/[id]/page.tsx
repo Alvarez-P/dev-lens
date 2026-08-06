@@ -221,15 +221,15 @@ export default function RepositoryDetailPage(): React.ReactNode {
           </div>
         )}
 
-        {(repo.sizeBytes !== null || repo.fileCount !== null) && (
+        {(typeof repo.sizeBytes === 'number' || typeof repo.fileCount === 'number') && (
           <div className="mt-4 flex gap-6 border-t border-white/[0.04] pt-4">
-            {repo.sizeBytes !== null && (
+            {typeof repo.sizeBytes === 'number' && (
               <span className="flex items-center gap-1.5 text-sm text-surface-400">
                 <HardDrive className="h-4 w-4" />
                 {formatBytes(repo.sizeBytes)}
               </span>
             )}
-            {repo.fileCount !== null && (
+            {typeof repo.fileCount === 'number' && (
               <span className="flex items-center gap-1.5 text-sm text-surface-400">
                 <FileText className="h-4 w-4" />
                 {repo.fileCount.toLocaleString()} files
