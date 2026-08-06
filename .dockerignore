@@ -3,6 +3,9 @@ node_modules
 .github
 .husky
 .atl
+dist
+.next
+coverage
 docs
 docker
 *.md

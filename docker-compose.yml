@@ -63,12 +63,24 @@ services:
     build:
       context: .
       dockerfile: ./src/backend/Dockerfile
+      target: development
     container_name: devlens-backend
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT}:3001"
     env_file:
       - ./src/backend/.env
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./src/backend/src:/app/src/backend/src
+      - ./src/backend/test:/app/src/backend/test
+      - ./src/backend/package.json:/app/src/backend/package.json
+      - ./src/backend/tsconfig.json:/app/src/backend/tsconfig.json
+      - ./src/backend/tsconfig.build.json:/app/src/backend/tsconfig.build.json
+      - ./src/backend/nest-cli.json:/app/src/backend/nest-cli.json
+      - ./src/backend/jest.config.js:/app/src/backend/jest.config.js
+      - backend-node-modules:/app/src/backend/node_modules
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,12 +88,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/v1/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
     networks:
       - devlens-network
 
@@ -89,15 +95,31 @@ services:
     build:
       context: .
       dockerfile: ./src/frontend/Dockerfile
+      target: development
     container_name: devlens-frontend
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT}:3000"
     env_file:
       - ./src/frontend/.env
+    environment:
+      NODE_ENV: development
+      NEXT_WEBPACK_POLLING: "300"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./src/frontend/src:/app/src/frontend/src
+      - ./src/frontend/public:/app/src/frontend/public
+      - ./src/frontend/package.json:/app/src/frontend/package.json
+      - ./src/frontend/tsconfig.json:/app/src/frontend/tsconfig.json
+      - ./src/frontend/next.config.js:/app/src/frontend/next.config.js
+      - ./src/frontend/tailwind.config.ts:/app/src/frontend/tailwind.config.ts
+      - ./src/frontend/postcss.config.js:/app/src/frontend/postcss.config.js
+      - ./src/frontend/vitest.config.ts:/app/src/frontend/vitest.config.ts
+      - ./src/frontend/vitest.setup.ts:/app/src/frontend/vitest.setup.ts
+      - ./src/frontend/.eslintrc.json:/app/src/frontend/.eslintrc.json
+      - frontend-node-modules:/app/src/frontend/node_modules
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - devlens-network
 
@@ -127,8 +149,10 @@ volumes:
     name: devlens-redis-data
   devlens-minio-data:
     name: devlens-minio-data
-  # devlens-kafka-data:
-  #   name: devlens-kafka-data
+  backend-node-modules:
+    name: devlens-backend-node-modules
+  frontend-node-modules:
+    name: devlens-frontend-node-modules
 
 networks:
   devlens-network:
