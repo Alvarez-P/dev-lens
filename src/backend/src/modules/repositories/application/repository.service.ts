@@ -246,6 +246,7 @@ export class RepositoryService {
       credentialId: repo.credentialId,
       lastSyncAt: repo.lastSyncAt?.toISOString() ?? null,
       lastSyncCommit: repo.lastSyncCommit,
+      lastSyncError: repo.lastSyncError,
       sizeBytes: repo.sizeBytes,
       fileCount: repo.fileCount,
       createdAt: repo.createdAt.toISOString(),

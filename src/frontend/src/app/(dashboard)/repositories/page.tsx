@@ -20,6 +20,7 @@ interface Repository {
   status: RepoStatus;
   defaultBranch: string;
   lastSyncAt: string | null;
+  lastSyncError: string | null;
   fileCount: number | null;
 }
 

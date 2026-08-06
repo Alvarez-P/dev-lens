@@ -97,6 +97,9 @@ export class RepositoryResponseDto {
   @ApiProperty({ nullable: true, example: 'abc123def' })
   lastSyncCommit!: string | null;
 
+  @ApiProperty({ nullable: true, example: 'Authentication failed: repository is private' })
+  lastSyncError!: string | null;
+
   @ApiProperty({ nullable: true, example: 1024000 })
   sizeBytes!: number | null;
 

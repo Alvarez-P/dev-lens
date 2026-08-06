@@ -48,6 +48,9 @@ export class RepositoryTypeOrmEntity {
   @Column({ name: 'last_sync_commit', nullable: true, type: 'varchar', length: 64 })
   lastSyncCommit!: string | null;
 
+  @Column({ name: 'last_sync_error', nullable: true, type: 'text' })
+  lastSyncError!: string | null;
+
   @Column({ name: 'size_bytes', nullable: true, type: 'bigint' })
   sizeBytes!: number | null;
 

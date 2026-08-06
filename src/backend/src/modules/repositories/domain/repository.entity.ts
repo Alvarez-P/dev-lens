@@ -25,6 +25,7 @@ export class Repository extends AggregateRoot<RepositoryId> {
     public credentialId: string | null,
     public lastSyncAt: Date | null,
     public lastSyncCommit: string | null,
+    public lastSyncError: string | null,
     public sizeBytes: number | null,
     public fileCount: number | null,
     public readonly createdAt: Date,
@@ -54,6 +55,7 @@ export class Repository extends AggregateRoot<RepositoryId> {
       ownerId,
       RepositoryStatus.ACTIVE,
       credentialId,
+      null,
       null,
       null,
       null,
@@ -90,6 +92,7 @@ export class Repository extends AggregateRoot<RepositoryId> {
     credentialId: string | null,
     lastSyncAt: Date | null,
     lastSyncCommit: string | null,
+    lastSyncError: string | null,
     sizeBytes: number | null,
     fileCount: number | null,
     createdAt: Date,
@@ -108,6 +111,7 @@ export class Repository extends AggregateRoot<RepositoryId> {
       credentialId,
       lastSyncAt,
       lastSyncCommit,
+      lastSyncError,
       sizeBytes,
       fileCount,
       createdAt,
@@ -165,6 +169,7 @@ export class Repository extends AggregateRoot<RepositoryId> {
 
   markAsError(errorMessage?: string): void {
     this.status = RepositoryStatus.ERROR;
+    this.lastSyncError = errorMessage ?? null;
     this.updatedAt = new Date();
 
     this.addDomainEvent(

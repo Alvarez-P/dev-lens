@@ -34,6 +34,7 @@ interface RepositoryDetail {
   defaultBranch: string;
   lastSyncAt: string | null;
   lastSyncCommit: string | null;
+  lastSyncError: string | null;
   sizeBytes: number | null;
   fileCount: number | null;
   createdAt: string;
@@ -224,6 +225,15 @@ export default function RepositoryDetailPage(): React.ReactNode {
             <p className="mt-1 font-mono text-sm text-primary-400">
               {repo.lastSyncCommit.slice(0, 12)}
             </p>
+          </div>
+        )}
+
+        {repo.lastSyncError && (
+          <div className="mt-4 border-t border-error-500/20 pt-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-error-400">
+              Last Sync Error
+            </p>
+            <p className="mt-1 text-sm text-error-300">{repo.lastSyncError}</p>
           </div>
         )}
 

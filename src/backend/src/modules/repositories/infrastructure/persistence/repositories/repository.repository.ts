@@ -68,6 +68,7 @@ export class RepositoryRepository {
       entity.credentialId,
       entity.lastSyncAt,
       entity.lastSyncCommit,
+      entity.lastSyncError,
       entity.sizeBytes,
       entity.fileCount,
       entity.createdAt,
@@ -89,6 +90,7 @@ export class RepositoryRepository {
     entity.credentialId = repo.credentialId;
     entity.lastSyncAt = repo.lastSyncAt;
     entity.lastSyncCommit = repo.lastSyncCommit;
+    entity.lastSyncError = repo.lastSyncError;
     entity.sizeBytes = repo.sizeBytes ?? null;
     entity.fileCount = repo.fileCount ?? null;
     entity.createdAt = repo.createdAt;
