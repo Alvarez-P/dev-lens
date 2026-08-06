@@ -54,7 +54,7 @@ export function GraphFilterBar({
   const setSearchQuery = useGraphStore((state) => state.setSearchQuery);
   const resetFilters = useGraphStore((state) => state.resetFilters);
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const activeCount = countActiveFilters({
     visibleNodeTypes,
@@ -163,16 +163,17 @@ export function GraphFilterBar({
           <Button
             variant="ghost"
             size="sm"
-            aria-label="Toggle filters"
-            title="Toggle filters"
-            className="sm:hidden"
+            aria-label={collapsed ? 'Expand filters' : 'Collapse filters'}
+            title={collapsed ? 'Expand filters' : 'Collapse filters'}
             onClick={() => setCollapsed((value) => !value)}
             leftIcon={<SlidersHorizontal className="h-4 w-4" />}
-          />
+          >
+            {collapsed ? 'Filters' : 'Hide'}
+          </Button>
         </div>
       </div>
 
-      <div className={clsx('space-y-3', collapsed && 'hidden sm:block')}>
+      <div className={clsx('space-y-3', collapsed && 'hidden')}>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="w-10 text-xs font-medium uppercase tracking-wide text-surface-500">
             Types
