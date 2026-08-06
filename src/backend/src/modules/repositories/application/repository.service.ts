@@ -51,6 +51,15 @@ export class RepositoryService {
 
     await this.eventDispatcher.dispatchBatch(repository.domainEvents);
 
+    // Trigger initial clone on first connect
+    repository.startCloning();
+    await this.repositoryRepo.save(repository);
+
+    await this.syncQueue.add('sync', {
+      repositoryId: repository.id.toString(),
+      userId,
+    });
+
     return this.toResponse(repository);
   }
 

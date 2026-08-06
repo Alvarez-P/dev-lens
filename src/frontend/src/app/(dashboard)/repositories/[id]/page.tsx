@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { Badge } from '@/components/atoms/badge';
 import { Spinner } from '@/components/atoms/spinner';
+import { useToast } from '@/components/molecules/toast-provider';
 import { RepoStatusBadge, type RepoStatus } from '@/components/molecules/repo-status-badge';
 import {
   SyncHistoryTimeline,
@@ -42,6 +43,7 @@ export default function RepositoryDetailPage(): React.ReactNode {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const id = params.id as string;
 
   const {
@@ -79,8 +81,12 @@ export default function RepositoryDetailPage(): React.ReactNode {
       }
     },
     onSuccess: () => {
+      toast('Sync started', 'success');
       queryClient.invalidateQueries({ queryKey: ['repository', id] });
       queryClient.invalidateQueries({ queryKey: ['repository-snapshots', id] });
+    },
+    onError: (err) => {
+      toast(err instanceof Error ? err.message : 'Sync failed', 'error');
     },
   });
 

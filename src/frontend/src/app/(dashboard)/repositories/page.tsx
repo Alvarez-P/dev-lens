@@ -36,6 +36,12 @@ export default function RepositoriesPage(): React.ReactNode {
       }
       throw new Error('Failed to fetch repositories');
     },
+    refetchInterval: (query) => {
+      const repos = query.state.data;
+      if (!repos || repos.length === 0) return false;
+      // Poll every 5s while any repo is syncing or cloning
+      return repos.some((r) => r.status === 'SYNCING' || r.status === 'CLONING') ? 5000 : false;
+    },
   });
 
   const repositories = data ?? [];
