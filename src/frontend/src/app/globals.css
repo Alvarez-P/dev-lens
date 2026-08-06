@@ -91,6 +91,10 @@
 }
 
 /* React Flow dark theme — default controls have white buttons on dark bg */
+.react-flow__controls {
+  @apply rounded-lg border border-white/[0.06] bg-surface-950 shadow-none !important;
+}
+
 .react-flow__controls-button {
   @apply border-white/[0.06] bg-surface-900 text-surface-300 !important;
   width: 28px;
@@ -107,4 +111,5 @@
 
 .react-flow__minimap {
   @apply rounded-lg border border-white/[0.06] !important;
+  background: #0c0c0f !important;
 }

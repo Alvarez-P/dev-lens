@@ -294,7 +294,7 @@ const ReactFlowAdapterInner = forwardRef<GraphRendererAdapter, ReactFlowAdapterP
       >
         <Background variant={BackgroundVariant.Dots} gap={24} color="#202024" />
         <MiniMap position="bottom-left" className="glass" style={{ width: 160, height: 120 }} />
-        <Controls className="glass" showInteractive={false} />
+        <Controls showInteractive={false} />
       </ReactFlow>
     );
   },
