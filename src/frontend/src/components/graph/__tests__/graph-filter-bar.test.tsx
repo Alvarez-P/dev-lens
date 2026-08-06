@@ -56,7 +56,9 @@ describe('GraphFilterBar — layer filter', () => {
   it('sets the layer filter through the store', () => {
     render(<GraphFilterBar />);
 
-    fireEvent.change(screen.getByLabelText(/layer/i), { target: { value: 'domain' } });
+    // Open custom combobox
+    fireEvent.click(screen.getByRole('combobox', { name: /layer/i }));
+    fireEvent.mouseDown(screen.getByRole('option', { name: 'Domain' }));
 
     expect(useGraphStore.getState().layerFilter).toBe('domain');
   });
@@ -67,7 +69,9 @@ describe('GraphFilterBar — layer filter', () => {
     });
     render(<GraphFilterBar />);
 
-    fireEvent.change(screen.getByLabelText(/layer/i), { target: { value: '' } });
+    // Open custom combobox
+    fireEvent.click(screen.getByRole('combobox', { name: /layer/i }));
+    fireEvent.mouseDown(screen.getByRole('option', { name: 'All layers' }));
 
     expect(useGraphStore.getState().layerFilter).toBeNull();
   });

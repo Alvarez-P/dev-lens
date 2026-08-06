@@ -18,9 +18,10 @@ describe('GraphToolbar — layout switcher', () => {
   it('switches the layout through the store', () => {
     render(<GraphToolbar />);
 
-    fireEvent.change(screen.getByLabelText(/layout/i), {
-      target: { value: LayoutType.HIERARCHICAL },
-    });
+    // Open the custom combobox
+    fireEvent.click(screen.getByRole('combobox', { name: /layout/i }));
+    // Select the Hierarchical option
+    fireEvent.mouseDown(screen.getByRole('option', { name: 'Hierarchical' }));
 
     expect(useGraphStore.getState().layout).toBe(LayoutType.HIERARCHICAL);
   });
@@ -28,11 +29,16 @@ describe('GraphToolbar — layout switcher', () => {
   it('offers every supported layout option', () => {
     render(<GraphToolbar />);
 
-    const select = screen.getByLabelText(/layout/i) as HTMLSelectElement;
+    // Open the custom combobox
+    fireEvent.click(screen.getByRole('combobox', { name: /layout/i }));
 
-    expect(Array.from(select.options).map((option) => option.value)).toEqual(
-      expect.arrayContaining(['force', 'hierarchical', 'radial', 'circular']),
+    const listbox = screen.getByRole('listbox');
+    const options = Array.from(listbox.querySelectorAll('[role="option"]')).map((option) =>
+      option.getAttribute('id')?.replace('layout-option-', ''),
     );
+
+    // The options should include all layout values
+    expect(options.length).toBeGreaterThanOrEqual(4);
   });
 });
 

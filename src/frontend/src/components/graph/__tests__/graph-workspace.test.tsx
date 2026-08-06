@@ -159,12 +159,12 @@ describe('mergeEdges (workspace graph merging)', () => {
 });
 
 describe('GraphWorkspace — loading state', () => {
-  it('renders a loading skeleton while the graph is loading', () => {
+  it('renders a loading overlay while the graph is loading', () => {
     mockLoad({ isLoading: true, nodes: [], nodeCount: 0 });
 
     render(<GraphWorkspace repoId="repo-1" />);
 
-    expect(screen.getByLabelText('Loading graph')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: /loading graph/i })).toBeInTheDocument();
   });
 });
 
