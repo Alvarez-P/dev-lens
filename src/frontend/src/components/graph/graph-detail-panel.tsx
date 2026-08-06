@@ -90,7 +90,7 @@ export function GraphDetailPanel({
         />
       ) : (
         <>
-          <header className="flex items-start justify-between gap-2 border-b border-white/[0.06] px-4 py-3">
+          <header className="flex items-start justify-between gap-2 border-b border-white/[0.06] px-5 py-4">
             <div className="min-w-0">
               {selectedNode && !isDetailLoading ? <NodeHeader node={selectedNode} /> : null}
             </div>
@@ -104,7 +104,7 @@ export function GraphDetailPanel({
             />
           </header>
 
-          <div className="flex-1 px-4 py-4">
+          <div className="flex-1 px-5 py-4">
             {selectedNodeId ? (
               isDetailLoading ? (
                 <div aria-label="Loading node details">
