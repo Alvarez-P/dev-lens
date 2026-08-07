@@ -102,6 +102,23 @@ export class FileManifestService {
     return changed / totalFiles > threshold;
   }
 
+  /**
+   * Deterministic composite hash of a per-file manifest (REQ-EP-006).
+   *
+   * Sorts the manifest entries by path before hashing so the digest depends
+   * only on file contents — any added/modified/deleted file changes it. This
+   * is the `manifestSha256` cache key used by the enrichment idempotency
+   * check and by MockProvider fixture lookup.
+   */
+  static computeManifestSha256(manifest: Record<string, string>): string {
+    const canonical = Object.entries(manifest)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([path, hash]) => `${path}\u0000${hash}`)
+      .join('\n');
+
+    return createHash('sha256').update(canonical).digest('hex');
+  }
+
   private extensionOf(filePath: string): string {
     const dotIndex = filePath.lastIndexOf('.');
 

@@ -58,11 +58,11 @@ Chain strategy: pending
 
 ## Phase 5: Pipeline + Merge + Docs
 
-- [ ] 5.1 EnrichmentRepository: findByAnalysisId idempotency + save (REQ-EP-006)
-- [ ] 5.2 ThreeGatesValidator: schema retry, referential drop, confidence ≥0.7 (REQ-EP-004)
-- [ ] 5.3 EnrichmentService 7-stage orchestration + per-unit fallback (REQ-EP-003)
-- [ ] 5.4 JobProcessor (attempts/backoff/DLQ) + EventHandler ai.enabled gate (REQ-EP-001/002)
-- [ ] 5.5 KG merge: resolveClassType AI override + GUARD/PIPE/INTERCEPTOR/MIDDLEWARE nodes + PROTECTS/TRANSFORMS edges (REQ-EP-007; coord. w/ RFV)
-- [ ] 5.6 Wire AiModule into app.module.ts
-- [ ] 5.7 Amend RFC-009 §14: signatures-only override, XML isolation, deny-list
-- [ ] 5.8 Integration specs: happy path, provider-down fallback, manifest idempotency (REQ-EP-003/009)
+- [x] 5.1 EnrichmentRepository: findByAnalysisId idempotency + save (REQ-EP-006)
+- [x] 5.2 ThreeGatesValidator: schema retry, referential drop, confidence ≥0.7 (REQ-EP-004)
+- [x] 5.3 EnrichmentService 7-stage orchestration + per-unit fallback (REQ-EP-003)
+- [x] 5.4 JobProcessor (attempts/backoff/DLQ) + EventHandler ai.enabled gate (REQ-EP-001/002)
+- [x] 5.5 KG merge: resolveClassType AI override + GUARD/PIPE/INTERCEPTOR/MIDDLEWARE nodes + PROTECTS/TRANSFORMS edges (REQ-EP-007; coord. w/ RFV)
+- [x] 5.6 Wire AiModule into app.module.ts
+- [x] 5.7 Amend RFC-009 §14: signatures-only override, XML isolation, deny-list
+- [x] 5.8 Integration specs: happy path, provider-down fallback, manifest idempotency (REQ-EP-003/009)

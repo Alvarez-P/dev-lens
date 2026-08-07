@@ -9,6 +9,8 @@ describe('EdgeType enum', () => {
       'IMPORTS',
       'DEPENDS_ON',
       'EXPOSES',
+      'PROTECTS',
+      'TRANSFORMS',
     ]);
   });
 
@@ -19,5 +21,7 @@ describe('EdgeType enum', () => {
     expect(EdgeType.IMPORTS).toBe('IMPORTS');
     expect(EdgeType.DEPENDS_ON).toBe('DEPENDS_ON');
     expect(EdgeType.EXPOSES).toBe('EXPOSES');
+    expect(EdgeType.PROTECTS).toBe('PROTECTS');
+    expect(EdgeType.TRANSFORMS).toBe('TRANSFORMS');
   });
 });

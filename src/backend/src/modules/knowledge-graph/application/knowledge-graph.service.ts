@@ -3,6 +3,7 @@ import { AnalysisRepository } from '../../analysis/infrastructure/persistence/re
 import { AnalysisId } from '../../analysis/domain/analysis-id.vo';
 import { SnapshotRepository } from '../../repositories/infrastructure/persistence/repositories/snapshot.repository';
 import { DomainEventDispatcher } from '../../../shared/domain/domain-event-dispatcher';
+import { EnrichmentRepository } from '../../ai/infrastructure/persistence/repositories/enrichment.repository';
 import { SemanticModelBuilder } from './semantic-model.builder';
 import { GraphBuilder } from './graph.builder';
 import { GraphRepository } from '../infrastructure/persistence/repositories/graph.repository';
@@ -26,6 +27,7 @@ export class KnowledgeGraphService {
     private readonly graphRepository: GraphRepository,
     @Inject('DOMAIN_EVENT_DISPATCHER')
     private readonly eventDispatcher: DomainEventDispatcher,
+    private readonly enrichmentRepository: EnrichmentRepository,
   ) {}
 
   async buildGraph(analysisId: string): Promise<void> {
@@ -56,7 +58,8 @@ export class KnowledgeGraphService {
     const snapshotId = snapshot.id.toString();
 
     try {
-      const semanticModel = this.semanticModelBuilder.build(analysis.ir);
+      const enrichment = await this.enrichmentRepository.findByAnalysisId(analysisId);
+      const semanticModel = this.semanticModelBuilder.build(analysis.ir, enrichment ?? undefined);
       const { nodes, edges } = this.graphBuilder.build(semanticModel, repositoryId, version);
 
       const previousNodes = latest?.nodes ?? [];

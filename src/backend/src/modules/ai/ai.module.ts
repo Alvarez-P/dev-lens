@@ -1,8 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Inject, Module, OnModuleInit, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule } from '../../config/config.module';
 import { ConfigService } from '../../config/config.service';
+import { DomainEventDispatcher } from '../../shared/domain/domain-event-dispatcher';
+import { AnalysisModule } from '../analysis/analysis.module';
+import { KnowledgeGraphModule } from '../knowledge-graph/knowledge-graph.module';
 import { AIProvider } from './domain/ai-provider.interface';
 import { ProviderSelectorService } from './application/provider-selector.service';
 import { CodeSketchBuilder } from './application/code-sketch.builder';
@@ -11,6 +15,13 @@ import { SketchCache } from './application/sketch-cache';
 import { PromptTemplateLoader } from './application/prompt-template-loader.service';
 import { FrameworkConfigLoader } from './application/framework-config-loader.service';
 import { PromptBuilder } from './application/prompt-builder.service';
+import { ContextAssembler } from './application/context-assembler.service';
+import { ThreeGatesValidator } from './application/three-gates-validator.service';
+import { EnrichmentService } from './application/enrichment.service';
+import { EnrichmentRepository } from './infrastructure/persistence/repositories/enrichment.repository';
+import { IrEnrichmentEntity } from './infrastructure/persistence/typeorm/enrichment.typeorm-entity';
+import { EnrichmentJobProcessor } from './infrastructure/jobs/enrichment.job-processor';
+import { EnrichmentEventHandler } from './infrastructure/events/enrichment-event-handler';
 import { OpenAIProvider } from './infrastructure/openai.provider';
 import { OllamaProvider } from './infrastructure/ollama.provider';
 import { MockProvider } from './infrastructure/mock.provider';
@@ -22,11 +33,20 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
  * and knowledge-graph queues: 3 attempts with exponential backoff, DLQ
  * routing (REQ-EP-002). Providers are registered behind the
  * AI_PROVIDER_REGISTRY token, mirroring PARSER_REGISTRY (REQ-AP-003/006).
+ *
+ * Cross-module deps (AnalysisRepository for IR, GraphQueryService for the
+ * KG context) come from AnalysisModule + KnowledgeGraphModule; the reverse
+ * dependency (KnowledgeGraphModule → EnrichmentRepository for the KG merge,
+ * REQ-EP-007) is broken with forwardRef. The enrichment event handler is
+ * registered for `analysis.completed` in onModuleInit (REQ-EP-001).
  */
 @Module({
   imports: [
+    TypeOrmModule.forFeature([IrEnrichmentEntity]),
     BullModule.registerQueue({ name: AI_ENRICHMENT_QUEUE }, { name: AI_ENRICHMENT_DLQ }),
     ConfigModule,
+    AnalysisModule,
+    forwardRef(() => KnowledgeGraphModule),
   ],
   providers: [
     ProviderSelectorService,
@@ -36,6 +56,12 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
     PromptTemplateLoader,
     FrameworkConfigLoader,
     PromptBuilder,
+    ContextAssembler,
+    ThreeGatesValidator,
+    EnrichmentService,
+    EnrichmentRepository,
+    EnrichmentJobProcessor,
+    EnrichmentEventHandler,
     {
       provide: OpenAIProvider,
       useFactory: (config: ConfigService): OpenAIProvider => {
@@ -80,6 +106,24 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
       inject: [OpenAIProvider, OllamaProvider, MockProvider],
     },
   ],
-  exports: [ProviderSelectorService, CodeSketchBuilder, SourceFileFilter, SketchCache],
+  exports: [
+    ProviderSelectorService,
+    CodeSketchBuilder,
+    SourceFileFilter,
+    SketchCache,
+    EnrichmentRepository,
+  ],
 })
-export class AiModule {}
+export class AiModule implements OnModuleInit {
+  constructor(
+    @Inject('DOMAIN_EVENT_DISPATCHER')
+    private readonly eventDispatcher: DomainEventDispatcher,
+    private readonly eventHandler: EnrichmentEventHandler,
+  ) {}
+
+  onModuleInit(): void {
+    this.eventDispatcher.registerHandler('analysis.completed', (event) =>
+      this.eventHandler.handle(event),
+    );
+  }
+}

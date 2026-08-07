@@ -9,7 +9,18 @@ export interface AIDtoField {
   optional: boolean;
 }
 
-/** Per-class classification produced by the LLM (REQ-EP-005). */
+/** Unit that fell back to deterministic classification (REQ-EP-003). */
+export interface FailedUnit {
+  fqn: string;
+  reason: string;
+}
+
+/**
+ * Per-class classification produced by the LLM (REQ-EP-005).
+ *
+ * `status` is set by the confidence gate (REQ-EP-004): `accepted` for
+ * confidence >= 0.7, `low-confidence` when downgraded to `UNKNOWN`.
+ */
 export interface AIClassifiedRole {
   /** FQN matching IrNode.fqn. */
   fqn: string;
@@ -23,6 +34,8 @@ export interface AIClassifiedRole {
   confidence: number;
   /** From IrNode.filePath. */
   sourceFile: string;
+  /** Gate-3 outcome; present only after validation (REQ-EP-004). */
+  status?: 'accepted' | 'low-confidence';
 }
 
 export interface IrEnrichmentProps {
@@ -35,6 +48,8 @@ export interface IrEnrichmentProps {
   /** 0–1 overall framework/architecture confidence. */
   confidence: number;
   classes: AIClassifiedRole[];
+  /** Units that fell back to deterministic classification (REQ-EP-003). */
+  failedUnits?: FailedUnit[];
 }
 
 export interface IrEnrichmentJson extends IrEnrichmentProps {
@@ -67,6 +82,7 @@ export class IrEnrichment extends AggregateRoot<IrEnrichmentId> {
     public readonly confidence: number,
     public readonly classes: readonly AIClassifiedRole[],
     public readonly completedAt: Date,
+    public readonly failedUnits: readonly FailedUnit[] = [],
   ) {
     super(id);
   }
@@ -82,6 +98,7 @@ export class IrEnrichment extends AggregateRoot<IrEnrichmentId> {
       props.confidence,
       Object.freeze([...props.classes]),
       new Date(),
+      Object.freeze([...(props.failedUnits ?? [])]),
     );
   }
 
@@ -95,6 +112,7 @@ export class IrEnrichment extends AggregateRoot<IrEnrichmentId> {
     confidence: number,
     classes: AIClassifiedRole[],
     completedAt: Date,
+    failedUnits: FailedUnit[] = [],
   ): IrEnrichment {
     return new IrEnrichment(
       id,
@@ -106,6 +124,7 @@ export class IrEnrichment extends AggregateRoot<IrEnrichmentId> {
       confidence,
       Object.freeze([...classes]),
       completedAt,
+      Object.freeze([...failedUnits]),
     );
   }
 
@@ -119,6 +138,7 @@ export class IrEnrichment extends AggregateRoot<IrEnrichmentId> {
       architecture: this.architecture,
       confidence: this.confidence,
       classes: [...this.classes],
+      failedUnits: [...this.failedUnits],
       completedAt: this.completedAt.toISOString(),
     };
   }

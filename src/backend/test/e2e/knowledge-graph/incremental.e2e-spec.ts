@@ -6,6 +6,8 @@ import { Global, Module } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 
 import { KnowledgeGraphModule } from '@/modules/knowledge-graph/knowledge-graph.module';
+import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ } from '@/modules/ai/ai.tokens';
+import { IrEnrichmentEntity } from '@/modules/ai/infrastructure/persistence/typeorm/enrichment.typeorm-entity';
 import {
   KNOWLEDGE_GRAPH_QUEUE,
   KNOWLEDGE_GRAPH_DLQ,
@@ -250,6 +252,12 @@ describe('Knowledge Graph Incremental Build (E2E)', () => {
       .useValue({ add: jest.fn() })
       .overrideProvider(getQueueToken(KNOWLEDGE_GRAPH_DLQ))
       .useValue({ add: jest.fn() })
+      .overrideProvider(getQueueToken(AI_ENRICHMENT_QUEUE))
+      .useValue({ add: jest.fn() })
+      .overrideProvider(getQueueToken(AI_ENRICHMENT_DLQ))
+      .useValue({ add: jest.fn() })
+      .overrideProvider(getRepositoryToken(IrEnrichmentEntity))
+      .useValue(mockOrmRepo)
       .compile();
 
     await moduleRef.get(KnowledgeGraphModule).onModuleInit();

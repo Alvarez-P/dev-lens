@@ -10,6 +10,8 @@ import {
   KNOWLEDGE_GRAPH_QUEUE,
   KNOWLEDGE_GRAPH_DLQ,
 } from '@/modules/knowledge-graph/knowledge-graph.tokens';
+import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ } from '@/modules/ai/ai.tokens';
+import { IrEnrichmentEntity } from '@/modules/ai/infrastructure/persistence/typeorm/enrichment.typeorm-entity';
 import { KnowledgeGraphService } from '@/modules/knowledge-graph/application/knowledge-graph.service';
 import { GraphNodeEntity } from '@/modules/knowledge-graph/infrastructure/persistence/typeorm/graph-node.typeorm-entity';
 import { GraphEdgeEntity } from '@/modules/knowledge-graph/infrastructure/persistence/typeorm/graph-edge.typeorm-entity';
@@ -251,6 +253,12 @@ describe('Knowledge Graph Pipeline (E2E)', () => {
       .useValue(graphQueue)
       .overrideProvider(getQueueToken(KNOWLEDGE_GRAPH_DLQ))
       .useValue({ add: jest.fn() })
+      .overrideProvider(getQueueToken(AI_ENRICHMENT_QUEUE))
+      .useValue({ add: jest.fn() })
+      .overrideProvider(getQueueToken(AI_ENRICHMENT_DLQ))
+      .useValue({ add: jest.fn() })
+      .overrideProvider(getRepositoryToken(IrEnrichmentEntity))
+      .useValue(mockOrmRepo)
       .compile();
 
     await moduleRef.get(KnowledgeGraphModule).onModuleInit();

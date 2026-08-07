@@ -83,6 +83,7 @@ describe('KnowledgeGraphService incremental', () => {
     saveGraph: jest.fn(),
   };
   const eventDispatcher = { dispatch: jest.fn(), registerHandler: jest.fn() };
+  const enrichmentRepository = { findByAnalysisId: jest.fn(), save: jest.fn() };
 
   let service: KnowledgeGraphService;
 
@@ -95,6 +96,7 @@ describe('KnowledgeGraphService incremental', () => {
       new GraphBuilder(),
       graphRepository as never,
       eventDispatcher as never,
+      enrichmentRepository as never,
     );
 
     graphRepository.findByAnalysisId.mockResolvedValue(null);

@@ -14,6 +14,10 @@ describe('NodeType enum', () => {
       'Interface',
       'Endpoint',
       'ExternalDependency',
+      'Guard',
+      'Pipe',
+      'Interceptor',
+      'Middleware',
       'Unknown',
     ]);
   });
@@ -30,6 +34,10 @@ describe('NodeType enum', () => {
     expect(NodeType.INTERFACE).toBe('Interface');
     expect(NodeType.ENDPOINT).toBe('Endpoint');
     expect(NodeType.EXTERNAL_DEPENDENCY).toBe('ExternalDependency');
+    expect(NodeType.GUARD).toBe('Guard');
+    expect(NodeType.PIPE).toBe('Pipe');
+    expect(NodeType.INTERCEPTOR).toBe('Interceptor');
+    expect(NodeType.MIDDLEWARE).toBe('Middleware');
     expect(NodeType.UNKNOWN).toBe('Unknown');
   });
 });

@@ -12,20 +12,38 @@ import {
 import { NodeType } from '../domain/node-type.enum';
 import { EdgeType } from '../domain/edge-type.enum';
 import { SemanticModel, SemanticNode, SemanticEdge } from '../domain/semantic-model';
+import { IrEnrichment } from '../../ai/domain/ai-enrichment.entity';
+import { parseLifecycleEntry } from '../../ai/application/three-gates-validator.service';
 
 const ROLE_TO_TYPE: Readonly<Record<string, NodeType>> = {
   controller: NodeType.CONTROLLER,
   service: NodeType.SERVICE,
   repository: NodeType.REPOSITORY,
+  dto: NodeType.DTO,
+  entity: NodeType.ENTITY,
+  guard: NodeType.GUARD,
+  pipe: NodeType.PIPE,
+  interceptor: NodeType.INTERCEPTOR,
+  middleware: NodeType.MIDDLEWARE,
+  module: NodeType.MODULE,
+  interface: NodeType.INTERFACE,
+};
+
+/** Edge from a lifecycle node to the class it guards/transforms (REQ-EP-007). */
+const LIFECYCLE_EDGE: Readonly<Record<string, EdgeType>> = {
+  guard: EdgeType.PROTECTS,
+  pipe: EdgeType.TRANSFORMS,
+  interceptor: EdgeType.TRANSFORMS,
+  middleware: EdgeType.TRANSFORMS,
 };
 
 export class SemanticModelBuilder {
-  build(ir: IrProject): SemanticModel {
+  build(ir: IrProject, enrichment?: IrEnrichment): SemanticModel {
     const nodes: SemanticNode[] = [];
     const edges: SemanticEdge[] = [];
     const knownFqns = new Set<string>([ir.fqn]);
 
-    nodes.push(this.projectNode(ir));
+    nodes.push(this.projectNode(ir, enrichment));
 
     for (const pkg of ir.packages) {
       knownFqns.add(pkg.fqn);
@@ -39,8 +57,13 @@ export class SemanticModelBuilder {
 
         for (const cls of mod.classes) {
           knownFqns.add(cls.fqn);
-          nodes.push(this.classNode(cls, mod.path));
+          const classNode = this.classNode(cls, mod.path, enrichment);
+          nodes.push(classNode);
           edges.push(this.belongsTo(cls.fqn, mod.fqn));
+
+          if (enrichment !== undefined) {
+            this.addLifecycleNodes(cls, enrichment, nodes, edges);
+          }
 
           for (const endpoint of cls.endpoints) {
             knownFqns.add(endpoint.fqn);
@@ -136,12 +159,22 @@ export class SemanticModelBuilder {
     }
   }
 
-  private projectNode(ir: IrProject): SemanticNode {
+  private projectNode(ir: IrProject, enrichment?: IrEnrichment): SemanticNode {
+    const properties: Record<string, unknown> = {
+      language: ir.language.name,
+      rootPath: ir.rootPath,
+    };
+
+    if (enrichment !== undefined) {
+      properties.framework = enrichment.framework;
+      properties.architecture = enrichment.architecture;
+    }
+
     return {
       type: NodeType.PROJECT,
       label: ir.name,
       fqn: ir.fqn,
-      properties: { language: ir.language.name, rootPath: ir.rootPath },
+      properties,
       sourceFile: '',
     };
   }
@@ -172,7 +205,7 @@ export class SemanticModelBuilder {
     };
   }
 
-  private classNode(cls: IrClass, filePath: string): SemanticNode {
+  private classNode(cls: IrClass, filePath: string, enrichment?: IrEnrichment): SemanticNode {
     const properties: Record<string, unknown> = {
       isAbstract: cls.isAbstract,
       isExported: cls.isExported,
@@ -182,13 +215,120 @@ export class SemanticModelBuilder {
       properties.role = cls.role;
     }
 
+    const aiRole = enrichment?.classes.find((entry) => entry.fqn === cls.fqn);
+
+    if (aiRole !== undefined) {
+      properties.role = aiRole.role;
+
+      if (aiRole.dtoFields.length > 0) {
+        properties.dtoFields = aiRole.dtoFields;
+      }
+    }
+
     return {
-      type: this.resolveClassType(cls, filePath),
+      type: this.resolveClassType(cls, filePath, enrichment),
       label: cls.name,
       fqn: cls.fqn,
       properties,
       sourceFile: filePath,
     };
+  }
+
+  /**
+   * REQ-EP-007: AI role overrides the heuristic when enrichment exists.
+   * Unmapped roles (e.g. `other`) fall through to the deterministic path.
+   */
+  private resolveClassType(cls: IrClass, filePath: string, enrichment?: IrEnrichment): NodeType {
+    const aiEntry = enrichment?.classes.find((entry) => entry.fqn === cls.fqn);
+
+    if (aiEntry !== undefined) {
+      const aiType = ROLE_TO_TYPE[aiEntry.role];
+
+      if (aiType !== undefined) {
+        return aiType;
+      }
+    }
+
+    if (cls.role !== null) {
+      const roleType = ROLE_TO_TYPE[cls.role];
+
+      if (roleType !== undefined) {
+        return roleType;
+      }
+    }
+
+    if (cls.name.endsWith('Dto') || cls.name.endsWith('DTO')) {
+      return NodeType.DTO;
+    }
+
+    if (cls.name.endsWith('Entity')) {
+      return NodeType.ENTITY;
+    }
+
+    const pathSegments = filePath.split(/[/\\]/);
+
+    if (pathSegments.includes('entities') || pathSegments.includes('domain')) {
+      return NodeType.ENTITY;
+    }
+
+    if (/^I[A-Z]/.test(cls.name)) {
+      return NodeType.INTERFACE;
+    }
+
+    return NodeType.UNKNOWN;
+  }
+
+  /**
+   * REQ-EP-007: `AIClassifiedRole.lifecycle` entries like `guard:JwtGuard`
+   * become GUARD/PIPE/INTERCEPTOR/MIDDLEWARE nodes with PROTECTS/TRANSFORMS
+   * edges pointing at the owning class node. Plain `handler` entries are the
+   * class itself and produce no node.
+   */
+  private addLifecycleNodes(
+    cls: IrClass,
+    enrichment: IrEnrichment,
+    nodes: SemanticNode[],
+    edges: SemanticEdge[],
+  ): void {
+    const aiEntry = enrichment.classes.find((entry) => entry.fqn === cls.fqn);
+
+    if (aiEntry === undefined) {
+      return;
+    }
+
+    for (const entry of aiEntry.lifecycle) {
+      const parsed = parseLifecycleEntry(entry);
+
+      if (parsed === null) {
+        continue;
+      }
+
+      const type = ROLE_TO_TYPE[parsed.kind];
+
+      if (type === undefined) {
+        continue;
+      }
+
+      const lifecycleFqn = `${cls.fqn}~${parsed.kind}:${parsed.name}`;
+
+      if (nodes.some((node) => node.fqn === lifecycleFqn)) {
+        continue;
+      }
+
+      nodes.push({
+        type,
+        label: parsed.name,
+        fqn: lifecycleFqn,
+        properties: { lifecycleKind: parsed.kind },
+        sourceFile: aiEntry.sourceFile,
+      });
+
+      edges.push({
+        type: LIFECYCLE_EDGE[parsed.kind],
+        sourceFqn: lifecycleFqn,
+        targetFqn: cls.fqn,
+      });
+    }
   }
 
   private interfaceNode(iface: IrInterface, filePath: string): SemanticNode {
@@ -219,36 +359,6 @@ export class SemanticModelBuilder {
       properties: { httpMethod: endpoint.httpMethod, path: endpoint.path },
       sourceFile: filePath,
     };
-  }
-
-  private resolveClassType(cls: IrClass, filePath: string): NodeType {
-    if (cls.role !== null) {
-      const roleType = ROLE_TO_TYPE[cls.role];
-
-      if (roleType !== undefined) {
-        return roleType;
-      }
-    }
-
-    if (cls.name.endsWith('Dto') || cls.name.endsWith('DTO')) {
-      return NodeType.DTO;
-    }
-
-    if (cls.name.endsWith('Entity')) {
-      return NodeType.ENTITY;
-    }
-
-    const pathSegments = filePath.split(/[/\\]/);
-
-    if (pathSegments.includes('entities') || pathSegments.includes('domain')) {
-      return NodeType.ENTITY;
-    }
-
-    if (/^I[A-Z]/.test(cls.name)) {
-      return NodeType.INTERFACE;
-    }
-
-    return NodeType.UNKNOWN;
   }
 
   private belongsTo(sourceFqn: string, targetFqn: string): SemanticEdge {
