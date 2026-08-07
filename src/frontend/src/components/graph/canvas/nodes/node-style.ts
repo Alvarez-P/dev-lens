@@ -12,6 +12,10 @@ import {
   Link2,
   Cloud,
   HelpCircle,
+  Shield,
+  Filter,
+  Workflow,
+  ArrowUpDown,
 } from 'lucide-react';
 import { NodeType } from '@/lib/visualization/types';
 
@@ -83,6 +87,30 @@ export const NODE_STYLE: Record<NodeType, NodeStyle> = {
     icon: Cloud,
     accent: '#505054',
     shape: 'cloud',
+    badgeVariant: 'default',
+  },
+  [NodeType.GUARD]: {
+    icon: Shield,
+    accent: '#f87171',
+    shape: 'hexagon',
+    badgeVariant: 'error',
+  },
+  [NodeType.PIPE]: {
+    icon: Filter,
+    accent: '#60a5fa',
+    shape: 'rectangle',
+    badgeVariant: 'info',
+  },
+  [NodeType.INTERCEPTOR]: {
+    icon: Workflow,
+    accent: '#818cf8',
+    shape: 'rounded-rect',
+    badgeVariant: 'warning',
+  },
+  [NodeType.MIDDLEWARE]: {
+    icon: ArrowUpDown,
+    accent: '#a78bfa',
+    shape: 'rectangle',
     badgeVariant: 'default',
   },
   [NodeType.UNKNOWN]: {

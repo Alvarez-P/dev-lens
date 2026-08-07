@@ -4,7 +4,7 @@
  * summary) plus the client-side normalization/UI types.
  */
 
-/** Mirror of the backend `NodeType` enum (12 members). */
+/** Mirror of the backend `NodeType` enum (16 members). */
 export enum NodeType {
   PROJECT = 'Project',
   PACKAGE = 'Package',
@@ -17,10 +17,14 @@ export enum NodeType {
   INTERFACE = 'Interface',
   ENDPOINT = 'Endpoint',
   EXTERNAL_DEPENDENCY = 'ExternalDependency',
+  GUARD = 'Guard',
+  PIPE = 'Pipe',
+  INTERCEPTOR = 'Interceptor',
+  MIDDLEWARE = 'Middleware',
   UNKNOWN = 'Unknown',
 }
 
-/** Mirror of the backend `EdgeType` enum (6 members). */
+/** Mirror of the backend `EdgeType` enum (8 members). */
 export enum EdgeType {
   BELONGS_TO = 'BELONGS_TO',
   IMPLEMENTS = 'IMPLEMENTS',
@@ -28,6 +32,8 @@ export enum EdgeType {
   IMPORTS = 'IMPORTS',
   DEPENDS_ON = 'DEPENDS_ON',
   EXPOSES = 'EXPOSES',
+  PROTECTS = 'PROTECTS',
+  TRANSFORMS = 'TRANSFORMS',
 }
 
 /** Mirror of the backend `BuildStatus` enum. */

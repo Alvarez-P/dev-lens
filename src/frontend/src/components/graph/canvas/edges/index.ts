@@ -6,8 +6,19 @@ import { ImplementsEdge } from './implements-edge';
 import { ExtendsEdge } from './extends-edge';
 import { ExposesEdge } from './exposes-edge';
 import { ImportsEdge } from './imports-edge';
+import { ProtectsEdge } from './protects-edge';
+import { TransformsEdge } from './transforms-edge';
 
-export { BelongsToEdge, DependsOnEdge, ImplementsEdge, ExtendsEdge, ExposesEdge, ImportsEdge };
+export {
+  BelongsToEdge,
+  DependsOnEdge,
+  ImplementsEdge,
+  ExtendsEdge,
+  ExposesEdge,
+  ImportsEdge,
+  ProtectsEdge,
+  TransformsEdge,
+};
 
 /**
  * Registry keyed by `EdgeType` enum value — passed to the ReactFlowAdapter
@@ -23,4 +34,6 @@ export const edgeTypes: EdgeTypes = {
   [EdgeType.EXTENDS]: ExtendsEdge as EdgeTypes[string],
   [EdgeType.EXPOSES]: ExposesEdge as EdgeTypes[string],
   [EdgeType.IMPORTS]: ImportsEdge as EdgeTypes[string],
+  [EdgeType.PROTECTS]: ProtectsEdge as EdgeTypes[string],
+  [EdgeType.TRANSFORMS]: TransformsEdge as EdgeTypes[string],
 };

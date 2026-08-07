@@ -14,6 +14,10 @@ import {
   Link2,
   Cloud,
   HelpCircle,
+  Shield,
+  Filter,
+  Workflow,
+  ArrowUpDown,
 } from 'lucide-react';
 import { NodeType } from '@/lib/visualization/types';
 import type { GraphNode } from '@/lib/visualization/types';
@@ -70,6 +74,10 @@ describe('node style config (VE-001 visual mapping)', () => {
     expect(NODE_STYLE[NodeType.SERVICE].accent).toBe('#47e02e'); // success-400
     expect(NODE_STYLE[NodeType.UNKNOWN].accent).toBe('#f87171'); // error-400
     expect(NODE_STYLE[NodeType.EXTERNAL_DEPENDENCY].accent).toBe('#505054'); // surface-500
+    expect(NODE_STYLE[NodeType.GUARD].accent).toBe('#f87171'); // error-400 — security
+    expect(NODE_STYLE[NodeType.PIPE].accent).toBe('#60a5fa'); // blue-400 — validation
+    expect(NODE_STYLE[NodeType.INTERCEPTOR].accent).toBe('#818cf8'); // indigo-400 — cross-cutting
+    expect(NODE_STYLE[NodeType.MIDDLEWARE].accent).toBe('#a78bfa'); // violet-400 — pipeline
   });
 
   it('assigns the documented lucide icons per type', () => {
@@ -84,11 +92,15 @@ describe('node style config (VE-001 visual mapping)', () => {
     expect(NODE_STYLE[NodeType.INTERFACE].icon).toBe(Puzzle);
     expect(NODE_STYLE[NodeType.ENDPOINT].icon).toBe(Link2);
     expect(NODE_STYLE[NodeType.EXTERNAL_DEPENDENCY].icon).toBe(Cloud);
+    expect(NODE_STYLE[NodeType.GUARD].icon).toBe(Shield);
+    expect(NODE_STYLE[NodeType.PIPE].icon).toBe(Filter);
+    expect(NODE_STYLE[NodeType.INTERCEPTOR].icon).toBe(Workflow);
+    expect(NODE_STYLE[NodeType.MIDDLEWARE].icon).toBe(ArrowUpDown);
     expect(NODE_STYLE[NodeType.UNKNOWN].icon).toBe(HelpCircle);
   });
 });
 
-describe('custom node components (12 types)', () => {
+describe('custom node components (16 types)', () => {
   for (const type of Object.values(NodeType)) {
     it(`renders ${type} with icon, label and type badge`, () => {
       const Component = nodeTypes[type];

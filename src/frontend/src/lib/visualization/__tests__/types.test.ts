@@ -20,7 +20,7 @@ import type {
 } from '../types';
 
 describe('NodeType enum', () => {
-  it('mirrors the 12 backend NodeType values exactly', () => {
+  it('mirrors the 16 backend NodeType values exactly', () => {
     expect(Object.values(NodeType)).toEqual([
       'Project',
       'Package',
@@ -33,9 +33,13 @@ describe('NodeType enum', () => {
       'Interface',
       'Endpoint',
       'ExternalDependency',
+      'Guard',
+      'Pipe',
+      'Interceptor',
+      'Middleware',
       'Unknown',
     ]);
-    expect(Object.values(NodeType)).toHaveLength(12);
+    expect(Object.values(NodeType)).toHaveLength(16);
   });
 
   it('exposes every type used by the KG model taxonomy', () => {
@@ -46,7 +50,7 @@ describe('NodeType enum', () => {
 });
 
 describe('EdgeType enum', () => {
-  it('mirrors the 6 backend EdgeType values exactly', () => {
+  it('mirrors the 8 backend EdgeType values exactly', () => {
     expect(Object.values(EdgeType)).toEqual([
       'BELONGS_TO',
       'IMPLEMENTS',
@@ -54,8 +58,10 @@ describe('EdgeType enum', () => {
       'IMPORTS',
       'DEPENDS_ON',
       'EXPOSES',
+      'PROTECTS',
+      'TRANSFORMS',
     ]);
-    expect(Object.values(EdgeType)).toHaveLength(6);
+    expect(Object.values(EdgeType)).toHaveLength(8);
   });
 });
 

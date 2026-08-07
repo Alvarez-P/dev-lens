@@ -31,4 +31,6 @@ export const EDGE_STYLE: Record<EdgeType, EdgeStyle> = {
   [EdgeType.EXTENDS]: { color: '#d6ff2e', dash: 'solid', arrow: true, width: 1.5 }, // primary-400
   [EdgeType.EXPOSES]: { color: '#fbbf24', dash: 'dotted', arrow: true, width: 1.5 }, // warning-400
   [EdgeType.IMPORTS]: { color: '#505054', dash: 'dashed', arrow: false, width: 1 }, // surface-500, no arrow
+  [EdgeType.PROTECTS]: { color: '#f87171', dash: 'solid', arrow: true, width: 1.5 }, // error-400 — guard → endpoint
+  [EdgeType.TRANSFORMS]: { color: '#60a5fa', dash: 'dashed', arrow: true, width: 1.5 }, // blue-400 — pipe → param
 };

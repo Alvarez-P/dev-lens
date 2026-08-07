@@ -11,6 +11,10 @@ import { DtoNode } from './dto-node';
 import { InterfaceNode } from './interface-node';
 import { EndpointNode } from './endpoint-node';
 import { ExternalDependencyNode } from './external-dependency-node';
+import { GuardNode } from './guard-node';
+import { PipeNode } from './pipe-node';
+import { InterceptorNode } from './interceptor-node';
+import { MiddlewareNode } from './middleware-node';
 import { UnknownNode } from './unknown-node';
 
 export {
@@ -25,6 +29,10 @@ export {
   InterfaceNode,
   EndpointNode,
   ExternalDependencyNode,
+  GuardNode,
+  PipeNode,
+  InterceptorNode,
+  MiddlewareNode,
   UnknownNode,
 };
 
@@ -44,5 +52,9 @@ export const nodeTypes: NodeTypes = {
   [NodeType.INTERFACE]: InterfaceNode,
   [NodeType.ENDPOINT]: EndpointNode,
   [NodeType.EXTERNAL_DEPENDENCY]: ExternalDependencyNode,
+  [NodeType.GUARD]: GuardNode,
+  [NodeType.PIPE]: PipeNode,
+  [NodeType.INTERCEPTOR]: InterceptorNode,
+  [NodeType.MIDDLEWARE]: MiddlewareNode,
   [NodeType.UNKNOWN]: UnknownNode,
 };
