@@ -15,6 +15,7 @@ export { AIProvider } from './ai-provider.interface';
 export {
   AIDtoField,
   AIClassifiedRole,
+  FailedUnit,
   IrEnrichment,
   IrEnrichmentId,
   IrEnrichmentJson,
