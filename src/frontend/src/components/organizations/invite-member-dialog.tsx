@@ -97,6 +97,7 @@ export function InviteMemberDialog({
           options={roleOptions}
           value={role}
           onChange={(e) => setRole(e.target.value)}
+          className="w-full"
         />
 
         <div className="flex justify-end gap-3 pt-2">

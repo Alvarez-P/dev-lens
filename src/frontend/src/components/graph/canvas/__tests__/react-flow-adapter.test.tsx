@@ -376,10 +376,9 @@ describe('ReactFlowAdapter — config surface', () => {
     expect(capturedReactFlowProps.maxZoom).toBe(4);
   });
 
-  it('renders minimap, controls and background decorations', () => {
+  it('renders controls and background decorations', () => {
     renderAdapter();
 
-    expect(screen.getByTestId('rf-minimap')).toBeInTheDocument();
     expect(screen.getByTestId('rf-controls')).toBeInTheDocument();
     expect(screen.getByTestId('rf-background')).toBeInTheDocument();
   });

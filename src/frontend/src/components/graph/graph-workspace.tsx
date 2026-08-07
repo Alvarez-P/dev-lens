@@ -274,7 +274,7 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
         )}
       </div>
 
-      <GraphToolbar adapterRef={adapterRef} />
+      <GraphToolbar />
 
       <GraphFilterBar searchInputRef={searchInputRef} onSearchSubmit={search.submit} />
 

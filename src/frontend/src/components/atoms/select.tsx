@@ -171,7 +171,7 @@ export function Select({
   }, [activeIndex, open, scrollActiveIntoView]);
 
   return (
-    <div ref={containerRef} className={className}>
+    <div ref={containerRef}>
       {label && (
         <label htmlFor={selectId} className="mb-1.5 block text-sm font-medium text-surface-300">
           {label}
@@ -202,7 +202,7 @@ export function Select({
           }}
           onKeyDown={handleKeyDown}
           className={clsx(
-            'flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm',
+            'flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm',
             'transition-colors duration-150',
             'focus-ring',
             'disabled:cursor-not-allowed disabled:opacity-50',
@@ -215,6 +215,7 @@ export function Select({
                     : 'bg-surface-900/60 backdrop-blur-sm hover:border-white/[0.14]',
                 ),
             currentValue ? 'text-surface-100' : 'text-surface-500',
+            className,
           )}
           {...props}
         >

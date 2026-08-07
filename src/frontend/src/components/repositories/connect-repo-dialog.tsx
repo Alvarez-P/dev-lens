@@ -121,6 +121,7 @@ export function ConnectRepoDialog({
           options={providerOptions}
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
+          className="w-full"
         />
 
         <Input

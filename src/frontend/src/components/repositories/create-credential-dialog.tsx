@@ -112,6 +112,7 @@ export function CreateCredentialDialog({
           options={providerOptions}
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
+          className="w-full"
         />
 
         <Input
@@ -127,6 +128,7 @@ export function CreateCredentialDialog({
           options={typeOptions}
           value={type}
           onChange={(e) => setType(e.target.value)}
+          className="w-full"
         />
 
         <Input
