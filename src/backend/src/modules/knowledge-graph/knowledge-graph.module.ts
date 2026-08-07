@@ -1,4 +1,4 @@
-import { Inject, Module, OnModuleInit } from '@nestjs/common';
+import { Inject, Module, OnModuleInit, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 
@@ -6,6 +6,7 @@ import { DomainEventDispatcher } from '../../shared/domain/domain-event-dispatch
 import { AnalysisModule } from '../analysis/analysis.module';
 import { RepositoriesModule } from '../repositories/repositories.module';
 import { IdentityModule } from '../identity/identity.module';
+import { AiModule } from '../ai/ai.module';
 
 import { SemanticModelBuilder } from './application/semantic-model.builder';
 import { GraphBuilder } from './application/graph.builder';
@@ -28,6 +29,7 @@ import { KNOWLEDGE_GRAPH_QUEUE, KNOWLEDGE_GRAPH_DLQ } from './knowledge-graph.to
     AnalysisModule,
     RepositoriesModule,
     IdentityModule,
+    forwardRef(() => AiModule),
   ],
   controllers: [GraphController],
   providers: [

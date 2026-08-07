@@ -18,6 +18,7 @@ import { KnowledgeGraphService } from '@/modules/knowledge-graph/application/kno
 import { SemanticModelBuilder } from '@/modules/knowledge-graph/application/semantic-model.builder';
 import { GraphBuilder } from '@/modules/knowledge-graph/application/graph.builder';
 import { GraphRepository } from '@/modules/knowledge-graph/infrastructure/persistence/repositories/graph.repository';
+import { EnrichmentRepository } from '@/modules/ai/infrastructure/persistence/repositories/enrichment.repository';
 import { GraphNodeEntity } from '@/modules/knowledge-graph/infrastructure/persistence/typeorm/graph-node.typeorm-entity';
 import { GraphEdgeEntity } from '@/modules/knowledge-graph/infrastructure/persistence/typeorm/graph-edge.typeorm-entity';
 import { GraphSnapshotEntity } from '@/modules/knowledge-graph/infrastructure/persistence/typeorm/graph-snapshot.typeorm-entity';
@@ -332,6 +333,10 @@ describe('Graph Controller (E2E)', () => {
             dispatch: jest.fn().mockResolvedValue(undefined),
             registerHandler: jest.fn(),
           },
+        },
+        {
+          provide: EnrichmentRepository,
+          useValue: { findByAnalysisId: jest.fn().mockResolvedValue(null), save: jest.fn() },
         },
       ],
     })
