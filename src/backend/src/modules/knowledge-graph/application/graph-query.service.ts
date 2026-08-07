@@ -75,6 +75,10 @@ export class GraphQueryService {
     return nodes.find((node) => node.fqn === fqn) ?? null;
   }
 
+  static getNodesByFile(nodes: readonly GraphNode[], sourceFile: string): GraphNode[] {
+    return nodes.filter((node) => node.sourceFile === sourceFile);
+  }
+
   static getNeighborhood(
     nodes: readonly GraphNode[],
     edges: readonly GraphEdge[],

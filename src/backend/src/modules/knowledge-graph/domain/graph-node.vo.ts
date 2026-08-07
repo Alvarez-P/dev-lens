@@ -14,6 +14,7 @@ export interface GraphNodeJson {
   repoId: string;
   version: number;
   deprecatedAt: string | null;
+  sourceFile: string | null;
 }
 
 export class GraphNode extends ValueObject {
@@ -26,6 +27,7 @@ export class GraphNode extends ValueObject {
     public readonly repoId: string,
     public readonly version: number,
     public readonly deprecatedAt: Date | null,
+    public readonly sourceFile: string | null,
   ) {
     super();
   }
@@ -37,6 +39,7 @@ export class GraphNode extends ValueObject {
     properties: Record<string, unknown> | undefined,
     repoId: string,
     version: number,
+    sourceFile: string | null = null,
   ): GraphNode {
     this.validateType(type);
     this.validateLabel(label);
@@ -53,6 +56,7 @@ export class GraphNode extends ValueObject {
       repoId.trim(),
       version,
       null,
+      sourceFile,
     );
   }
 
@@ -65,6 +69,7 @@ export class GraphNode extends ValueObject {
     repoId: string,
     version: number,
     deprecatedAt: Date | null,
+    sourceFile: string | null = null,
   ): GraphNode {
     return new GraphNode(
       id,
@@ -75,6 +80,7 @@ export class GraphNode extends ValueObject {
       repoId,
       version,
       deprecatedAt,
+      sourceFile,
     );
   }
 
@@ -88,6 +94,7 @@ export class GraphNode extends ValueObject {
       this.repoId,
       this.version,
       this.deprecatedAt,
+      this.sourceFile,
     ];
   }
 
@@ -101,6 +108,7 @@ export class GraphNode extends ValueObject {
       repoId: this.repoId,
       version: this.version,
       deprecatedAt: this.deprecatedAt?.toISOString() ?? null,
+      sourceFile: this.sourceFile,
     };
   }
 

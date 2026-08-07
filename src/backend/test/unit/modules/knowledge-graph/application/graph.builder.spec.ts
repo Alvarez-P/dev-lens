@@ -66,6 +66,48 @@ describe('GraphBuilder', () => {
       expect(module?.properties).toEqual({ filePath: '/repo/src/users/users.module.ts' });
     });
 
+    it('should stamp the sourceFile onto the node', () => {
+      const result = new GraphBuilder().build(baseModel(), 'repo-1', 1);
+
+      const service = result.nodes.find(
+        (node) => node.fqn === 'acme:default:src/users#UsersService',
+      );
+      expect(service?.sourceFile).toBe('/repo/src/users/users.service.ts');
+
+      const module = result.nodes.find((node) => node.fqn === 'acme:default:src/users');
+      expect(module?.sourceFile).toBe('/repo/src/users/users.module.ts');
+    });
+
+    it('should leave sourceFile null for nodes without a file', () => {
+      const model: SemanticModel = {
+        nodes: [
+          {
+            type: NodeType.PROJECT,
+            label: 'acme',
+            fqn: 'acme',
+            properties: {},
+            sourceFile: '',
+          },
+        ],
+        edges: [],
+      };
+
+      const result = new GraphBuilder().build(model, 'repo-1', 1);
+
+      expect(result.nodes[0].sourceFile).toBeNull();
+    });
+
+    it('should propagate sourceFile to deprecated copies', () => {
+      const first = new GraphBuilder().build(baseModel(), 'repo-1', 1);
+      const service = first.nodes.find(
+        (node) => node.fqn === 'acme:default:src/users#UsersService',
+      );
+
+      const deprecated = new GraphBuilder().buildDeprecatedNode(service!, 'repo-1', 2);
+
+      expect(deprecated.sourceFile).toBe('/repo/src/users/users.service.ts');
+    });
+
     it('should assign deterministic UUID ids', () => {
       const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
       const result = new GraphBuilder().build(baseModel(), 'repo-1', 1);

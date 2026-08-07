@@ -76,6 +76,7 @@ describe('Knowledge graph TypeORM entities', () => {
         'properties',
         'repoId',
         'sourceAnalysisId',
+        'sourceFile',
         'type',
         'updatedAt',
         'version',
@@ -112,11 +113,19 @@ describe('Knowledge graph TypeORM entities', () => {
     it('should use snake_case physical column names', () => {
       expect(columnOf(GraphNodeEntity, 'repoId')?.options.name).toBe('repo_id');
       expect(columnOf(GraphNodeEntity, 'deprecatedAt')?.options.name).toBe('deprecated_at');
+      expect(columnOf(GraphNodeEntity, 'sourceFile')?.options.name).toBe('source_file');
       expect(columnOf(GraphNodeEntity, 'sourceAnalysisId')?.options.name).toBe(
         'source_analysis_id',
       );
       expect(columnOf(GraphNodeEntity, 'createdAt')?.options.name).toBe('created_at');
       expect(columnOf(GraphNodeEntity, 'updatedAt')?.options.name).toBe('updated_at');
+    });
+
+    it('should map source_file as a nullable text column', () => {
+      expect(columnOf(GraphNodeEntity, 'sourceFile')?.options).toMatchObject({
+        type: 'text',
+        nullable: true,
+      });
     });
 
     it('should add created_at and updated_at timestamps', () => {

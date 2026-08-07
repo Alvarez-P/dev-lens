@@ -7,7 +7,6 @@ import { EdgeType } from '@/modules/knowledge-graph/domain/edge-type.enum';
 function makeNode(type: NodeType, label: string, fqn: string, id: string): GraphNode {
   return GraphNode.reconstitute(id, type, label, fqn, undefined, 'repo-1', 1, null);
 }
-
 function makeEdge(type: EdgeType, source: GraphNode, target: GraphNode): GraphEdge {
   return GraphEdge.create(type, source.id, target.id, undefined, 1);
 }
@@ -92,6 +91,41 @@ describe('GraphQueryService', () => {
       const { nodes } = buildFixture();
 
       expect(GraphQueryService.getNodeByFqn(nodes, 'nonexistent:module:Class')).toBeNull();
+    });
+  });
+
+  describe('getNodesByFile', () => {
+    it('should return every node derived from the given source file', () => {
+      const file = 'src/utils/helpers.ts';
+      const nodes = [
+        makeNode(NodeType.SERVICE, 'HelperA', 'acme:utils#HelperA', 'node-a'),
+        makeNode(NodeType.SERVICE, 'HelperB', 'acme:utils#HelperB', 'node-b'),
+        makeNode(NodeType.SERVICE, 'HelperC', 'acme:utils#HelperC', 'node-c'),
+      ].map((node) =>
+        GraphNode.reconstitute(
+          node.id,
+          node.type,
+          node.label,
+          node.fqn,
+          undefined,
+          'repo-1',
+          1,
+          null,
+          file,
+        ),
+      );
+      const other = makeNode(NodeType.MODULE, 'users', 'acme:default:src/users', 'node-module');
+
+      const result = GraphQueryService.getNodesByFile([...nodes, other], file);
+
+      expect(result).toHaveLength(3);
+      expect(result.every((node) => node.sourceFile === file)).toBe(true);
+    });
+
+    it('should return an empty array when no node matches the file', () => {
+      const { nodes } = buildFixture();
+
+      expect(GraphQueryService.getNodesByFile(nodes, 'src/missing/file.ts')).toEqual([]);
     });
   });
 

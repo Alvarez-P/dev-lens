@@ -80,6 +80,7 @@ export class GraphBuilder {
       repoId,
       version,
       new Date(),
+      previousNode.sourceFile,
     );
   }
 
@@ -99,6 +100,7 @@ export class GraphBuilder {
       repoId,
       version,
       null,
+      semanticNode.sourceFile === '' ? null : semanticNode.sourceFile,
     );
   }
 }

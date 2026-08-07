@@ -38,6 +38,9 @@ export class GraphNodeEntity {
   @Column({ name: 'deprecated_at', type: 'timestamptz', nullable: true })
   deprecatedAt!: Date | null;
 
+  @Column({ name: 'source_file', type: 'text', nullable: true })
+  sourceFile!: string | null;
+
   @Column({ name: 'source_analysis_id', type: 'uuid' })
   sourceAnalysisId!: string;
 
