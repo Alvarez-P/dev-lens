@@ -22,6 +22,8 @@ export interface IrModuleProps {
   classes?: IrClassProps[];
   interfaces?: IrInterfaceProps[];
   functions?: IrFunctionProps[];
+  /** Imports resolved to FQNs (external packages as bare names) (REQ-CA-002). */
+  imports?: string[];
 }
 
 export interface IrClassProps {
@@ -33,6 +35,10 @@ export interface IrClassProps {
   implements?: string[];
   methods?: IrMethodProps[];
   endpoints?: IrEndpointProps[];
+  /** Class decorators WITH arguments, e.g. "@Controller('users')" (REQ-CA-002). */
+  decorators?: string[];
+  /** Constructor parameters with type + decorators (REQ-CA-002). */
+  constructorParams?: IrParamProps[];
 }
 
 export interface IrInterfaceProps {
@@ -46,11 +52,25 @@ export interface IrFunctionProps {
   isExported?: boolean;
 }
 
+/** Structured parameter signature (REQ-CA-002). */
+export interface IrParamProps {
+  name: string;
+  type: string;
+  decorators: string[];
+}
+
 export interface IrMethodProps {
   name: string;
   visibility: string;
   isStatic?: boolean;
-  parameters: string[];
+  /** Legacy name-only parameter list (kept for backward compatibility). */
+  parameters?: string[];
+  /** Method decorators WITH arguments (REQ-CA-002). */
+  decorators?: string[];
+  /** Structured parameters (name, type, decorators) (REQ-CA-002). */
+  params?: IrParamProps[];
+  /** Return type text, e.g. 'Promise<UserDto>' (REQ-CA-002). */
+  returnType?: string;
 }
 
 export interface IrEndpointProps {
@@ -186,6 +206,7 @@ export class IrModule extends ValueObject {
     public readonly classes: readonly IrClass[],
     public readonly interfaces: readonly IrInterface[],
     public readonly functions: readonly IrFunction[],
+    public readonly imports: readonly string[],
     public readonly fqn: string,
   ) {
     super();
@@ -209,12 +230,23 @@ export class IrModule extends ValueObject {
       props.interfaces?.map((iface) => IrInterface.create(fqn, iface)) ?? [],
     );
     const functions = Object.freeze(props.functions?.map((fn) => IrFunction.create(fqn, fn)) ?? []);
+    const imports = Object.freeze([
+      ...new Set(props.imports?.map((specifier) => specifier.trim()).filter(Boolean) ?? []),
+    ]);
 
-    return new IrModule(name, path, classes, interfaces, functions, fqn);
+    return new IrModule(name, path, classes, interfaces, functions, imports, fqn);
   }
 
   protected getEqualityComponents(): unknown[] {
-    return [this.name, this.path, this.classes, this.interfaces, this.functions, this.fqn];
+    return [
+      this.name,
+      this.path,
+      this.classes,
+      this.interfaces,
+      this.functions,
+      this.imports,
+      this.fqn,
+    ];
   }
 
   toJSON(): IrModuleProps {
@@ -224,6 +256,7 @@ export class IrModule extends ValueObject {
       classes: this.classes.map((cls) => cls.toJSON()),
       interfaces: this.interfaces.map((iface) => iface.toJSON()),
       functions: this.functions.map((fn) => fn.toJSON()),
+      imports: [...this.imports],
     };
   }
 }
@@ -237,6 +270,8 @@ export class IrClass extends ValueObject {
   public readonly implements: readonly string[];
   public readonly methods: readonly IrMethod[];
   public readonly endpoints: readonly IrEndpoint[];
+  public readonly decorators: readonly string[];
+  public readonly constructorParams: readonly IrParameter[];
   public readonly fqn: string;
 
   private constructor(
@@ -248,6 +283,8 @@ export class IrClass extends ValueObject {
     implementsInterfaces: readonly string[],
     methods: readonly IrMethod[],
     endpoints: readonly IrEndpoint[],
+    decorators: readonly string[],
+    constructorParams: readonly IrParameter[],
     fqn: string,
   ) {
     super();
@@ -259,6 +296,8 @@ export class IrClass extends ValueObject {
     this.implements = implementsInterfaces;
     this.methods = methods;
     this.endpoints = endpoints;
+    this.decorators = decorators;
+    this.constructorParams = constructorParams;
     this.fqn = fqn;
   }
 
@@ -277,6 +316,12 @@ export class IrClass extends ValueObject {
       props.endpoints?.map((endpoint) => IrEndpoint.create(fqn, endpoint)) ?? [],
     );
     const implemented = Object.freeze([...(props.implements ?? [])].map((value) => value.trim()));
+    const decorators = Object.freeze(
+      props.decorators?.map((decorator) => decorator.trim()).filter(Boolean) ?? [],
+    );
+    const constructorParams = Object.freeze(
+      props.constructorParams?.map((param) => IrParameter.create(param)) ?? [],
+    );
 
     return new IrClass(
       name,
@@ -287,6 +332,8 @@ export class IrClass extends ValueObject {
       implemented,
       methods,
       endpoints,
+      decorators,
+      constructorParams,
       fqn,
     );
   }
@@ -301,6 +348,8 @@ export class IrClass extends ValueObject {
       this.implements,
       this.methods,
       this.endpoints,
+      this.decorators,
+      this.constructorParams,
       this.fqn,
     ];
   }
@@ -315,6 +364,8 @@ export class IrClass extends ValueObject {
       implements: [...this.implements],
       methods: this.methods.map((method) => method.toJSON()),
       endpoints: this.endpoints.map((endpoint) => endpoint.toJSON()),
+      decorators: [...this.decorators],
+      constructorParams: this.constructorParams.map((param) => param.toJSON()),
     };
   }
 }
@@ -388,12 +439,51 @@ export class IrFunction extends ValueObject {
   }
 }
 
+export class IrParameter extends ValueObject {
+  private constructor(
+    public readonly name: string,
+    public readonly type: string,
+    public readonly decorators: readonly string[],
+  ) {
+    super();
+  }
+
+  static create(props: IrParamProps): IrParameter {
+    const name = props.name.trim();
+
+    if (!name) {
+      throw new Error('Parameter name must not be empty');
+    }
+
+    return new IrParameter(
+      name,
+      props.type.trim() || 'unknown',
+      Object.freeze(props.decorators.map((decorator) => decorator.trim()).filter(Boolean)),
+    );
+  }
+
+  protected getEqualityComponents(): unknown[] {
+    return [this.name, this.type, this.decorators];
+  }
+
+  toJSON(): IrParamProps {
+    return {
+      name: this.name,
+      type: this.type,
+      decorators: [...this.decorators],
+    };
+  }
+}
+
 export class IrMethod extends ValueObject {
   private constructor(
     public readonly name: string,
     public readonly visibility: string,
     public readonly isStatic: boolean,
     public readonly parameters: readonly string[],
+    public readonly decorators: readonly string[],
+    public readonly params: readonly IrParameter[],
+    public readonly returnType: string,
     public readonly fqn: string,
   ) {
     super();
@@ -411,19 +501,35 @@ export class IrMethod extends ValueObject {
       throw new Error(`Method "${name}" visibility must not be empty`);
     }
 
-    const parameters = Object.freeze(props.parameters.map((parameter) => parameter.trim()));
+    const parameters = Object.freeze((props.parameters ?? []).map((parameter) => parameter.trim()));
+    const decorators = Object.freeze(
+      props.decorators?.map((decorator) => decorator.trim()).filter(Boolean) ?? [],
+    );
+    const params = Object.freeze(props.params?.map((param) => IrParameter.create(param)) ?? []);
 
     return new IrMethod(
       name,
       visibility,
       props.isStatic ?? false,
       parameters,
+      decorators,
+      params,
+      props.returnType?.trim() || 'void',
       `${classFqn}.${name}`,
     );
   }
 
   protected getEqualityComponents(): unknown[] {
-    return [this.name, this.visibility, this.isStatic, this.parameters, this.fqn];
+    return [
+      this.name,
+      this.visibility,
+      this.isStatic,
+      this.parameters,
+      this.decorators,
+      this.params,
+      this.returnType,
+      this.fqn,
+    ];
   }
 
   toJSON(): IrMethodProps {
@@ -432,6 +538,9 @@ export class IrMethod extends ValueObject {
       visibility: this.visibility,
       isStatic: this.isStatic,
       parameters: [...this.parameters],
+      decorators: [...this.decorators],
+      params: this.params.map((param) => param.toJSON()),
+      returnType: this.returnType,
     };
   }
 }
