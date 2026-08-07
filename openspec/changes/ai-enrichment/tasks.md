@@ -33,18 +33,18 @@ Chain strategy: pending
 
 ## Phase 2: AI Domain + Config
 
-- [ ] 2.1 Add `ai:` section to configuration.ts + .env.example (REQ-AP-004)
-- [ ] 2.2 AIProvider interface + AIRequest/AIResponse/AIChunk VOs (REQ-AP-001/002)
-- [ ] 2.3 BaseAIError + 6 typed errors (REQ-AP-005)
-- [ ] 2.4 IrEnrichment + AIClassifiedRole + CodeSketch VOs (REQ-EP-005, REQ-CA-002)
-- [ ] 2.5 Enrichment events + ai.tokens.ts + AiModule queue scaffold (REQ-EP-002/008)
+- [x] 2.1 Add `ai:` section to configuration.ts + .env.example (REQ-AP-004)
+- [x] 2.2 AIProvider interface + AIRequest/AIResponse/AIChunk VOs (REQ-AP-001/002)
+- [x] 2.3 BaseAIError + 6 typed errors (REQ-AP-005)
+- [x] 2.4 IrEnrichment + AIClassifiedRole + CodeSketch VOs (REQ-EP-005, REQ-CA-002)
+- [x] 2.5 Enrichment events + ai.tokens.ts + AiModule queue scaffold (REQ-EP-002/008)
 
 ## Phase 3: Provider Abstraction
 
-- [ ] 3.1 RED→GREEN: OpenAIProvider via openai SDK (REQ-AP-003)
-- [ ] 3.2 RED→GREEN: OllamaProvider fetch /api/generate + healthCheck (REQ-AP-003)
-- [ ] 3.3 RED→GREEN: MockProvider + sha256-keyed fixtures (REQ-AP-003)
-- [ ] 3.4 ProviderSelectorService fallback + registry injection (REQ-AP-006)
+- [x] 3.1 RED→GREEN: OpenAIProvider via openai SDK (REQ-AP-003)
+- [x] 3.2 RED→GREEN: OllamaProvider fetch /api/generate + healthCheck (REQ-AP-003)
+- [x] 3.3 RED→GREEN: MockProvider + sha256-keyed fixtures (REQ-AP-003)
+- [x] 3.4 ProviderSelectorService fallback + registry injection (REQ-AP-006)
 
 ## Phase 4: Context + Prompts
 

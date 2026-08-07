@@ -39,3 +39,68 @@ Scope: Phase 1 only — tasks 1.1, 1.2, 1.3. Phases 2-5 belong to later PRs.
 ## Next PRs (out of scope here)
 
 PR 2: AI domain + config + provider abstraction. PR 3: context assembly + prompts. PR 4: pipeline, gates, KG merge, RFC-009.
+
+---
+
+# Apply Progress: ai-enrichment — PR 2 (AI Domain + Config + Provider Abstraction)
+
+Branch: `feat/ai-enrichment` (accumulates on tracker; feature-branch-chain PR #2)
+Artifact store: openspec | Strict TDD: RED → GREEN per task
+Scope: Phase 2 (tasks 2.1-2.5) + Phase 3 (tasks 3.1-3.4). Phases 4-5 belong to PR 3/4.
+
+## TDD Cycle Evidence
+
+| Task | Test File                                                            | Layer | RED     | GREEN | Notes                                                  |
+| ---- | -------------------------------------------------------------------- | ----- | ------- | ----- | ------------------------------------------------------ |
+| 2.1  | `unit/configuration.spec.ts` (AiConfig block)                        | Unit  | Written | 19/19 | defaults + env overrides for all ai.* fields           |
+| 2.2  | `ai-provider.interface.spec.ts` + `ai-request.vo.spec.ts`            | Unit  | Written | 11/11 | 5-method contract, VO shapes, enrichment contracts     |
+| 2.3  | `ai-errors.spec.ts`                                                  | Unit  | Written | 7/7   | BaseAIError fields + 6 typed errors retriability       |
+| 2.4  | `ai-enrichment.entity.spec.ts` + `code-sketch.vo.spec.ts`            | Unit  | Written | 8/8   | create/reconstitute/toJSON, sketch fields + truncation |
+| 2.5  | `ai-events.spec.ts` + `ai.module.spec.ts` (scaffold)                 | Unit  | Written | 8/8   | 4 events, queue tokens, BullMQ registration            |
+| 3.1  | `openai.provider.spec.ts`                                            | Unit  | Written | 11/11 | SDK mapping, 429→AIRateLimit, enrich schema guard      |
+| 3.2  | `ollama.provider.spec.ts`                                            | Unit  | Written | 11/11 | /api/generate + /api/tags, JSON format, error mapping  |
+| 3.3  | `mock.provider.spec.ts`                                              | Unit  | Written | 7/7   | fixture lookup, no network, health always true         |
+| 3.4  | `provider-selector.service.spec.ts` + `ai.module.spec.ts` (registry) | Unit  | Written | 9/9   | default select, fallback, none-healthy throws          |
+
+## Test Summary
+
+- `npx jest` (full backend): 74 suites, 588 tests, 0 failures (was 63/509 at PR 1 → +79 new AI tests)
+- `npx tsc --noEmit`: 0 errors
+- Layers: Unit only (all tasks; no integration/E2E — pipeline lives in PR 4)
+
+## Files Changed (PR 2)
+
+| File                                                                             | Action | Description                                                                                      |
+| -------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
+| `src/backend/src/config/configuration.ts`                                        | Modify | Add `AIProviderConfig` + `AiConfig` interfaces and `ai:` section to `AppConfiguration` factory   |
+| `src/backend/src/config/config.service.ts`                                       | Modify | Add `get ai(): AiConfig` getter                                                                  |
+| `src/backend/.env.example`                                                       | Modify | Add `AI_ENABLED`, `OPENAI_API_KEY`, `OPENAI_MODEL`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `AI_*`    |
+| `src/backend/src/modules/ai/domain/ai-provider.interface.ts`                     | Create | `AIProvider` — complete, streamComplete, healthCheck, estimateCost, enrich                       |
+| `src/backend/src/modules/ai/domain/ai-request.vo.ts`                             | Create | `AIRequest`, `AIResponse`, `AIChunk`, `AIEnrichmentRequest`, `AIEnrichmentResponse`, `AIMessage` |
+| `src/backend/src/modules/ai/domain/ai-errors.ts`                                 | Create | `BaseAIError` + 6 typed errors with provider_id/model/timestamp/retriable                        |
+| `src/backend/src/modules/ai/domain/ai-enrichment.entity.ts`                      | Create | `IrEnrichment` aggregate + `AIClassifiedRole` + `AIDtoField`                                     |
+| `src/backend/src/modules/ai/domain/code-sketch.vo.ts`                            | Create | `CodeSketch`, `MethodSketch`, `ParamSketch` + `omittedMethodCount`                               |
+| `src/backend/src/modules/ai/domain/ai-events.ts`                                 | Create | `EnrichmentStarted/Completed/Failed/SkippedEvent`                                                |
+| `src/backend/src/modules/ai/domain/index.ts`                                     | Create | Domain barrel export                                                                             |
+| `src/backend/src/modules/ai/ai.tokens.ts`                                        | Create | `AI_ENRICHMENT_QUEUE`, `AI_ENRICHMENT_DLQ`, `AI_PROVIDER_REGISTRY`                               |
+| `src/backend/src/modules/ai/ai.module.ts`                                        | Create | Queue registration + provider factories + `AI_PROVIDER_REGISTRY` + selector export               |
+| `src/backend/src/modules/ai/application/provider-selector.service.ts`            | Create | `default_model` resolution + first-healthy fallback                                              |
+| `src/backend/src/modules/ai/infrastructure/openai.provider.ts`                   | Create | `openai` SDK adapter (`chat.completions.create`)                                                 |
+| `src/backend/src/modules/ai/infrastructure/ollama.provider.ts`                   | Create | fetch `/api/generate` + `/api/tags` health check                                                 |
+| `src/backend/src/modules/ai/infrastructure/mock.provider.ts`                     | Create | deterministic fixtures keyed by capability + manifestSha256                                      |
+| `src/backend/src/modules/ai/ai.fixtures/classify-lifecycle/abc123.response.json` | Create | Golden fixture for MockProvider enrich                                                           |
+| `src/backend/package.json` + `pnpm-lock.yaml`                                    | Modify | Add `openai@^6.49.0`                                                                             |
+| 9 test files (new) + configuration.spec.ts (extended)                            | Modify | RED→GREEN specs per task                                                                         |
+
+## Deviations / Decisions
+
+- **`openai@^6` not `openai@7`**: v7 requires Node ≥ 22, but CI pins Node 20 (`.github/workflows/*.yml`). v6 has no engine restriction and the same `chat.completions.create` API. Installed via `pnpm add --filter devlens-backend` (repo is a pnpm workspace; `npm install` breaks ts-jest prepare).
+- **`streamComplete` is an MVP stub** returning `EMPTY` observable in all three providers — interface present per REQ-AP-001, streaming deferred.
+- **Error mapping without SDK error-type coupling**: OpenAI adapter inspects `(error as {status}).status` (429 → `AIRateLimitError`, else `ProviderUnavailableError`); Ollama adapter inspects `response.status`. `AIDidNotMeetSchemaError` is used by OpenAI.enrich for missing required fields; Ollama.enrich uses `AIInvalidResponseError` for the same (schema gate is Phase 4/5 `ThreeGatesValidator` — adapters do only shape validation).
+- **`providers` config defaults populated from env** (openai/ollama/mock) rather than literal `{}` — matches the REQ-AP-004 scenario table while keeping the system runnable out of the box (ollama = local default, mock = CI).
+- **`MockProvider.fixturesDir` is `@Optional()`** so Nest DI resolves it (String param otherwise unresolvable); default resolves relative to `__dirname` (works under ts-jest; dist path note in `ai.fixtures` packaging is a PR 4 concern).
+- **AiModule does NOT wire `app.module.ts` or event handler** — those are task 5.6/5.4 (PR 4). Module is importable and self-contained now.
+
+## Next PRs (out of scope here)
+
+PR 3: context assembly + prompt management (needs Phase 2 types). PR 4: pipeline, gates, KG merge, RFC-009, app.module wiring.
