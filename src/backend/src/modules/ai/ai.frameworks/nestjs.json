@@ -1,0 +1,29 @@
+{
+  "name": "nestjs",
+  "description": "NestJS — modular framework with decorator-driven controllers and dependency injection. Decorator order on a handler: @UseGuards (guard) → @UseInterceptors (interceptor) → @UsePipes (pipe) → route handler.",
+  "decoratorSemantics": {
+    "@Controller": "route controller — class-level, defines the route prefix",
+    "@Get": "GET route handler",
+    "@Post": "POST route handler",
+    "@Put": "PUT route handler",
+    "@Patch": "PATCH route handler",
+    "@Delete": "DELETE route handler",
+    "@All": "route handler for any HTTP method",
+    "@UseGuards": "applies a guard (authorization) to a controller or handler",
+    "@UsePipes": "applies a validation/transformation pipe",
+    "@UseInterceptors": "applies an interceptor (request lifecycle) to a controller or handler",
+    "@UseFilters": "applies an exception filter",
+    "@Injectable": "injectable provider — service unless it implements a lifecycle interface",
+    "@Module": "NestJS module definition",
+    "@Body": "binds the request body to a handler parameter",
+    "@Param": "binds a route parameter to a handler parameter",
+    "@Query": "binds the query string to a handler parameter",
+    "@Headers": "binds request headers to a handler parameter",
+    "@Catch": "exception filter class",
+    "@WebSocketGateway": "WebSocket gateway class",
+    "@EventPattern": "event handler for the event-driven transport",
+    "@MessagePattern": "message handler for the message-driven transport"
+  },
+  "lifecycleStageOrder": ["guard", "interceptor", "pipe", "handler"],
+  "entryPointPatterns": ["**/*.controller.ts", "**/*.controller.js"]
+}

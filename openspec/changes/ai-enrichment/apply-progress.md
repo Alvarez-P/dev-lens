@@ -104,3 +104,63 @@ Scope: Phase 2 (tasks 2.1-2.5) + Phase 3 (tasks 3.1-3.4). Phases 4-5 belong to P
 ## Next PRs (out of scope here)
 
 PR 3: context assembly + prompt management (needs Phase 2 types). PR 4: pipeline, gates, KG merge, RFC-009, app.module wiring.
+
+---
+
+# Apply Progress: ai-enrichment — PR 3 (Context Assembly + Prompt Management)
+
+Branch: `feat/ai-enrichment` (accumulates on tracker; feature-branch-chain PR #3)
+Artifact store: openspec | Strict TDD: RED → GREEN per task
+Scope: Phase 4 only — tasks 4.1-4.7. Phases 1-3, 5 belong to other PRs.
+
+## TDD Cycle Evidence
+
+| Task | Test File                                                                  | Layer | RED     | GREEN | Notes                                                                                  |
+| ---- | -------------------------------------------------------------------------- | ----- | ------- | ----- | -------------------------------------------------------------------------------------- |
+| 4.1  | `ir-nodes.signatures.spec.ts` + `typescript-ir-builder.signatures.spec.ts` | Unit  | Written | 16/16 | decorators w/ args, ctor params, structured method params, returnType, FQN imports     |
+| 4.2  | `code-sketch.builder.spec.ts`                                              | Unit  | Written | 9/9   | signature-only serialize, private helpers excluded, 4000-token truncation              |
+| 4.3  | `source-file-filter.spec.ts`                                               | Unit  | Written | 9/9   | .ts/.tsx/.js/.jsx allow, `.env*` + ignored-dir deny w/ warn, silent skip               |
+| 4.4  | `context-assembler.service.spec.ts`                                        | Unit  | Written | 9/9   | KG+IR only (no FS), ≤5000 budget w/ priority truncation, `ai:sketch:{sha256}` cache    |
+| 4.5  | `prompt-template-loader.spec.ts` + `real-template-files.spec.ts`           | Unit  | Written | 12/12 | versioned v{n}/ load, latest default, missing-version errors early                     |
+| 4.6  | `prompt-builder.service.spec.ts`                                           | Unit  | Written | 15/15 | 4 sections, `<code>` isolation, substitution, 6000 budget + ContextBudgetExceededError |
+| 4.7  | `framework-config-loader.spec.ts`                                          | Unit  | Written | 4/4   | nestjs/express configs, generic fallback w/ warn                                       |
+
+## Test Summary
+
+- `npx jest` (full backend): 83 suites, 663 tests, 0 failures (was 74/588 at PR 2 → +9 suites, +75 tests)
+- `npx tsc --noEmit`: 0 errors
+- `npx eslint` on changed src: 0 errors
+- Layers: Unit only (no integration/E2E — pipeline lives in PR 4)
+
+## Files Changed (PR 3)
+
+| File                                                                                             | Action | Description                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/backend/src/modules/analysis/domain/ir-nodes.ts`                                            | Modify | `IrClass.decorators`/`constructorParams`, `IrMethod.decorators`/`params`/`returnType`, `IrModule.imports`, new `IrParameter` VO + `IrParamProps`      |
+| `src/backend/src/modules/analysis/domain/index.ts`                                               | Modify | Export `IrParameter` + `IrParamProps`                                                                                                                 |
+| `src/backend/src/modules/analysis/infrastructure/parsers/typescript/typescript-ir-builder.ts`    | Modify | Extract decorator text w/ args, ctor/method params (name/type/decorators), returnType, FQN-resolved deduped imports                                   |
+| `src/backend/src/modules/ai/application/code-sketch.builder.ts`                                  | Create | `CodeSketchBuilder` + `serializeSketch` + `estimateTokens` (4 chars/token); 4000-token cap, never mid-method, `omittedMethodCount`                    |
+| `src/backend/src/modules/ai/application/source-file-filter.ts`                                   | Create | Allow/deny-list classify + filter with warn+skip (`.env*`, ignored dirs)                                                                              |
+| `src/backend/src/modules/ai/application/sketch-cache.ts`                                         | Create | In-memory Map cache keyed `ai:sketch:{sha256}` (Redis-deferred per design)                                                                            |
+| `src/backend/src/modules/ai/application/context-assembler.service.ts`                            | Create | `ContextAssembler.assemble(analysisId)`, 5000-token guard, priority truncation (controller > service > dto > other), `KgContext` + `AssembledContext` |
+| `src/backend/src/modules/ai/application/prompt-template-loader.service.ts`                       | Create | Versioned `ai/capabilities/{id}/v{n}/` loader, latest-by-default, early missing-version error                                                         |
+| `src/backend/src/modules/ai/application/framework-config-loader.service.ts`                      | Create | `ai/frameworks/{framework}.json` loader + generic fallback w/ warn                                                                                    |
+| `src/backend/src/modules/ai/application/prompt-builder.service.ts`                               | Create | 4-section prompt, `<code sourceFile>` XML isolation, `{{var}}` substitution (throws unresolved), 6000-token budget (KG → sketches → throw)            |
+| `src/backend/src/modules/ai/ai.capabilities/classify-lifecycle/v1/system.md` + `instructions.md` | Create | v1 templates incl. untrusted-`<code>` instruction                                                                                                     |
+| `src/backend/src/modules/ai/ai.frameworks/nestjs.json` + `express.json`                          | Create | Framework format configs (decoratorSemantics, lifecycleStageOrder, entryPointPatterns)                                                                |
+| `src/backend/src/modules/ai/ai.module.ts`                                                        | Modify | Register CodeSketchBuilder/SourceFileFilter/SketchCache/PromptTemplateLoader/FrameworkConfigLoader/PromptBuilder; export sketch-stage services        |
+| 10 new test files + ai.module.spec.ts (extended)                                                 | Modify | RED→GREEN specs per task                                                                                                                              |
+
+## Deviations / Decisions
+
+- **IR `parameters` kept alongside new `params`**: legacy name-only `parameters: string[]` remains (endpoints + existing specs depend on it); new structured `params: IrParamProps[]` carries name/type/decorators per REQ-CA-002.
+- **`IrModule.imports` (file-level) not `IrClass.imports`**: imports are per-file, matching one CodeSketch per file; resolved to FQNs (external → bare name) via existing `resolveImportTarget`, deduped, declaration order preserved.
+- **`ContextAssembler` NOT registered in AiModule yet**: it needs `AnalysisRepository` + `GraphQueryService` (cross-module); module wiring is task 5.6 (PR 4) alongside the enrichment service. All other Phase 4 services are registered.
+- **Template version = exact match**: REQ-PM-001 scenario "missing version errors early" requires requesting a non-existent version to throw, even when lower versions exist (spec scenario 3 wins over "highest ≤ requested").
+- **Sketch cache is in-memory Map**: design decision "Redis-deferred" (RFC-009 target). Content-addressed key `ai:sketch:{sha256}` preserved so Redis swap is a drop-in later.
+- **`kgContext.architecture` defaults to 'unknown'**: pipeline detection is PR 4 (LLM response); prompt substitution uses caller override via `substitutions`.
+- **File filter uses `IGNORED_DIRECTORIES` + `.env*` regex from FileManifestService** — single source of truth for ignored dirs.
+
+## Next PRs (out of scope here)
+
+PR 4: pipeline (EnrichmentService 7 stages), ThreeGatesValidator, KG merge, RFC-009 §14 amend, app.module wiring, AiModule cross-module imports.

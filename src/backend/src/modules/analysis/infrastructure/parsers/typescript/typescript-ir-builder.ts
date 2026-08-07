@@ -11,6 +11,7 @@ import {
   IrClassProps,
   IrDependencyProps,
   IrRelationshipProps,
+  IrParamProps,
 } from '../../../domain/ir-nodes';
 import { DecoratorRoleRegistry } from '../decorator-role-registry';
 
@@ -38,6 +39,9 @@ interface MethodData {
   visibility: string;
   isStatic: boolean;
   parameters: string[];
+  decorators: string[];
+  params: IrParamProps[];
+  returnType: string;
 }
 
 interface EndpointData {
@@ -57,6 +61,8 @@ interface PendingClass {
   implements: string[];
   methods: MethodData[];
   endpoints: EndpointData[];
+  decorators: string[];
+  constructorParams: IrParamProps[];
 }
 
 interface PendingModule {
@@ -206,6 +212,8 @@ export class TypeScriptIrBuilder {
     const implementsNames = classDeclaration
       .getImplements()
       .map((imp) => imp.getExpression().getText());
+    const decorators = classDeclaration.getDecorators().map((decorator) => decorator.getText());
+    const constructorParams = this.buildConstructorParams(classDeclaration);
 
     const methods: MethodData[] = [];
     const endpoints: EndpointData[] = [];
@@ -231,7 +239,23 @@ export class TypeScriptIrBuilder {
       implements: implementsNames,
       methods,
       endpoints,
+      decorators,
+      constructorParams,
     };
+  }
+
+  private buildConstructorParams(classDeclaration: ClassDeclaration): IrParamProps[] {
+    const constructor = classDeclaration.getConstructors()[0];
+
+    if (constructor === undefined) {
+      return [];
+    }
+
+    return constructor.getParameters().map((param) => ({
+      name: param.getName(),
+      type: this.parameterType(param),
+      decorators: param.getDecorators().map((decorator) => decorator.getText()),
+    }));
   }
 
   private buildMethod(method: MethodDeclaration, name: string): MethodData {
@@ -246,7 +270,18 @@ export class TypeScriptIrBuilder {
       visibility,
       isStatic: method.isStatic(),
       parameters: method.getParameters().map((param) => param.getName()),
+      decorators: method.getDecorators().map((decorator) => decorator.getText()),
+      params: method.getParameters().map((param) => ({
+        name: param.getName(),
+        type: this.parameterType(param),
+        decorators: param.getDecorators().map((decorator) => decorator.getText()),
+      })),
+      returnType: method.getReturnTypeNode()?.getText() ?? 'void',
     };
+  }
+
+  private parameterType(param: { getTypeNode(): { getText(): string } | undefined }): string {
+    return param.getTypeNode()?.getText() ?? 'any';
   }
 
   private buildEndpoints(
@@ -392,13 +427,16 @@ export class TypeScriptIrBuilder {
       name: projectName,
       rootPath,
       language,
-      packages: this.toPackageProps(modules),
+      packages: this.toPackageProps(modules, modulePathToFqn),
       dependencies,
       relationships,
     };
   }
 
-  private toPackageProps(modules: PendingModule[]): IrPackageProps[] {
+  private toPackageProps(
+    modules: PendingModule[],
+    modulePathToFqn: Map<string, string>,
+  ): IrPackageProps[] {
     if (modules.length === 0) {
       return [];
     }
@@ -406,12 +444,14 @@ export class TypeScriptIrBuilder {
     return [
       {
         name: DEFAULT_PACKAGE,
-        modules: modules.map((mod) => this.toModuleProps(mod)),
+        modules: modules.map((mod) => this.toModuleProps(mod, modulePathToFqn)),
       },
     ];
   }
 
-  private toModuleProps(mod: PendingModule): IrModuleProps {
+  private toModuleProps(mod: PendingModule, modulePathToFqn: Map<string, string>): IrModuleProps {
+    const imports = this.resolveModuleImports(mod, modulePathToFqn);
+
     return {
       name: mod.moduleName,
       path: mod.filePath,
@@ -425,7 +465,27 @@ export class TypeScriptIrBuilder {
         isAsync: fn.isAsync,
         isExported: fn.isExported,
       })),
+      imports,
     };
+  }
+
+  /**
+   * Resolve import specifiers to FQNs (REQ-CA-002): external packages stay as
+   * bare names, relative imports resolve to their module FQN when the target
+   * module was parsed. Deduplicated, declaration order preserved.
+   */
+  private resolveModuleImports(mod: PendingModule, modulePathToFqn: Map<string, string>): string[] {
+    const resolved: string[] = [];
+
+    for (const specifier of mod.imports) {
+      const target = this.resolveImportTarget(specifier, mod.filePath, modulePathToFqn);
+
+      if (!resolved.includes(target)) {
+        resolved.push(target);
+      }
+    }
+
+    return resolved;
   }
 
   private toClassProps(cls: PendingClass, mod: PendingModule): IrClassProps {
@@ -438,6 +498,8 @@ export class TypeScriptIrBuilder {
       implements: cls.implements.map((name) => this.resolveInterfaceReference(name, mod)),
       methods: cls.methods.map((method) => ({ ...method })),
       endpoints: cls.endpoints.map((endpoint) => ({ ...endpoint })),
+      decorators: cls.decorators,
+      constructorParams: cls.constructorParams.map((param) => ({ ...param })),
     };
   }
 

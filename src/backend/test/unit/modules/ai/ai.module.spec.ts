@@ -10,6 +10,12 @@ import {
 } from '@/modules/ai/ai.tokens';
 import { AIProvider } from '@/modules/ai/domain/ai-provider.interface';
 import { ProviderSelectorService } from '@/modules/ai/application/provider-selector.service';
+import { CodeSketchBuilder } from '@/modules/ai/application/code-sketch.builder';
+import { SourceFileFilter } from '@/modules/ai/application/source-file-filter';
+import { SketchCache } from '@/modules/ai/application/sketch-cache';
+import { PromptBuilder } from '@/modules/ai/application/prompt-builder.service';
+import { PromptTemplateLoader } from '@/modules/ai/application/prompt-template-loader.service';
+import { FrameworkConfigLoader } from '@/modules/ai/application/framework-config-loader.service';
 import { OpenAIProvider } from '@/modules/ai/infrastructure/openai.provider';
 import { OllamaProvider } from '@/modules/ai/infrastructure/ollama.provider';
 import { MockProvider } from '@/modules/ai/infrastructure/mock.provider';
@@ -68,5 +74,14 @@ describe('AiModule', () => {
     const selector = moduleRef.get(ProviderSelectorService);
 
     expect(selector).toBeInstanceOf(ProviderSelectorService);
+  });
+
+  it('should register context assembly and prompt management services', () => {
+    expect(moduleRef.get(CodeSketchBuilder)).toBeInstanceOf(CodeSketchBuilder);
+    expect(moduleRef.get(SourceFileFilter)).toBeInstanceOf(SourceFileFilter);
+    expect(moduleRef.get(SketchCache)).toBeInstanceOf(SketchCache);
+    expect(moduleRef.get(PromptTemplateLoader)).toBeInstanceOf(PromptTemplateLoader);
+    expect(moduleRef.get(FrameworkConfigLoader)).toBeInstanceOf(FrameworkConfigLoader);
+    expect(moduleRef.get(PromptBuilder)).toBeInstanceOf(PromptBuilder);
   });
 });

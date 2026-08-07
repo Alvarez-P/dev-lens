@@ -14,8 +14,10 @@ export {
   IrEndpoint,
   IrDependency,
   IrRelationship,
+  IrParameter,
   IrProjectJson,
 } from './ir-nodes';
+export type { IrParamProps } from './ir-nodes';
 
 export { LanguageParser } from './interfaces/language-parser.interface';
 export { ParserRegistry } from './interfaces/parser-registry.interface';

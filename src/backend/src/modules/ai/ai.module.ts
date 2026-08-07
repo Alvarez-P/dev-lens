@@ -5,6 +5,12 @@ import { ConfigModule } from '../../config/config.module';
 import { ConfigService } from '../../config/config.service';
 import { AIProvider } from './domain/ai-provider.interface';
 import { ProviderSelectorService } from './application/provider-selector.service';
+import { CodeSketchBuilder } from './application/code-sketch.builder';
+import { SourceFileFilter } from './application/source-file-filter';
+import { SketchCache } from './application/sketch-cache';
+import { PromptTemplateLoader } from './application/prompt-template-loader.service';
+import { FrameworkConfigLoader } from './application/framework-config-loader.service';
+import { PromptBuilder } from './application/prompt-builder.service';
 import { OpenAIProvider } from './infrastructure/openai.provider';
 import { OllamaProvider } from './infrastructure/ollama.provider';
 import { MockProvider } from './infrastructure/mock.provider';
@@ -24,6 +30,12 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
   ],
   providers: [
     ProviderSelectorService,
+    CodeSketchBuilder,
+    SourceFileFilter,
+    SketchCache,
+    PromptTemplateLoader,
+    FrameworkConfigLoader,
+    PromptBuilder,
     {
       provide: OpenAIProvider,
       useFactory: (config: ConfigService): OpenAIProvider => {
@@ -68,6 +80,6 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
       inject: [OpenAIProvider, OllamaProvider, MockProvider],
     },
   ],
-  exports: [ProviderSelectorService],
+  exports: [ProviderSelectorService, CodeSketchBuilder, SourceFileFilter, SketchCache],
 })
 export class AiModule {}
