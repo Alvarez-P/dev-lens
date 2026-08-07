@@ -99,6 +99,7 @@ describe('KnowledgeGraphService', () => {
     saveGraph: jest.fn(),
   };
   const eventDispatcher = { dispatch: jest.fn(), registerHandler: jest.fn() };
+  const enrichmentRepository = { findByAnalysisId: jest.fn(), save: jest.fn() };
 
   let service: KnowledgeGraphService;
 
@@ -111,6 +112,7 @@ describe('KnowledgeGraphService', () => {
       graphBuilder as never,
       graphRepository as never,
       eventDispatcher as never,
+      enrichmentRepository as never,
     );
 
     analysisRepository.findById.mockResolvedValue(buildAnalysis());
@@ -146,7 +148,7 @@ describe('KnowledgeGraphService', () => {
 
     expect(analysisRepository.findById).toHaveBeenCalledWith(AnalysisId.from('analysis-1'));
     expect(graphRepository.findByAnalysisId).toHaveBeenCalledWith('analysis-1');
-    expect(semanticModelBuilder.build).toHaveBeenCalledWith(expect.any(IrProject));
+    expect(semanticModelBuilder.build).toHaveBeenCalledWith(expect.any(IrProject), undefined);
     expect(graphBuilder.build).toHaveBeenCalledWith(expect.anything(), 'repo-1', 1);
 
     expect(graphRepository.saveGraph).toHaveBeenCalledTimes(1);
@@ -226,5 +228,32 @@ describe('KnowledgeGraphService', () => {
 
     expect(graphBuilder.build).toHaveBeenCalledWith(expect.anything(), 'repo-1', 2);
     expect(eventDispatcher.dispatch).toHaveBeenCalledWith(expect.any(GraphUpdatedEvent));
+  });
+
+  it('should pass the loaded enrichment to the semantic model builder (REQ-EP-007)', async () => {
+    const { IrEnrichment } = await import('@/modules/ai/domain/ai-enrichment.entity');
+    const enrichment = IrEnrichment.create({
+      analysisId: 'analysis-1',
+      repositoryId: 'repo-1',
+      manifestSha256: 'abc123',
+      framework: 'nestjs',
+      architecture: 'mvc',
+      confidence: 0.9,
+      classes: [],
+    });
+    enrichmentRepository.findByAnalysisId.mockResolvedValue(enrichment);
+
+    await service.buildGraph('analysis-1');
+
+    expect(enrichmentRepository.findByAnalysisId).toHaveBeenCalledWith('analysis-1');
+    expect(semanticModelBuilder.build).toHaveBeenCalledWith(expect.any(IrProject), enrichment);
+  });
+
+  it('should build deterministically when no enrichment exists for the analysis', async () => {
+    enrichmentRepository.findByAnalysisId.mockResolvedValue(null);
+
+    await service.buildGraph('analysis-1');
+
+    expect(semanticModelBuilder.build).toHaveBeenCalledWith(expect.any(IrProject), undefined);
   });
 });

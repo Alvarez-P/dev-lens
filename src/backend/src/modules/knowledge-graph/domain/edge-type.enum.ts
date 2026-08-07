@@ -5,4 +5,6 @@ export enum EdgeType {
   IMPORTS = 'IMPORTS',
   DEPENDS_ON = 'DEPENDS_ON',
   EXPOSES = 'EXPOSES',
+  PROTECTS = 'PROTECTS',
+  TRANSFORMS = 'TRANSFORMS',
 }

@@ -10,5 +10,9 @@ export enum NodeType {
   INTERFACE = 'Interface',
   ENDPOINT = 'Endpoint',
   EXTERNAL_DEPENDENCY = 'ExternalDependency',
+  GUARD = 'Guard',
+  PIPE = 'Pipe',
+  INTERCEPTOR = 'Interceptor',
+  MIDDLEWARE = 'Middleware',
   UNKNOWN = 'Unknown',
 }
