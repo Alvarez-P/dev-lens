@@ -32,3 +32,10 @@ export {
   AIInvalidResponseError,
   AISecretsExposureError,
 } from './ai-errors';
+
+export {
+  EnrichmentStartedEvent,
+  EnrichmentCompletedEvent,
+  EnrichmentFailedEvent,
+  EnrichmentSkippedEvent,
+} from './ai-events';
