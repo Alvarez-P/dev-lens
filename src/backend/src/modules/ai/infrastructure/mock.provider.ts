@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Observable, EMPTY } from 'rxjs';
@@ -22,7 +22,7 @@ export class MockProvider implements AIProvider {
   private readonly logger = new Logger(MockProvider.name);
 
   constructor(
-    private readonly fixturesDir: string = path.resolve(__dirname, '..', 'ai.fixtures'),
+    @Optional() private readonly fixturesDir: string = path.resolve(__dirname, '..', 'ai.fixtures'),
   ) {}
 
   async complete(_req: AIRequest): Promise<AIResponse> {
