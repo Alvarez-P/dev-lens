@@ -164,3 +164,70 @@ Scope: Phase 4 only — tasks 4.1-4.7. Phases 1-3, 5 belong to other PRs.
 ## Next PRs (out of scope here)
 
 PR 4: pipeline (EnrichmentService 7 stages), ThreeGatesValidator, KG merge, RFC-009 §14 amend, app.module wiring, AiModule cross-module imports.
+
+---
+
+# Apply Progress: ai-enrichment — PR 4 (Pipeline, Gates, KG Merge, RFC-009) — FINAL
+
+Branch: `feat/ai-enrichment` (accumulates on tracker; feature-branch-chain PR #4 — FINAL)
+Artifact store: openspec | Strict TDD: RED → GREEN per task
+Scope: Phase 5 only — tasks 5.1-5.8. Wires AiModule into app.module.ts (the integration moment).
+
+## TDD Cycle Evidence
+
+| Task | Test File                                                                                             | Layer            | RED     | GREEN   | Notes                                                                                   |
+| ---- | ----------------------------------------------------------------------------------------------------- | ---------------- | ------- | ------- | --------------------------------------------------------------------------------------- |
+| 5.1  | `enrichment.repository.spec.ts` + `enrichment-typeorm-entity.spec.ts` + `enrichment-artifact.spec.ts` | Unit             | Written | 12/12   | findByAnalysisId idempotency, save round-trip, entity metadata, failedUnits on artifact |
+| 5.2  | `three-gates-validator.service.spec.ts`                                                               | Unit             | Written | 9/9     | schema w/ forbidNonWhitelisted, referential drop, 0.7 confidence boundary               |
+| 5.3  | `enrichment.service.spec.ts`                                                                          | Unit             | Written | 8/8     | 7 stages, schema retry once, manifest idempotency, provider-down, partial success       |
+| 5.4  | `enrichment.job-processor.spec.ts` + `enrichment-event-handler.spec.ts`                               | Unit             | Written | 7/7     | DLQ routing, finalAttempt flag, ai.enabled gate                                         |
+| 5.5  | `semantic-model.builder.merge.spec.ts` + KG service specs + enum specs                                | Unit             | Written | 8/8+    | AI role override, lifecycle nodes/edges, dtoFields, project stamp                       |
+| 5.6  | `ai.module.spec.ts` + `knowledge-graph.module.spec.ts` + e2e KG specs                                 | Unit/Integration | n/a     | updated | full override sets for forwardRef'd modules                                             |
+| 5.7  | RFC-009 §14 amend (doc-only)                                                                          | Docs             | n/a     | n/a     | signatures-only override, XML isolation, deny-list                                      |
+| 5.8  | `enrichment-pipeline.integration.spec.ts`                                                             | Integration      | Written | 4/4     | MockProvider fixtures keyed by real manifest sha256                                     |
+
+## Test Summary
+
+- `npx jest` (full backend): 92 suites, 721 tests, 0 failures (was 83/663 at PR 3 → +9 suites, +58 tests)
+- `npx tsc --noEmit`: 0 errors
+- `npx eslint` on changed src: 0 errors
+- Layers: Unit (5.1-5.6) + Integration (5.8, full pipeline with MockProvider)
+
+## Files Changed (PR 4)
+
+| File                                                                                          | Action | Description                                                                                                                                                                                |
+| --------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/backend/src/modules/ai/infrastructure/persistence/typeorm/enrichment.typeorm-entity.ts`  | Create | `IrEnrichmentEntity` — jsonb classes/failed_units, unique `analysis_id`, timestamptz `completed_at`                                                                                        |
+| `src/backend/src/modules/ai/infrastructure/persistence/repositories/enrichment.repository.ts` | Create | `findByAnalysisId` (idempotency) + `save` (REQ-EP-006)                                                                                                                                     |
+| `src/backend/src/modules/ai/application/three-gates-validator.service.ts`                     | Create | Schema (class-validator, whitelist+forbidNonWhitelisted) / referential (IR lookup, drop) / confidence (≥0.7) gates + `parseLifecycleEntry`                                                 |
+| `src/backend/src/modules/ai/application/enrichment.service.ts`                                | Create | 7-stage orchestration (load → idempotency → assemble → prompt → provider → validate → persist), schema retry once w/ feedback, `detectFramework`, failed only on final attempt             |
+| `src/backend/src/modules/ai/infrastructure/jobs/enrichment.job-processor.ts`                  | Create | `@Processor('ai-enrichment')` — 3 attempts, exponential backoff, DLQ routing, finalAttempt flag                                                                                            |
+| `src/backend/src/modules/ai/infrastructure/events/enrichment-event-handler.ts`                | Create | `analysis.completed` → enqueue; `ai.enabled=false` short-circuits (REQ-EP-001)                                                                                                             |
+| `src/backend/src/modules/ai/domain/ai-enrichment.entity.ts`                                   | Modify | Add `FailedUnit` interface, `failedUnits` on aggregate, per-class `status: 'accepted' \| 'low-confidence'`                                                                                 |
+| `src/backend/src/modules/analysis/application/file-manifest.service.ts`                       | Modify | Add `computeManifestSha256` — deterministic composite hash (sorted entries) as the enrichment cache key                                                                                    |
+| `src/backend/src/modules/knowledge-graph/domain/node-type.enum.ts`                            | Modify | Add GUARD, PIPE, INTERCEPTOR, MIDDLEWARE                                                                                                                                                   |
+| `src/backend/src/modules/knowledge-graph/domain/edge-type.enum.ts`                            | Modify | Add PROTECTS, TRANSFORMS                                                                                                                                                                   |
+| `src/backend/src/modules/knowledge-graph/application/semantic-model.builder.ts`               | Modify | `build(ir, enrichment?)` — AI role overrides resolveClassType; lifecycle nodes + PROTECTS/TRANSFORMS edges; dtoFields metadata; project framework/architecture                             |
+| `src/backend/src/modules/knowledge-graph/application/knowledge-graph.service.ts`              | Modify | Inject EnrichmentRepository, load enrichment before buildGraph, pass to builder                                                                                                            |
+| `src/backend/src/modules/ai/ai.module.ts`                                                     | Modify | Register ContextAssembler/ThreeGatesValidator/EnrichmentService/Repository/JobProcessor/EventHandler; import AnalysisModule + forwardRef(KnowledgeGraphModule); onModuleInit wires handler |
+| `src/backend/src/modules/knowledge-graph/knowledge-graph.module.ts`                           | Modify | import forwardRef(AiModule) for EnrichmentRepository                                                                                                                                       |
+| `src/backend/src/app.module.ts`                                                               | Modify | Import AiModule                                                                                                                                                                            |
+| `docs/architecture/RFC-009-AI-Orchestration.md`                                               | Modify | §14 amend: signatures-only override, XML isolation, deny-list, no-secrets                                                                                                                  |
+| 15 test files (new + updated)                                                                 | Modify | RED→GREEN specs per task + integration spec                                                                                                                                                |
+
+## Deviations / Decisions
+
+- **Circular module deps via forwardRef**: AiModule needs GraphQueryService (KG module) for ContextAssembler while KnowledgeGraphService needs EnrichmentRepository (AI module) for the merge — both modules import each other with `forwardRef`. Module/e2e specs compile the full graph with the standard override set (DataSource, repo tokens, queues).
+- **manifestSha256 composite**: spec says "obtained from FileManifestService" but only per-file hashes were stored; added `FileManifestService.computeManifestSha256` — sha256 over sorted `path\u0000hash` entries, so any file add/modify/delete changes the key. MockProvider fixtures in integration tests are keyed by this real digest.
+- **Schema retry once with feedback**: Gate 1 failure appends `"Your previous response failed validation: <errors>. Respond again with a corrected JSON object."` and re-calls the provider; a second failure aborts the pipeline (deterministic fallback).
+- **`enrichment.failed` only on final attempt**: `EnrichmentJobProcessor` computes `finalAttempt` from `job.attemptsMade` and forwards it to the service — matches REQ-EP-002 "failed emitted only after the final retry".
+- **Per-unit fallback granularity**: MVP sends one prompt for all sketches (design open question §OQ2 resolved: single-call MVP); per-unit fallback is realized inside the gates — referential drops and low-confidence downgrades land in `failedUnits` while remaining units persist (REQ-EP-003 partial success).
+- **`enrichment.skipped` reason `no_source_units`**: when context assembly yields zero sketches (all files filtered), the job skips instead of failing — deterministic path is authoritative; nothing to enrich.
+- **RFC-009 §14 override**: the "no raw source code" rule is explicitly amended (14.1) for signature-level sketches built from the IR — no bodies, XML-isolated as untrusted `<code>`, `.env*` + ignored-dir deny-list, no secrets. Design.md flagged this override at the top; tasks 5.7 codified it.
+- **Lifecycle FQNs**: `parseLifecycleEntry('guard:JwtGuard')` → `{kind:'guard', name:'JwtGuard'}`; node FQN `${classFqn}~guard:JwtGuard` (unique per class); `handler` entries are the class itself → no node. PROTECTS for guard, TRANSFORMS for pipe/interceptor/middleware, edge lifecycle-node → class-node (RFV direction Guard→Endpoint).
+- **`detectFramework(ir)` heuristic**: decorators/imports scan for nestjs/express markers, `'unknown'` falls back to the generic framework config — the LLM's returned framework (validated) is what persists on the artifact.
+- **ACCEPTS/RETURNS edges deferred**: REQ-EP-007 spec table mentions them for dtoFields, but the task scope (5.5) lists only PROTECTS/TRANSFORMS; dtoFields metadata lands on DTO node properties, ACCEPTS/RETURNS coordination left to the RFV change.
+
+## Completion
+
+All 8 tasks of Phase 5 complete → ai-enrichment change fully implemented (PRs 1-4). Final full-suite state: 92 suites / 721 tests green, tsc + eslint clean. The tracker `feat/ai-enrichment` is ready for the final merge to main.
