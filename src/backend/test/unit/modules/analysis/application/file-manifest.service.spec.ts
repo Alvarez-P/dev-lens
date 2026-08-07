@@ -166,4 +166,46 @@ describe('FileManifestService', () => {
       expect(service.shouldFullReparse(diff, 0)).toBe(true);
     });
   });
+
+  describe('computeManifestSha256', () => {
+    it('should produce a deterministic composite hash of the manifest', () => {
+      const manifest = { 'b.ts': 'hash-b', 'a.ts': 'hash-a' };
+
+      const first = FileManifestService.computeManifestSha256(manifest);
+      const second = FileManifestService.computeManifestSha256(manifest);
+
+      expect(first).toBe(second);
+      expect(first).toMatch(/^[0-9a-f]{64}$/);
+    });
+
+    it('should change when any file hash changes (REQ-EP-006)', () => {
+      const before = FileManifestService.computeManifestSha256({ 'a.ts': 'hash-a' });
+      const after = FileManifestService.computeManifestSha256({ 'a.ts': 'hash-a-changed' });
+
+      expect(after).not.toBe(before);
+    });
+
+    it('should change when a file is added or removed', () => {
+      const oneFile = FileManifestService.computeManifestSha256({ 'a.ts': 'hash-a' });
+      const twoFiles = FileManifestService.computeManifestSha256({
+        'a.ts': 'hash-a',
+        'b.ts': 'hash-b',
+      });
+
+      expect(twoFiles).not.toBe(oneFile);
+    });
+
+    it('should be order-independent across object key insertion order', () => {
+      const insertionA = FileManifestService.computeManifestSha256({
+        'a.ts': 'hash-a',
+        'b.ts': 'hash-b',
+      });
+      const insertionB = FileManifestService.computeManifestSha256({
+        'b.ts': 'hash-b',
+        'a.ts': 'hash-a',
+      });
+
+      expect(insertionA).toBe(insertionB);
+    });
+  });
 });
