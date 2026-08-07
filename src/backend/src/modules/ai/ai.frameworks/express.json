@@ -1,0 +1,12 @@
+{
+  "name": "express",
+  "description": "Express — middleware-chain HTTP framework with function-based routing. Middleware runs in registration order before the route handler.",
+  "decoratorSemantics": {},
+  "lifecycleStageOrder": ["middleware", "handler"],
+  "entryPointPatterns": [
+    "**/routes/**/*.js",
+    "**/routes/**/*.ts",
+    "**/*.router.js",
+    "**/*.router.ts"
+  ]
+}
