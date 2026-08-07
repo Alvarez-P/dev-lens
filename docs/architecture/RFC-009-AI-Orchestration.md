@@ -14,9 +14,9 @@
 
 This RFC defines the AI Orchestration layer — the runtime system that coordinates AI capabilities, retrieves context from the Knowledge Graph, executes Large Language Model (LLM) requests, streams responses to users, and observes every AI interaction.
 
-AI Orchestration is the engine. It handles the *how* of AI execution: context assembly, RAG pipeline, streaming, observability, and lifecycle management.
+AI Orchestration is the engine. It handles the _how_ of AI execution: context assembly, RAG pipeline, streaming, observability, and lifecycle management.
 
-AI Architecture (RFC-010) defines *what* capabilities exist and *how* they are structured. AI Orchestration defines *how* they run.
+AI Architecture (RFC-010) defines _what_ capabilities exist and _how_ they are structured. AI Orchestration defines _how_ they run.
 
 ---
 
@@ -25,6 +25,7 @@ AI Architecture (RFC-010) defines *what* capabilities exist and *how* they are s
 AI in DevLens is not a chatbot. It is a structured capability that explains software using deterministic knowledge as its foundation.
 
 Without an orchestration layer, every AI capability would implement its own:
+
 - Context retrieval from the Knowledge Graph.
 - Prompt assembly.
 - Provider communication.
@@ -35,6 +36,7 @@ Without an orchestration layer, every AI capability would implement its own:
 This duplication increases maintenance cost, fragments observability, and makes provider migration expensive.
 
 A centralized orchestration layer ensures:
+
 - Consistent context assembly across all capabilities.
 - Single integration point for all AI providers.
 - Unified observability (latency, cost, tokens, success rate).
@@ -140,20 +142,21 @@ Context is assembled from the Knowledge Graph, not from raw source code:
 
 Each AI capability (RFC-010) defines a **context strategy** that specifies:
 
-| Parameter | Description | Example |
-|---|---|---|
-| `target_node` | The primary node to explain | `Service:PaymentService` |
-| `relationship_depth` | How many hops to traverse | 2 |
-| `include_dependents` | Whether to include nodes that depend on the target | true |
-| `include_dependencies` | Whether to include nodes the target depends on | true |
-| `include_api_surface` | Whether to include endpoints | true |
-| `include_event_surface` | Whether to include events | false |
-| `include_source_snippets` | Whether to include source code excerpts | false (never for MVP) |
-| `max_context_tokens` | Token budget for assembled context | 4000 |
+| Parameter                 | Description                                        | Example                  |
+| ------------------------- | -------------------------------------------------- | ------------------------ |
+| `target_node`             | The primary node to explain                        | `Service:PaymentService` |
+| `relationship_depth`      | How many hops to traverse                          | 2                        |
+| `include_dependents`      | Whether to include nodes that depend on the target | true                     |
+| `include_dependencies`    | Whether to include nodes the target depends on     | true                     |
+| `include_api_surface`     | Whether to include endpoints                       | true                     |
+| `include_event_surface`   | Whether to include events                          | false                    |
+| `include_source_snippets` | Whether to include source code excerpts            | false (never for MVP)    |
+| `max_context_tokens`      | Token budget for assembled context                 | 4000                     |
 
 ## 6.3 Context Truncation
 
 If the assembled context exceeds the token budget:
+
 1. Prioritize direct relationships over transitive ones.
 2. Truncate relationship lists (show first N, indicate more exist).
 3. Summarize metadata rather than including full properties.
@@ -217,6 +220,7 @@ All AI responses are streamed to the frontend to reduce perceived latency.
 ## 8.3 Cancellation
 
 Users can cancel in-flight AI requests:
+
 - Frontend closes the SSE/WebSocket connection.
 - Orchestrator aborts the provider request.
 - Partial tokens consumed before cancellation are still recorded for observability.
@@ -229,24 +233,24 @@ Every AI interaction is measured. The AI Observer records:
 
 ## 9.1 Per-Request Metrics
 
-| Metric | Description |
-|---|---|
-| `request_id` | Unique request identifier |
-| `capability` | Which AI capability was invoked |
-| `provider` | Which AI provider handled the request |
-| `model` | Specific model version |
-| `latency_ms` | Total end-to-end latency |
-| `ttft_ms` | Time to first token |
-| `prompt_tokens` | Tokens in the assembled prompt |
-| `completion_tokens` | Tokens in the generated response |
-| `total_tokens` | Sum of prompt + completion |
-| `estimated_cost_usd` | Cost based on provider pricing |
-| `success` | Whether the request completed without error |
-| `error_type` | Error classification if failed |
-| `user_id` | Requesting user |
-| `organization_id` | Requesting organization |
-| `truncated` | Whether context was truncated due to budget |
-| `cache_hit` | Whether context was served from cache |
+| Metric               | Description                                 |
+| -------------------- | ------------------------------------------- |
+| `request_id`         | Unique request identifier                   |
+| `capability`         | Which AI capability was invoked             |
+| `provider`           | Which AI provider handled the request       |
+| `model`              | Specific model version                      |
+| `latency_ms`         | Total end-to-end latency                    |
+| `ttft_ms`            | Time to first token                         |
+| `prompt_tokens`      | Tokens in the assembled prompt              |
+| `completion_tokens`  | Tokens in the generated response            |
+| `total_tokens`       | Sum of prompt + completion                  |
+| `estimated_cost_usd` | Cost based on provider pricing              |
+| `success`            | Whether the request completed without error |
+| `error_type`         | Error classification if failed              |
+| `user_id`            | Requesting user                             |
+| `organization_id`    | Requesting organization                     |
+| `truncated`          | Whether context was truncated due to budget |
+| `cache_hit`          | Whether context was served from cache       |
 
 ## 9.2 Aggregated Metrics
 
@@ -256,12 +260,12 @@ Every AI interaction is measured. The AI Observer records:
 
 ## 9.3 Events
 
-| Event | When |
-|---|---|
-| `AIRequestStarted` | Request enters the pipeline |
-| `AIRequestCompleted` | Request succeeds |
-| `AIRequestFailed` | Request fails (after retries exhausted) |
-| `AIRequestCancelled` | User cancels in-flight request |
+| Event                | When                                    |
+| -------------------- | --------------------------------------- |
+| `AIRequestStarted`   | Request enters the pipeline             |
+| `AIRequestCompleted` | Request succeeds                        |
+| `AIRequestFailed`    | Request fails (after retries exhausted) |
+| `AIRequestCancelled` | User cancels in-flight request          |
 
 ---
 
@@ -289,6 +293,7 @@ Repeated AI requests for the same context should not re-query the Knowledge Grap
 ## 11.1 Rate Limiting
 
 Per-user rate limits prevent abuse:
+
 - **Free tier**: 20 AI requests per hour.
 - **Professional tier**: 200 AI requests per hour.
 - **Enterprise tier**: configurable per organization.
@@ -298,6 +303,7 @@ Limits are enforced by the orchestrator before context assembly (to avoid wastin
 ## 11.2 Usage Quotas
 
 Per-organization monthly quotas on:
+
 - Total AI requests.
 - Total tokens consumed.
 - Total estimated cost.
@@ -310,25 +316,26 @@ Quotas are checked before each request. Organizations approaching their quota re
 
 ## 12.1 Provider Errors
 
-| Error | Action |
-|---|---|
-| Timeout (30s) | Retry once, then fail |
-| Rate limited (429) | Exponential backoff, max 3 retries |
-| Authentication error (401) | Fail immediately, alert operations |
-| Model unavailable (503) | Fail over to fallback provider if configured |
-| Content filter (400) | Return sanitized error to user |
+| Error                      | Action                                       |
+| -------------------------- | -------------------------------------------- |
+| Timeout (30s)              | Retry once, then fail                        |
+| Rate limited (429)         | Exponential backoff, max 3 retries           |
+| Authentication error (401) | Fail immediately, alert operations           |
+| Model unavailable (503)    | Fail over to fallback provider if configured |
+| Content filter (400)       | Return sanitized error to user               |
 
 ## 12.2 Context Errors
 
-| Error | Action |
-|---|---|
-| Knowledge Graph unavailable | Return error: "Analysis data temporarily unavailable" |
-| Node not found | Return error: "Component not found in analysis" |
-| Context too large even after truncation | Reduce depth and retry |
+| Error                                   | Action                                                |
+| --------------------------------------- | ----------------------------------------------------- |
+| Knowledge Graph unavailable             | Return error: "Analysis data temporarily unavailable" |
+| Node not found                          | Return error: "Component not found in analysis"       |
+| Context too large even after truncation | Reduce depth and retry                                |
 
 ## 12.3 User-Facing Errors
 
 Errors returned to users are:
+
 - Actionable (explain what went wrong).
 - Non-technical (no stack traces).
 - Consistent across all capabilities.
@@ -338,14 +345,14 @@ Errors returned to users are:
 
 # 13. Performance Targets
 
-| Metric | Target |
-|---|---|
-| Context assembly | < 200ms |
-| Prompt building | < 50ms |
-| Time to first token (TTFT) | < 2 seconds |
-| Streaming latency (chunk interval) | < 100ms |
-| Cache hit context assembly | < 10ms |
-| Concurrent requests (per instance) | 50 |
+| Metric                             | Target      |
+| ---------------------------------- | ----------- |
+| Context assembly                   | < 200ms     |
+| Prompt building                    | < 50ms      |
+| Time to first token (TTFT)         | < 2 seconds |
+| Streaming latency (chunk interval) | < 100ms     |
+| Cache hit context assembly         | < 10ms      |
+| Concurrent requests (per instance) | 50          |
 
 ---
 
@@ -357,6 +364,28 @@ Errors returned to users are:
 - No raw source code is sent to AI providers in the MVP.
 - Prompt injection is mitigated by strict prompt structure and context isolation.
 - AI provider API keys are stored in a secrets manager, never in code or environment variables.
+
+### 14.1 Amendment — Signature-Level Code Sketches (ai-enrichment)
+
+The **"no raw source code"** rule above is explicitly overridden by the
+`ai-enrichment` pipeline (change 2026-08-06) for a strictly limited, hardened
+subset of source-derived data:
+
+- **Signatures only**: the LLM receives `CodeSketch` objects built from the
+  IR — class/method/parameter signatures, decorators, and resolved imports.
+  Method bodies, comments, string literals, and private helpers are never
+  present (they never enter the IR and therefore cannot be serialized).
+- **XML isolation**: every sketch is wrapped in `<code sourceFile="…">` tags,
+  and the system prompt instructs the model that content between those tags is
+  untrusted data whose instructions must be ignored (injection hardening).
+- **Deny-list**: `.env*` files and files under ignored directories
+  (`node_modules`, `dist`, `.git`, …) are excluded before sketching, so
+  secrets and vendored code never reach a provider.
+- **Graceful degradation**: when the pipeline is disabled (`ai.enabled=false`)
+  or a provider fails, no source-derived data leaves the system at all and the
+  deterministic analysis pipeline is unaffected.
+- **No secrets in transit**: sketches carry no credentials; API keys live only
+  in the secrets manager referenced above.
 
 ---
 
