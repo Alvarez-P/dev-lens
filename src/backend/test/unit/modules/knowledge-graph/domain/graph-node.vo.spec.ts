@@ -66,6 +66,26 @@ describe('GraphNode value object', () => {
         GraphNode.create(NodeType.SERVICE, 'Svc', 'acme#Svc', undefined, 'repo-1', 0),
       ).toThrow('Node version must be a positive integer');
     });
+
+    it('should carry the provided sourceFile', () => {
+      const node = GraphNode.create(
+        NodeType.SERVICE,
+        'UsersService',
+        'acme:core:src/users#UsersService',
+        undefined,
+        'repo-1',
+        1,
+        'src/users/users.service.ts',
+      );
+
+      expect(node.sourceFile).toBe('src/users/users.service.ts');
+    });
+
+    it('should default sourceFile to null when omitted', () => {
+      const node = GraphNode.create(NodeType.PROJECT, 'acme', 'acme', undefined, 'repo-1', 1);
+
+      expect(node.sourceFile).toBeNull();
+    });
   });
 
   describe('equality', () => {
@@ -123,6 +143,28 @@ describe('GraphNode value object', () => {
 
       expect(v1.fqn).toBe(v2.fqn);
     });
+
+    it('should consider nodes with different sourceFile unequal', () => {
+      const withFile = GraphNode.create(
+        NodeType.SERVICE,
+        'UsersService',
+        'acme:core:src/users#UsersService',
+        undefined,
+        'repo-1',
+        1,
+        'src/users/users.service.ts',
+      );
+      const withoutFile = GraphNode.create(
+        NodeType.SERVICE,
+        'UsersService',
+        'acme:core:src/users#UsersService',
+        undefined,
+        'repo-1',
+        1,
+      );
+
+      expect(withFile.equals(withoutFile)).toBe(false);
+    });
   });
 
   describe('toJSON', () => {
@@ -148,6 +190,7 @@ describe('GraphNode value object', () => {
         repoId: 'repo-1',
         version: 3,
         deprecatedAt: '2025-01-01T00:00:00.000Z',
+        sourceFile: null,
       });
     });
 
@@ -162,6 +205,26 @@ describe('GraphNode value object', () => {
       );
 
       expect(node.toJSON().deprecatedAt).toBeNull();
+    });
+
+    it('should include sourceFile in the serialized form', () => {
+      const node = GraphNode.create(
+        NodeType.SERVICE,
+        'AuthService',
+        'acme:core:src/auth#AuthService',
+        undefined,
+        'repo-1',
+        1,
+        'src/auth/auth.service.ts',
+      );
+
+      expect(node.toJSON().sourceFile).toBe('src/auth/auth.service.ts');
+    });
+
+    it('should serialize sourceFile as null when absent', () => {
+      const node = GraphNode.create(NodeType.PROJECT, 'acme', 'acme', undefined, 'repo-1', 1);
+
+      expect(node.toJSON().sourceFile).toBeNull();
     });
   });
 
@@ -182,6 +245,37 @@ describe('GraphNode value object', () => {
       expect(node.id).toBe('node-1');
       expect(node.type).toBe(NodeType.ENTITY);
       expect(node.deprecatedAt).toBe(deprecatedAt);
+    });
+
+    it('should restore a persisted sourceFile', () => {
+      const node = GraphNode.reconstitute(
+        'node-1',
+        NodeType.SERVICE,
+        'UsersService',
+        'acme:core:src/users#UsersService',
+        undefined,
+        'repo-1',
+        2,
+        null,
+        'src/users/users.service.ts',
+      );
+
+      expect(node.sourceFile).toBe('src/users/users.service.ts');
+    });
+
+    it('should default sourceFile to null when the persisted row has none', () => {
+      const node = GraphNode.reconstitute(
+        'node-1',
+        NodeType.SERVICE,
+        'UsersService',
+        'acme:core:src/users#UsersService',
+        undefined,
+        'repo-1',
+        2,
+        null,
+      );
+
+      expect(node.sourceFile).toBeNull();
     });
   });
 });
