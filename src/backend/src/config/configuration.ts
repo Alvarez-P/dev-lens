@@ -46,6 +46,36 @@ export interface AnalysisConfig {
   staticAnalysisThreshold: number;
 }
 
+export interface AIProviderConfig {
+  /** Env var name holding the API key, e.g. 'OPENAI_API_KEY'. */
+  api_key_env?: string;
+  /** Base URL for self-hosted providers (e.g. Ollama). */
+  base_url?: string;
+  /** Model identifier for this provider. */
+  model?: string;
+  /** Whether this provider is allowed to be selected. */
+  enabled: boolean;
+}
+
+export interface AiConfig {
+  /** Master kill-switch for all AI features. */
+  enabled: boolean;
+  /** Provider configs keyed by provider name. */
+  providers: Record<string, AIProviderConfig>;
+  /** Default provider/model selector in `provider/model` format. */
+  default_model: string;
+  /** Per-request timeout in ms. */
+  timeout_ms: number;
+  retry: {
+    /** Max LLM call attempts (including retries). */
+    max_attempts: number;
+  };
+  budget: {
+    /** Hard token budget per prompt. */
+    max_total_tokens: number;
+  };
+}
+
 export interface AppConfiguration {
   nodeEnv: string;
   port: number;
@@ -58,6 +88,7 @@ export interface AppConfiguration {
   repo: RepoConfig;
   oauth: OAuthConfig;
   analysis: AnalysisConfig;
+  ai: AiConfig;
   logLevel: string;
 }
 
@@ -107,6 +138,32 @@ export default (): AppConfiguration => ({
   },
   analysis: {
     staticAnalysisThreshold: parseFloat(process.env.STATIC_ANALYSIS_THRESHOLD || '0.5'),
+  },
+  ai: {
+    enabled: process.env.AI_ENABLED === 'true',
+    providers: {
+      openai: {
+        api_key_env: 'OPENAI_API_KEY',
+        model: process.env.OPENAI_MODEL || 'gpt-4o',
+        enabled: Boolean(process.env.OPENAI_API_KEY),
+      },
+      ollama: {
+        base_url: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+        model: process.env.OLLAMA_MODEL || 'llama3.2',
+        enabled: true,
+      },
+      mock: {
+        enabled: true,
+      },
+    },
+    default_model: process.env.AI_DEFAULT_MODEL || 'ollama/llama3.2',
+    timeout_ms: parseInt(process.env.AI_TIMEOUT_MS || '60000', 10),
+    retry: {
+      max_attempts: parseInt(process.env.AI_RETRY_MAX_ATTEMPTS || '2', 10),
+    },
+    budget: {
+      max_total_tokens: parseInt(process.env.AI_BUDGET_MAX_TOKENS || '6000', 10),
+    },
   },
   logLevel: process.env.LOG_LEVEL || 'debug',
 });

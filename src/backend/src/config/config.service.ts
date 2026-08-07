@@ -3,6 +3,7 @@ import { ConfigService as NestConfigService } from '@nestjs/config';
 import {
   AppConfiguration,
   AnalysisConfig,
+  AiConfig,
   DatabaseConfig,
   RedisConfig,
   MinioConfig,
@@ -57,6 +58,10 @@ export class ConfigService {
 
   get analysis(): AnalysisConfig {
     return this.configService.getOrThrow<AnalysisConfig>('analysis');
+  }
+
+  get ai(): AiConfig {
+    return this.configService.getOrThrow<AiConfig>('ai');
   }
 
   get logLevel(): string {

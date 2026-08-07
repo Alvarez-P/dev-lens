@@ -1,6 +1,7 @@
 import configuration, {
   AppConfiguration,
   AnalysisConfig,
+  AiConfig,
   OAuthConfig,
   OAuthProviderConfig,
 } from '@/config/configuration';
@@ -90,6 +91,118 @@ describe('Configuration', () => {
       const config: AppConfiguration = configuration();
 
       expect(config.oauth.tokenEncryptionKey).toBe('custom-encryption-key');
+    });
+  });
+
+  describe('AiConfig', () => {
+    it('should define an AiConfig with AI section fields', () => {
+      const ai: AiConfig = {
+        enabled: true,
+        providers: {
+          openai: { api_key_env: 'OPENAI_API_KEY', model: 'gpt-4o', enabled: true },
+          ollama: { base_url: 'http://localhost:11434', model: 'llama3.2', enabled: true },
+          mock: { enabled: true },
+        },
+        default_model: 'ollama/llama3.2',
+        timeout_ms: 60000,
+        retry: { max_attempts: 2 },
+        budget: { max_total_tokens: 6000 },
+      };
+
+      expect(ai.enabled).toBe(true);
+      expect(ai.default_model).toBe('ollama/llama3.2');
+      expect(ai.providers.openai.api_key_env).toBe('OPENAI_API_KEY');
+      expect(ai.retry.max_attempts).toBe(2);
+      expect(ai.budget.max_total_tokens).toBe(6000);
+    });
+
+    it('should default ai.enabled to false', () => {
+      delete process.env.AI_ENABLED;
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.enabled).toBe(false);
+    });
+
+    it('should default ai.default_model to ollama/llama3.2', () => {
+      delete process.env.AI_DEFAULT_MODEL;
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.default_model).toBe('ollama/llama3.2');
+    });
+
+    it('should default ai.timeout_ms to 60000', () => {
+      delete process.env.AI_TIMEOUT_MS;
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.timeout_ms).toBe(60000);
+    });
+
+    it('should default retry.max_attempts to 2 and budget.max_total_tokens to 6000', () => {
+      delete process.env.AI_RETRY_MAX_ATTEMPTS;
+      delete process.env.AI_BUDGET_MAX_TOKENS;
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.retry.max_attempts).toBe(2);
+      expect(config.ai.budget.max_total_tokens).toBe(6000);
+    });
+
+    it('should load ai.enabled from the AI_ENABLED env var', () => {
+      process.env.AI_ENABLED = 'true';
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.enabled).toBe(true);
+    });
+
+    it('should load default_model from AI_DEFAULT_MODEL env var', () => {
+      process.env.AI_DEFAULT_MODEL = 'openai/gpt-4o';
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.default_model).toBe('openai/gpt-4o');
+    });
+
+    it('should load provider configs from env vars', () => {
+      process.env.OPENAI_API_KEY = 'sk-test';
+      process.env.OPENAI_MODEL = 'gpt-4o-mini';
+      process.env.OLLAMA_BASE_URL = 'http://ollama:11434';
+      process.env.OLLAMA_MODEL = 'codellama';
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.providers.openai).toBeDefined();
+      expect(config.ai.providers.openai.api_key_env).toBe('OPENAI_API_KEY');
+      expect(config.ai.providers.openai.model).toBe('gpt-4o-mini');
+      expect(config.ai.providers.ollama.base_url).toBe('http://ollama:11434');
+      expect(config.ai.providers.ollama.model).toBe('codellama');
+    });
+
+    it('should default provider base_url and model when env vars absent', () => {
+      delete process.env.OPENAI_API_KEY;
+      delete process.env.OPENAI_MODEL;
+      delete process.env.OLLAMA_BASE_URL;
+      delete process.env.OLLAMA_MODEL;
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.providers.ollama.base_url).toBe('http://localhost:11434');
+      expect(config.ai.providers.ollama.model).toBe('llama3.2');
+    });
+
+    it('should load timeout, retry, and budget from env vars', () => {
+      process.env.AI_TIMEOUT_MS = '120000';
+      process.env.AI_RETRY_MAX_ATTEMPTS = '3';
+      process.env.AI_BUDGET_MAX_TOKENS = '8000';
+
+      const config: AppConfiguration = configuration();
+
+      expect(config.ai.timeout_ms).toBe(120000);
+      expect(config.ai.retry.max_attempts).toBe(3);
+      expect(config.ai.budget.max_total_tokens).toBe(8000);
     });
   });
 
