@@ -231,6 +231,7 @@ export class GraphRepository {
     entity.repoId = node.repoId;
     entity.version = node.version;
     entity.deprecatedAt = node.deprecatedAt;
+    entity.sourceFile = node.sourceFile;
     entity.sourceAnalysisId = sourceAnalysisId;
 
     return entity;
@@ -272,6 +273,7 @@ export class GraphRepository {
       entity.repoId,
       entity.version,
       entity.deprecatedAt,
+      entity.sourceFile ?? null,
     );
   }
 

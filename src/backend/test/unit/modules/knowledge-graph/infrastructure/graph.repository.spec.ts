@@ -22,6 +22,20 @@ function buildGraphNode(version = 1, id = 'node-1'): GraphNode {
   );
 }
 
+function buildGraphNodeWithSourceFile(): GraphNode {
+  return GraphNode.reconstitute(
+    'node-1',
+    NodeType.CONTROLLER,
+    'UsersController',
+    'acme:users#UsersController',
+    {},
+    'repo-1',
+    1,
+    null,
+    'src/users/users.controller.ts',
+  );
+}
+
 function buildGraphEdge(nodeId = 'node-1', version = 1): GraphEdge {
   return GraphEdge.reconstitute('edge-1', EdgeType.BELONGS_TO, nodeId, 'node-2', {}, version);
 }
@@ -137,6 +151,28 @@ describe('GraphRepository', () => {
       });
     });
 
+    it('should stamp the source_file column on persisted nodes', async () => {
+      const { repository, manager } = buildHarness();
+      const node = buildGraphNodeWithSourceFile();
+      const snapshot = buildSnapshot();
+
+      await repository.saveGraph([node], [], snapshot);
+
+      const insertedNodes = manager.save.mock.calls[0][1] as GraphNodeEntity[];
+      expect(insertedNodes[0].sourceFile).toBe('src/users/users.controller.ts');
+    });
+
+    it('should persist null source_file for nodes without a file', async () => {
+      const { repository, manager } = buildHarness();
+      const node = buildGraphNode();
+      const snapshot = buildSnapshot();
+
+      await repository.saveGraph([node], [], snapshot);
+
+      const insertedNodes = manager.save.mock.calls[0][1] as GraphNodeEntity[];
+      expect(insertedNodes[0].sourceFile).toBeNull();
+    });
+
     it('should propagate a failed insert so the whole build rolls back', async () => {
       const { repository, manager } = buildHarness();
       manager.save.mockImplementationOnce(async () => undefined);
@@ -227,6 +263,26 @@ describe('GraphRepository', () => {
       expect(result[0].id).toBe('node-1');
       expect(result[0].fqn).toBe('acme:users');
       expect(result[0].deprecatedAt).toBeNull();
+    });
+
+    it('should map source_file back to the domain sourceFile', async () => {
+      const { repository, nodesRepo } = buildHarness();
+      nodesRepo.find.mockResolvedValue([
+        nodeEntity({ sourceFile: 'src/users/users.controller.ts' }),
+      ]);
+
+      const result = await repository.findNodesByRepoAndVersion('repo-1', 1);
+
+      expect(result[0].sourceFile).toBe('src/users/users.controller.ts');
+    });
+
+    it('should map a null source_file back to a null sourceFile', async () => {
+      const { repository, nodesRepo } = buildHarness();
+      nodesRepo.find.mockResolvedValue([nodeEntity({ sourceFile: null })]);
+
+      const result = await repository.findNodesByRepoAndVersion('repo-1', 1);
+
+      expect(result[0].sourceFile).toBeNull();
     });
   });
 
