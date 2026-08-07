@@ -48,13 +48,13 @@ Chain strategy: pending
 
 ## Phase 4: Context + Prompts
 
-- [ ] 4.1 Extend IrClass/IrMethod: decorator args, ctor params, FQN imports (REQ-CA-002; coord. w/ parser)
-- [ ] 4.2 CodeSketchBuilder: signatures only, strip comments/literals/private helpers (REQ-CA-002/003)
-- [ ] 4.3 Allow/deny-list: .ts/.tsx allow, `.env*` deny, warn+skip (REQ-CA-004)
-- [ ] 4.4 Assembler: ≤5000 budget, priority truncation, sha256 cache (REQ-CA-005/006)
-- [ ] 4.5 Template loader + classify-lifecycle v1 files (REQ-PM-001)
-- [ ] 4.6 PromptBuilder: 4 sections, `<code>` XML isolation, substitution, 6000 budget (REQ-PM-002/003/005)
-- [ ] 4.7 Framework configs nestjs.json/express.json + generic fallback (REQ-PM-006)
+- [x] 4.1 Extend IrClass/IrMethod: decorator args, ctor params, FQN imports (REQ-CA-002; coord. w/ parser)
+- [x] 4.2 CodeSketchBuilder: signatures only, strip comments/literals/private helpers (REQ-CA-002/003)
+- [x] 4.3 Allow/deny-list: .ts/.tsx allow, `.env*` deny, warn+skip (REQ-CA-004)
+- [x] 4.4 Assembler: ≤5000 budget, priority truncation, sha256 cache (REQ-CA-005/006)
+- [x] 4.5 Template loader + classify-lifecycle v1 files (REQ-PM-001)
+- [x] 4.6 PromptBuilder: 4 sections, `<code>` XML isolation, substitution, 6000 budget (REQ-PM-002/003/005)
+- [x] 4.7 Framework configs nestjs.json/express.json + generic fallback (REQ-PM-006)
 
 ## Phase 5: Pipeline + Merge + Docs
 
