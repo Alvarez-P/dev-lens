@@ -48,13 +48,13 @@ TDD: RED first.
 
 ## Phase 3: Frontend Types, Store & API (PR 3)
 
-- [ ] 3.1 `types.ts`: EdgeType +INVOKES/INJECTS (10), ViewMode.REQUEST_FLOW, RequestFlowStep/RequestFlow
-- [ ] 3.2 RED: `types.test.ts`: 10 edges, 8 views, step shape
-- [ ] 3.3 `views.ts`: REQUEST_FLOW config (#8)
-- [ ] 3.4 RED: store tests: startFlow, nextStep, pauseFlow, resetFlow on switch
-- [ ] 3.5 Implement `flowSlice` in `src/frontend/src/lib/visualization/store/graph-store.ts`
-- [ ] 3.6 `graph-api.ts`: `getEndpointFlow(repoId, fqn)` + fqn encoding test
-- [ ] 3.7 `node-style.ts` entries + register InvokesEdge/InjectsEdge in `src/frontend/src/components/graph/canvas/edges/index.ts`
+- [x] 3.1 `types.ts`: EdgeType +INVOKES/INJECTS (10), ViewMode.REQUEST_FLOW, RequestFlowStep/RequestFlow
+- [x] 3.2 RED: `types.test.ts`: 10 edges, 8 views, step shape
+- [x] 3.3 `views.ts`: REQUEST_FLOW config (#8)
+- [x] 3.4 RED: store tests: startFlow, nextStep, pauseFlow, resetFlow on switch
+- [x] 3.5 Implement `flowSlice` in `src/frontend/src/lib/visualization/store/graph-store.ts`
+- [x] 3.6 `graph-api.ts`: `getEndpointFlow(repoId, fqn)` + fqn encoding test
+- [x] 3.7 `node-style.ts` entries + register InvokesEdge/InjectsEdge in `src/frontend/src/components/graph/canvas/edges/index.ts`
 
 ## Phase 4: Frontend Animation & Wiring (PR 4)
 
