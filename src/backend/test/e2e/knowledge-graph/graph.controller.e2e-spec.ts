@@ -263,10 +263,62 @@ function buildFixtureIr(): IrProject {
   });
 }
 
+const FLOW_ENDPOINT_FQN = 'acme:default:src/users#UsersController.GET:/users';
+
+function buildFlowFixtureIr(): IrProject {
+  return IrProject.create({
+    name: 'acme',
+    rootPath: '/repo',
+    language: Language.create('typescript', '.ts'),
+    packages: [
+      {
+        name: 'default',
+        modules: [
+          {
+            name: 'src/users',
+            path: '/repo/src/users/users.module.ts',
+            classes: [
+              {
+                name: 'UsersController',
+                role: 'controller',
+                constructorParams: [{ name: 'userService', type: 'UsersService', decorators: [] }],
+                endpoints: [
+                  {
+                    name: 'findAll',
+                    httpMethod: 'GET',
+                    path: '/users',
+                    parameters: [],
+                    lifecycle: [
+                      { kind: 'guard', classRef: 'JwtGuard' },
+                      { kind: 'pipe', classRef: 'ValidationPipe' },
+                      { kind: 'interceptor', classRef: 'Logging' },
+                    ],
+                    typedParams: [
+                      { name: 'dto', typeAnnotation: 'CreateUserDto', decorator: '@Body' },
+                    ],
+                  },
+                ],
+              },
+              {
+                name: 'UsersService',
+                role: 'service',
+                constructorParams: [{ name: 'userRepo', type: 'UsersRepository', decorators: [] }],
+              },
+              { name: 'UsersRepository', role: 'repository' },
+              { name: 'CreateUserDto', role: 'dto' },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+}
+
 describe('Graph Controller (E2E)', () => {
   let app: INestApplication;
   let store: InMemoryGraphStore;
   let service: KnowledgeGraphService;
+  let analysisRepository: InMemoryAnalysisRepository;
 
   const jwtGuard = { canActivate: jest.fn(() => true) };
   const membershipGuard = { canActivate: jest.fn(() => true) };
@@ -277,7 +329,7 @@ describe('Graph Controller (E2E)', () => {
 
     store = new InMemoryGraphStore();
     currentDataSource = store.dataSource;
-    const analysisRepository = new InMemoryAnalysisRepository();
+    analysisRepository = new InMemoryAnalysisRepository();
 
     const analysis = Analysis.reconstitute(
       AnalysisId.from('11111111-2222-3333-4444-555555555555'),
@@ -528,5 +580,82 @@ describe('Graph Controller (E2E)', () => {
         (edge: { sourceNodeId: string }) => edge.sourceNodeId === controller.id,
       ),
     ).toBe(true);
+  });
+
+  it('should return ordered request-flow steps for an endpoint', async () => {
+    const flowAnalysis = Analysis.reconstitute(
+      AnalysisId.from('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'),
+      SnapshotId.from('snap-1'),
+      RepositoryId.from('repo-1'),
+      AnalysisStatus.COMPLETED,
+      buildFlowFixtureIr(),
+      {},
+      null,
+      new Date(),
+      new Date(),
+    );
+    await analysisRepository.save(flowAnalysis);
+    await service.buildGraph(flowAnalysis.id.toString());
+
+    const fqn = encodeURIComponent(FLOW_ENDPOINT_FQN);
+    const response = await request(app.getHttpServer())
+      .get(`/api/v1/graph/repo-1/endpoints/${fqn}/flow`)
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.flowAvailable).toBe(true);
+    expect(response.body.data.endpointFqn).toBe(FLOW_ENDPOINT_FQN);
+    expect(response.body.data.steps.map((step: { kind: string }) => step.kind)).toEqual([
+      'guard',
+      'pipe',
+      'interceptor',
+      'handler',
+      'service',
+      'repository',
+    ]);
+    expect(response.body.data.steps.map((step: { order: number }) => step.order)).toEqual([
+      1, 2, 3, 4, 5, 6,
+    ]);
+
+    const handler = response.body.data.steps.find(
+      (step: { kind: string }) => step.kind === 'handler',
+    );
+    expect(handler.payloadType).toBe('CreateUserDto');
+    expect(handler.approximate).toBe(false);
+
+    const approximateTail = response.body.data.steps.filter(
+      (step: { approximate: boolean }) => step.approximate,
+    );
+    expect(approximateTail.map((step: { kind: string }) => step.kind)).toEqual([
+      'service',
+      'repository',
+    ]);
+    expect(approximateTail.every((step: { edgeType: string }) => step.edgeType === 'INVOKES')).toBe(
+      true,
+    );
+  });
+
+  it('should return 404 when the endpoint fqn does not exist in the graph', async () => {
+    await request(app.getHttpServer())
+      .get(`/api/v1/graph/repo-1/endpoints/${encodeURIComponent('acme:missing:Thing')}/flow`)
+      .expect(404);
+  });
+
+  it('should return flowAvailable false with empty steps for a pre-flow v1 snapshot', async () => {
+    for (const node of store.nodes) {
+      node.version = 1;
+    }
+    for (const edge of store.edges) {
+      edge.version = 1;
+    }
+
+    const fqn = encodeURIComponent(FLOW_ENDPOINT_FQN);
+    const response = await request(app.getHttpServer())
+      .get(`/api/v1/graph/repo-1/endpoints/${fqn}/flow`)
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.flowAvailable).toBe(false);
+    expect(response.body.data.steps).toEqual([]);
   });
 });

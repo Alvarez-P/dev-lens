@@ -9,6 +9,7 @@ import {
   GraphExportQueryDto,
   GraphQueryNodeDetailDto,
   ExportResponseDto,
+  EndpointFlowResponseDto,
 } from './graph-query.dto';
 
 @ApiTags('Knowledge Graph')
@@ -140,6 +141,26 @@ export class GraphController {
         limit: query.limit,
       },
     };
+  }
+
+  @Get(':repoId/endpoints/:fqn/flow')
+  @ApiOperation({ summary: 'Get the ordered request-flow steps for an endpoint' })
+  @ApiResponse({
+    status: 200,
+    description: 'Ordered flow steps; flowAvailable false for pre-flow snapshots',
+    type: EndpointFlowResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({ status: 403, description: 'Not a member of the repository' })
+  @ApiResponse({ status: 404, description: 'No endpoint exists for the fqn' })
+  async getEndpointFlow(@Param('repoId') repoId: string, @Param('fqn') fqn: string) {
+    const result = await this.graphQueryService.getEndpointFlow(repoId, fqn);
+
+    if (result === null) {
+      throw new NotFoundException(`No endpoint flow found for fqn "${fqn}"`);
+    }
+
+    return { success: true, data: result };
   }
 
   private pageMeta(total: number, page: number, limit: number) {
