@@ -29,12 +29,12 @@ TDD: RED first.
 
 ## Phase 1: Backend Parser & IR (PR 1)
 
-- [ ] 1.1 RED: `decorator-role-registry.spec.ts`: UsePipes→pipe, UseInterceptors→interceptor, Body→body, Param→param, Query→query, Headers→headers
-- [ ] 1.2 Add 6 entries to `src/backend/src/modules/analysis/infrastructure/parsers/decorator-role-registry.ts`
-- [ ] 1.3 Add `LifecycleEntry`/`TypedParam` + `lifecycle`/`typedParams` on `IrEndpointProps` in `src/backend/src/modules/analysis/domain/ir-nodes.ts`
-- [ ] 1.4 RED: `typescript-ir-builder.spec.ts`: buildEndpoints() projects decorators→lifecycle (order), params→typedParams (null), empty lists
-- [ ] 1.5 Implement projection in `buildEndpoints()` in `src/backend/src/modules/analysis/infrastructure/parsers/typescript/typescript-ir-builder.ts`
-- [ ] 1.6 Add `INVOKES`/`INJECTS` to `src/backend/src/modules/knowledge-graph/domain/edge-type.enum.ts` (8→10); update tests
+- [x] 1.1 RED: `decorator-role-registry.spec.ts`: UsePipes→pipe, UseInterceptors→interceptor, Body→body, Param→param, Query→query, Headers→headers
+- [x] 1.2 Add 6 entries to `src/backend/src/modules/analysis/infrastructure/parsers/decorator-role-registry.ts`
+- [x] 1.3 Add `LifecycleEntry`/`TypedParam` + `lifecycle`/`typedParams` on `IrEndpointProps` in `src/backend/src/modules/analysis/domain/ir-nodes.ts`
+- [x] 1.4 RED: `typescript-ir-builder.spec.ts`: buildEndpoints() projects decorators→lifecycle (order), params→typedParams (null), empty lists
+- [x] 1.5 Implement projection in `buildEndpoints()` in `src/backend/src/modules/analysis/infrastructure/parsers/typescript/typescript-ir-builder.ts`
+- [x] 1.6 Add `INVOKES`/`INJECTS` to `src/backend/src/modules/knowledge-graph/domain/edge-type.enum.ts` (8→10); update tests
 
 ## Phase 2: Backend Graph Model & Flow API (PR 2)
 
