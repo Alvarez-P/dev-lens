@@ -76,11 +76,26 @@ describe('getViewConfig (VV-001 view→layout/filter table)', () => {
     expect(config.nodeTypes).toEqual([]);
     expect(config.edgeTypes).toEqual([]);
   });
+
+  it('Request Flow is a hierarchical lifecycle-edge view (not an empty state)', () => {
+    const config = getViewConfig(ViewMode.REQUEST_FLOW);
+
+    expect(config.layout).toBe(LayoutType.HIERARCHICAL);
+    expect(config.isEmptyState).toBeFalsy();
+    expect(config.label).toBe('Request Flow');
+    expect(config.description).toContain('Select an endpoint');
+    expect(config.edgeTypes).toEqual([
+      EdgeType.PROTECTS,
+      EdgeType.TRANSFORMS,
+      EdgeType.INVOKES,
+      EdgeType.INJECTS,
+    ]);
+  });
 });
 
 describe('VIEWS', () => {
-  it('exposes exactly 7 views in view-number order', () => {
-    expect(VIEWS).toHaveLength(7);
+  it('exposes exactly 8 views in view-number order', () => {
+    expect(VIEWS).toHaveLength(8);
     expect(VIEWS.map((view) => view.mode)).toEqual(Object.values(ViewMode));
   });
 });
@@ -105,5 +120,49 @@ describe('applyViewMode', () => {
     expect(state.viewMode).toBe(ViewMode.EVENT_FLOW);
     expect(state.visibleNodeTypes).toEqual([]);
     expect(state.visibleEdgeTypes).toEqual([]);
+  });
+
+  it('leaving REQUEST_FLOW via applyViewMode resets the flow slice (REQ-VV-008)', () => {
+    applyViewMode(ViewMode.REQUEST_FLOW);
+    useGraphStore.getState().startFlow('fqn-A', [
+      {
+        order: 0,
+        kind: 'guard',
+        nodeFqn: 'fqn-guard',
+        nodeLabel: 'JwtAuthGuard',
+        edgeType: EdgeType.PROTECTS,
+        payloadType: null,
+        approximate: false,
+      },
+    ]);
+    useGraphStore.getState().nextStep();
+
+    applyViewMode(ViewMode.MODULES);
+
+    const state = useGraphStore.getState();
+    expect(state.viewMode).toBe(ViewMode.MODULES);
+    expect(state.activeEndpointFqn).toBeNull();
+    expect(state.flowSteps).toEqual([]);
+    expect(state.currentStepIndex).toBe(0);
+    expect(state.isPlaying).toBe(false);
+  });
+
+  it('switching to REQUEST_FLOW itself does not reset an existing flow', () => {
+    applyViewMode(ViewMode.REQUEST_FLOW);
+    useGraphStore.getState().startFlow('fqn-A', [
+      {
+        order: 0,
+        kind: 'handler',
+        nodeFqn: 'fqn-handler',
+        nodeLabel: 'login()',
+        edgeType: EdgeType.EXPOSES,
+        payloadType: 'LoginDto',
+        approximate: false,
+      },
+    ]);
+
+    applyViewMode(ViewMode.REQUEST_FLOW);
+
+    expect(useGraphStore.getState().activeEndpointFqn).toBe('fqn-A');
   });
 });
