@@ -4,6 +4,7 @@ import { GraphEdge } from '../domain/graph-edge.vo';
 import { NodeType } from '../domain/node-type.enum';
 import { EdgeType } from '../domain/edge-type.enum';
 import { BuildStatus } from '../domain/build-status.enum';
+import { GRAPH_FLOW_VERSION } from '../domain/graph-version';
 import {
   GraphRepository,
   PersistedGraph,
@@ -56,6 +57,33 @@ export interface GraphSnapshotSummary {
 export interface GraphNodeWithEdges {
   node: GraphNode;
   edges: GraphEdge[];
+}
+
+export type FlowStepKind =
+  'middleware' | 'guard' | 'pipe' | 'interceptor' | 'handler' | 'service' | 'repository';
+
+export interface RequestFlowStep {
+  order: number;
+  kind: FlowStepKind;
+  nodeFqn: string;
+  nodeLabel: string;
+  edgeType: EdgeType;
+  /** DTO type annotation from the endpoint's typedParams (handler steps only). */
+  payloadType: string | null;
+  /** True for the INVOKES-derived service tail (inferred, not from method bodies). */
+  approximate: boolean;
+}
+
+export interface EndpointFlowResponse {
+  flowAvailable: boolean;
+  steps: RequestFlowStep[];
+  endpointFqn: string;
+}
+
+interface LifecycleGroup {
+  kind: FlowStepKind;
+  edgeType: EdgeType;
+  sourceTypes: NodeType[];
 }
 
 @Injectable()
@@ -132,6 +160,210 @@ export class GraphQueryService {
 
       return true;
     });
+  }
+
+  /**
+   * Assembles the ordered request-flow steps for an endpoint from the graph:
+   * guards -> pipes -> interceptors -> handler -> approximate service tail.
+   * Returns null when the fqn does not resolve to an ENDPOINT node, and a
+   * `flowAvailable: false` response for snapshots below the flow-data version.
+   */
+  static buildEndpointFlow(
+    nodes: readonly GraphNode[],
+    edges: readonly GraphEdge[],
+    version: number,
+    endpointFqn: string,
+  ): EndpointFlowResponse | null {
+    const endpoint = nodes.find((node) => node.fqn === endpointFqn);
+
+    if (endpoint === undefined || endpoint.type !== NodeType.ENDPOINT) {
+      return null;
+    }
+
+    if (version < GRAPH_FLOW_VERSION) {
+      return { flowAvailable: false, steps: [], endpointFqn };
+    }
+
+    const steps: RequestFlowStep[] = [
+      ...this.lifecycleSteps(nodes, edges, endpoint),
+      this.handlerStep(nodes, edges, endpoint),
+      ...this.serviceTail(nodes, edges, endpoint),
+    ];
+
+    steps.forEach((step, index) => {
+      step.order = index + 1;
+    });
+
+    return { flowAvailable: true, steps, endpointFqn };
+  }
+
+  private static lifecycleSteps(
+    nodes: readonly GraphNode[],
+    edges: readonly GraphEdge[],
+    endpoint: GraphNode,
+  ): RequestFlowStep[] {
+    const steps: RequestFlowStep[] = [];
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const incoming = edges.filter((edge) => edge.targetNodeId === endpoint.id);
+
+    const groups: readonly LifecycleGroup[] = [
+      { kind: 'middleware', edgeType: EdgeType.TRANSFORMS, sourceTypes: [NodeType.MIDDLEWARE] },
+      { kind: 'guard', edgeType: EdgeType.PROTECTS, sourceTypes: [NodeType.GUARD] },
+      { kind: 'pipe', edgeType: EdgeType.TRANSFORMS, sourceTypes: [NodeType.PIPE] },
+      {
+        kind: 'interceptor',
+        edgeType: EdgeType.TRANSFORMS,
+        sourceTypes: [NodeType.INTERCEPTOR],
+      },
+    ];
+
+    for (const group of groups) {
+      const members: GraphNode[] = [];
+
+      for (const edge of incoming) {
+        if (edge.type !== group.edgeType) {
+          continue;
+        }
+
+        const source = nodeById.get(edge.sourceNodeId);
+
+        if (source === undefined || !group.sourceTypes.includes(source.type)) {
+          continue;
+        }
+
+        if (!members.includes(source)) {
+          members.push(source);
+        }
+      }
+
+      members.sort((a, b) => compareLifecycleOrder(a, b));
+
+      for (const member of members) {
+        steps.push({
+          order: 0,
+          kind: group.kind,
+          nodeFqn: member.fqn,
+          nodeLabel: member.label,
+          edgeType: group.edgeType,
+          payloadType: null,
+          approximate: false,
+        });
+      }
+    }
+
+    return steps;
+  }
+
+  private static handlerStep(
+    nodes: readonly GraphNode[],
+    edges: readonly GraphEdge[],
+    endpoint: GraphNode,
+  ): RequestFlowStep {
+    return {
+      order: 0,
+      kind: 'handler',
+      nodeFqn: endpoint.fqn,
+      nodeLabel: endpoint.label,
+      edgeType: EdgeType.EXPOSES,
+      payloadType: this.handlerPayloadType(nodes, edges, endpoint),
+      approximate: false,
+    };
+  }
+
+  /** First DTO type (by paramName) referenced by a parameter-type DEPENDS_ON edge. */
+  private static handlerPayloadType(
+    nodes: readonly GraphNode[],
+    edges: readonly GraphEdge[],
+    endpoint: GraphNode,
+  ): string | null {
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const outgoing = edges.filter(
+      (edge) =>
+        edge.sourceNodeId === endpoint.id &&
+        edge.type === EdgeType.DEPENDS_ON &&
+        edge.properties.reason === 'parameter-type',
+    );
+
+    const targets = outgoing
+      .map((edge) => nodeById.get(edge.targetNodeId))
+      .filter((node): node is GraphNode => node !== undefined)
+      .sort((a, b) => {
+        const left = String(a.properties.paramName ?? '');
+        const right = String(b.properties.paramName ?? '');
+
+        return left < right ? -1 : left > right ? 1 : 0;
+      });
+
+    return targets[0]?.label ?? null;
+  }
+
+  /** Approximate INVOKES chain (Controller -> Service -> Repository), breadth-first. */
+  private static serviceTail(
+    nodes: readonly GraphNode[],
+    edges: readonly GraphEdge[],
+    endpoint: GraphNode,
+  ): RequestFlowStep[] {
+    const steps: RequestFlowStep[] = [];
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const exposes = edges.find(
+      (edge) => edge.targetNodeId === endpoint.id && edge.type === EdgeType.EXPOSES,
+    );
+
+    if (exposes === undefined) {
+      return steps;
+    }
+
+    const controller = nodeById.get(exposes.sourceNodeId);
+
+    if (controller === undefined) {
+      return steps;
+    }
+
+    const outgoingInvokes = new Map<string, GraphEdge[]>();
+
+    for (const edge of edges) {
+      if (edge.type !== EdgeType.INVOKES) {
+        continue;
+      }
+
+      const list = outgoingInvokes.get(edge.sourceNodeId) ?? [];
+      list.push(edge);
+      outgoingInvokes.set(edge.sourceNodeId, list);
+    }
+
+    const visited = new Set<string>([controller.id, endpoint.id]);
+    const queue = [controller.id];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+
+      for (const edge of outgoingInvokes.get(currentId) ?? []) {
+        if (visited.has(edge.targetNodeId)) {
+          continue;
+        }
+
+        visited.add(edge.targetNodeId);
+        const target = nodeById.get(edge.targetNodeId);
+
+        if (target === undefined) {
+          continue;
+        }
+
+        steps.push({
+          order: 0,
+          kind: target.type === NodeType.REPOSITORY ? 'repository' : 'service',
+          nodeFqn: target.fqn,
+          nodeLabel: target.label,
+          edgeType: EdgeType.INVOKES,
+          payloadType: null,
+          approximate: true,
+        });
+
+        queue.push(edge.targetNodeId);
+      }
+    }
+
+    return steps;
   }
 
   async getLatestGraphSnapshot(repoId: string): Promise<GraphSnapshotSummary | null> {
@@ -224,6 +456,16 @@ export class GraphQueryService {
     });
   }
 
+  async getEndpointFlow(repoId: string, fqn: string): Promise<EndpointFlowResponse | null> {
+    const graph = await this.findAllNodesAndEdges(repoId);
+
+    if (graph === null) {
+      return null;
+    }
+
+    return GraphQueryService.buildEndpointFlow(graph.nodes, graph.edges, graph.version, fqn);
+  }
+
   private async resolveVersion(repoId: string, requested?: number): Promise<number | null> {
     if (requested !== undefined) {
       return requested;
@@ -237,4 +479,24 @@ export class GraphQueryService {
   private latestVersion(latest: PersistedGraph): number {
     return latest.nodes.length > 0 ? latest.nodes[0].version : 0;
   }
+}
+
+/** Lifecycle nodes carry `properties.order` (decorator position); fall back to fqn. */
+function compareLifecycleOrder(a: GraphNode, b: GraphNode): number {
+  const orderA = a.properties.order;
+  const orderB = b.properties.order;
+
+  if (typeof orderA === 'number' && typeof orderB === 'number') {
+    return orderA - orderB;
+  }
+
+  if (typeof orderA === 'number') {
+    return -1;
+  }
+
+  if (typeof orderB === 'number') {
+    return 1;
+  }
+
+  return a.fqn < b.fqn ? -1 : a.fqn > b.fqn ? 1 : 0;
 }

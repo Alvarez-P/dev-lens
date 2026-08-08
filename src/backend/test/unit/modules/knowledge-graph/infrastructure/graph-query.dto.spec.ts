@@ -1,12 +1,14 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import {
+  EndpointFlowResponseDto,
   ExportResponseDto,
   GraphExportQueryDto,
   GraphNodesQueryDto,
   GraphQueryNodeDetailDto,
 } from '@/modules/knowledge-graph/infrastructure/controllers/graph-query.dto';
 import { NodeType } from '@/modules/knowledge-graph/domain/node-type.enum';
+import { EdgeType } from '@/modules/knowledge-graph/domain/edge-type.enum';
 
 function errorsOf<T extends object>(dtoClass: new () => T, value: Record<string, unknown>) {
   const instance = plainToInstance(dtoClass, value);
@@ -126,6 +128,78 @@ describe('Graph query DTOs', () => {
       expect(instance.nodes[0].fqn).toBe('acme:users#UsersController');
       expect(instance.edges).toHaveLength(1);
       expect(instance.meta).toEqual({ nodeCount: 1, edgeCount: 1, version: 3 });
+    });
+  });
+
+  describe('EndpointFlowResponseDto', () => {
+    it('carries flow availability, ordered lifecycle steps, and the endpoint fqn', () => {
+      const instance = plainToInstance(EndpointFlowResponseDto, {
+        flowAvailable: true,
+        endpointFqn: 'acme:default:src/users#UsersController.GET:/users',
+        steps: [
+          {
+            order: 1,
+            kind: 'guard',
+            nodeFqn: 'acme:default:src/users#UsersController~guard:JwtGuard',
+            nodeLabel: 'JwtGuard',
+            edgeType: EdgeType.PROTECTS,
+            payloadType: null,
+            approximate: false,
+          },
+          {
+            order: 2,
+            kind: 'handler',
+            nodeFqn: 'acme:default:src/users#UsersController.GET:/users',
+            nodeLabel: 'findAll',
+            edgeType: EdgeType.EXPOSES,
+            payloadType: 'CreateUserDto',
+            approximate: false,
+          },
+        ],
+      });
+
+      expect(instance.flowAvailable).toBe(true);
+      expect(instance.endpointFqn).toBe('acme:default:src/users#UsersController.GET:/users');
+      expect(instance.steps).toHaveLength(2);
+      expect(instance.steps[0].kind).toBe('guard');
+      expect(instance.steps[0].edgeType).toBe(EdgeType.PROTECTS);
+      expect(instance.steps[0].payloadType).toBeNull();
+      expect(instance.steps[1].kind).toBe('handler');
+      expect(instance.steps[1].edgeType).toBe(EdgeType.EXPOSES);
+      expect(instance.steps[1].payloadType).toBe('CreateUserDto');
+    });
+
+    it('carries approximate service-tail steps', () => {
+      const instance = plainToInstance(EndpointFlowResponseDto, {
+        flowAvailable: true,
+        endpointFqn: 'acme:default:src/users#UsersController.GET:/users',
+        steps: [
+          {
+            order: 1,
+            kind: 'service',
+            nodeFqn: 'acme:default:src/users#UsersService',
+            nodeLabel: 'UsersService',
+            edgeType: EdgeType.INVOKES,
+            payloadType: null,
+            approximate: true,
+          },
+        ],
+      });
+
+      expect(instance.steps[0].kind).toBe('service');
+      expect(instance.steps[0].edgeType).toBe(EdgeType.INVOKES);
+      expect(instance.steps[0].approximate).toBe(true);
+    });
+
+    it('carries a flowAvailable false state with an empty step list', () => {
+      const instance = plainToInstance(EndpointFlowResponseDto, {
+        flowAvailable: false,
+        endpointFqn: 'acme:default:src/users#UsersController.GET:/users',
+        steps: [],
+      });
+
+      expect(instance.flowAvailable).toBe(false);
+      expect(instance.steps).toEqual([]);
     });
   });
 });

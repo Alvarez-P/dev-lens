@@ -324,7 +324,7 @@ describe('Knowledge Graph Pipeline (E2E)', () => {
 
     for (const node of store.nodes) {
       expect(node.repoId).toBe('repo-1');
-      expect(node.version).toBe(1);
+      expect(node.version).toBe(2);
       expect(node.sourceAnalysisId).toBe(analysis.id.toString());
       expect(node.deprecatedAt).toBeNull();
     }
