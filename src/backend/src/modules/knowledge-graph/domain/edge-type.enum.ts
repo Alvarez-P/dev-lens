@@ -7,4 +7,6 @@ export enum EdgeType {
   EXPOSES = 'EXPOSES',
   PROTECTS = 'PROTECTS',
   TRANSFORMS = 'TRANSFORMS',
+  INVOKES = 'INVOKES',
+  INJECTS = 'INJECTS',
 }
