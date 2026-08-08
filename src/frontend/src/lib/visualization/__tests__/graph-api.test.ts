@@ -11,6 +11,7 @@ import {
   getGraphExport,
   getGraphNodes,
   getNodeDetail,
+  getEndpointFlow,
   buildQueryString,
 } from '../graph-api';
 
@@ -167,5 +168,76 @@ describe('getNodeDetail', () => {
     expect(getMock).toHaveBeenCalledWith(
       '/api/v1/graph/repo-1/nodes/my%3Apkg%3AController%23handle',
     );
+  });
+});
+
+describe('getEndpointFlow (REQ-VV-006)', () => {
+  beforeEach(() => {
+    getMock.mockReset();
+  });
+
+  it('GETs /api/v1/graph/:repoId/endpoints/:fqn/flow', async () => {
+    getMock.mockResolvedValue({
+      success: true,
+      data: { flowAvailable: true, steps: [], endpointFqn: 'my:AuthController#login' },
+    });
+
+    await getEndpointFlow('repo-1', 'my:AuthController#login');
+
+    expect(getMock).toHaveBeenCalledWith(
+      '/api/v1/graph/repo-1/endpoints/my%3AAuthController%23login/flow',
+    );
+  });
+
+  it('percent-encodes FQN separators and fragment markers in the flow path', async () => {
+    getMock.mockResolvedValue({
+      success: true,
+      data: { flowAvailable: false, steps: [], endpointFqn: 'my:pkg:Controller#handle' },
+    });
+
+    await getEndpointFlow('repo-1', 'my:pkg:Controller#handle');
+
+    expect(getMock).toHaveBeenCalledWith(
+      '/api/v1/graph/repo-1/endpoints/my%3Apkg%3AController%23handle/flow',
+    );
+  });
+
+  it('resolves with the endpoint flow response for flow-capable snapshots', async () => {
+    const response = {
+      success: true,
+      data: {
+        flowAvailable: true,
+        steps: [
+          {
+            order: 0,
+            kind: 'guard',
+            nodeFqn: 'my:auth:JwtAuthGuard',
+            nodeLabel: 'JwtAuthGuard',
+            edgeType: 'PROTECTS',
+            payloadType: null,
+            approximate: false,
+          },
+        ],
+        endpointFqn: 'my:AuthController#login',
+      },
+    };
+    getMock.mockResolvedValue(response);
+
+    const result = await getEndpointFlow('repo-1', 'my:AuthController#login');
+
+    expect(result).toEqual(response);
+    expect(result.data?.flowAvailable).toBe(true);
+  });
+
+  it('surfaces flowAvailable false for old snapshots without fabricating steps', async () => {
+    getMock.mockResolvedValue({
+      success: true,
+      data: { flowAvailable: false, steps: [], endpointFqn: 'my:AuthController#login' },
+    });
+
+    const result = await getEndpointFlow('repo-1', 'my:AuthController#login');
+
+    expect(result.data?.flowAvailable).toBe(false);
+    expect(result.data?.steps).toHaveLength(0);
   });
 });
