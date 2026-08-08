@@ -217,6 +217,48 @@ describe('GraphBuilder', () => {
 
       expect(result.edges).toHaveLength(1);
     });
+
+    it('should propagate SemanticEdge properties onto the GraphEdge', () => {
+      const model: SemanticModel = {
+        nodes: [MODULE_NODE, SERVICE_NODE],
+        edges: [
+          {
+            type: EdgeType.INVOKES,
+            sourceFqn: 'acme:default:src/users#UsersService',
+            targetFqn: 'acme:default:src/users',
+            properties: { approximate: true },
+          },
+        ],
+      };
+
+      const result = new GraphBuilder().build(model, 'repo-1', 1);
+
+      expect(result.edges[0].properties).toEqual({ approximate: true });
+    });
+
+    it('should keep edges that differ only in properties', () => {
+      const model: SemanticModel = {
+        nodes: [MODULE_NODE, SERVICE_NODE],
+        edges: [
+          {
+            type: EdgeType.DEPENDS_ON,
+            sourceFqn: 'acme:default:src/users#UsersService',
+            targetFqn: 'acme:default:src/users',
+            properties: { reason: 'parameter-type', paramName: 'a' },
+          },
+          {
+            type: EdgeType.DEPENDS_ON,
+            sourceFqn: 'acme:default:src/users#UsersService',
+            targetFqn: 'acme:default:src/users',
+            properties: { reason: 'parameter-type', paramName: 'b' },
+          },
+        ],
+      };
+
+      const result = new GraphBuilder().build(model, 'repo-1', 1);
+
+      expect(result.edges).toHaveLength(2);
+    });
   });
 
   describe('determinism', () => {

@@ -37,6 +37,22 @@ const LIFECYCLE_EDGE: Readonly<Record<string, EdgeType>> = {
   middleware: EdgeType.TRANSFORMS,
 };
 
+/** Parameter type annotations that never reference a resolvable DTO class. */
+const PRIMITIVE_TYPES: ReadonlySet<string> = new Set([
+  'string',
+  'number',
+  'boolean',
+  'bigint',
+  'symbol',
+  'undefined',
+  'null',
+  'void',
+  'any',
+  'unknown',
+  'never',
+  'object',
+]);
+
 export class SemanticModelBuilder {
   build(ir: IrProject, enrichment?: IrEnrichment): SemanticModel {
     const nodes: SemanticNode[] = [];
@@ -88,11 +104,159 @@ export class SemanticModelBuilder {
 
     this.addImportEdges(ir.dependencies, knownFqns, nodes, edges);
     this.addRelationshipEdges(ir.relationships, edges);
+    this.addFlowEdges(ir, enrichment, nodes, edges);
 
     return {
       nodes: this.dedupeSortedNodes(nodes),
       edges: this.dedupeSortedEdges(edges),
     };
+  }
+
+  /**
+   * REQ-FLOW: endpoint-level lifecycle (PROTECTS/TRANSFORMS), constructor DI
+   * (INJECTS), approximate call chain (INVOKES), and parameter-type DTO
+   * dependencies (DEPENDS_ON). Runs after the structural loop so every class
+   * and endpoint node already exists for label-based resolution.
+   */
+  private addFlowEdges(
+    ir: IrProject,
+    enrichment: IrEnrichment | undefined,
+    nodes: SemanticNode[],
+    edges: SemanticEdge[],
+  ): void {
+    for (const pkg of ir.packages) {
+      for (const mod of pkg.modules) {
+        for (const cls of mod.classes) {
+          const classNodeType = this.resolveClassType(cls, mod.path, enrichment);
+
+          for (const endpoint of cls.endpoints) {
+            this.addEndpointLifecycleEdges(endpoint, cls, mod.path, nodes, edges);
+            this.addDtoEdges(endpoint, nodes, edges);
+          }
+
+          this.addInjectsEdges(cls, nodes, edges);
+          this.addInvokesEdges(cls, classNodeType, nodes, edges);
+        }
+      }
+    }
+  }
+
+  /**
+   * Endpoint-level lifecycle entries reuse the class-level lifecycle-node FQN
+   * scheme (`${cls.fqn}~kind:name`); FQN dedup prevents duplicate nodes when
+   * a class-level (AI) entry and an endpoint-level (parser) entry overlap.
+   * The `order` property preserves decorator order for the flow API.
+   */
+  private addEndpointLifecycleEdges(
+    endpoint: IrEndpoint,
+    cls: IrClass,
+    filePath: string,
+    nodes: SemanticNode[],
+    edges: SemanticEdge[],
+  ): void {
+    endpoint.lifecycle.forEach((entry, index) => {
+      const type = ROLE_TO_TYPE[entry.kind];
+
+      if (type === undefined) {
+        return;
+      }
+
+      const lifecycleFqn = `${cls.fqn}~${entry.kind}:${entry.classRef}`;
+
+      if (!nodes.some((node) => node.fqn === lifecycleFqn)) {
+        nodes.push({
+          type,
+          label: entry.classRef,
+          fqn: lifecycleFqn,
+          properties: { lifecycleKind: entry.kind, order: index },
+          sourceFile: filePath,
+        });
+      }
+
+      edges.push({
+        type: LIFECYCLE_EDGE[entry.kind],
+        sourceFqn: lifecycleFqn,
+        targetFqn: endpoint.fqn,
+      });
+    });
+  }
+
+  /** Constructor dependency injection: dependent class -> injected dependency. */
+  private addInjectsEdges(cls: IrClass, nodes: SemanticNode[], edges: SemanticEdge[]): void {
+    for (const param of cls.constructorParams) {
+      const target = this.resolveNodeByLabel(nodes, param.type);
+
+      if (target === undefined) {
+        continue;
+      }
+
+      edges.push({
+        type: EdgeType.INJECTS,
+        sourceFqn: cls.fqn,
+        targetFqn: target.fqn,
+      });
+    }
+  }
+
+  /**
+   * Approximate call chain (Controller -> Service -> Repository) derived from
+   * constructor DI order. `approximate: true` signals the chain is inferred,
+   * not read from method bodies.
+   */
+  private addInvokesEdges(
+    cls: IrClass,
+    classNodeType: NodeType,
+    nodes: SemanticNode[],
+    edges: SemanticEdge[],
+  ): void {
+    if (classNodeType !== NodeType.CONTROLLER && classNodeType !== NodeType.SERVICE) {
+      return;
+    }
+
+    for (const param of cls.constructorParams) {
+      const target = this.resolveNodeByLabel(nodes, param.type);
+
+      if (target === undefined) {
+        continue;
+      }
+
+      if (target.type !== NodeType.SERVICE && target.type !== NodeType.REPOSITORY) {
+        continue;
+      }
+
+      edges.push({
+        type: EdgeType.INVOKES,
+        sourceFqn: cls.fqn,
+        targetFqn: target.fqn,
+        properties: { approximate: true },
+      });
+    }
+  }
+
+  /** Endpoint -> DTO dependency for parameter type annotations from typedParams. */
+  private addDtoEdges(endpoint: IrEndpoint, nodes: SemanticNode[], edges: SemanticEdge[]): void {
+    for (const param of endpoint.typedParams) {
+      if (PRIMITIVE_TYPES.has(param.typeAnnotation)) {
+        continue;
+      }
+
+      const target = this.resolveNodeByLabel(nodes, param.typeAnnotation);
+
+      if (target === undefined) {
+        continue;
+      }
+
+      edges.push({
+        type: EdgeType.DEPENDS_ON,
+        sourceFqn: endpoint.fqn,
+        targetFqn: target.fqn,
+        properties: { reason: 'parameter-type', paramName: param.name },
+      });
+    }
+  }
+
+  private resolveNodeByLabel(nodes: SemanticNode[], label: string): SemanticNode | undefined {
+    return nodes.find((node) => node.label === label);
   }
 
   private addImportEdges(
@@ -395,7 +559,9 @@ export class SemanticModelBuilder {
     const seen = new Set<string>();
 
     for (const edge of sorted) {
-      const key = `${edge.type}|${edge.sourceFqn}|${edge.targetFqn}`;
+      const key = `${edge.type}|${edge.sourceFqn}|${edge.targetFqn}|${JSON.stringify(
+        edge.properties ?? {},
+      )}`;
 
       if (!seen.has(key)) {
         seen.add(key);
