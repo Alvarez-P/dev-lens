@@ -47,6 +47,7 @@ describe('GraphController', () => {
     getNodeWithEdges: jest.fn(),
     getEdges: jest.fn(),
     findAllNodesAndEdges: jest.fn(),
+    getEndpointFlow: jest.fn(),
   };
   const jwtGuard = { canActivate: jest.fn(() => true) };
   const membershipGuard = { canActivate: jest.fn(() => true) };
@@ -227,6 +228,73 @@ describe('GraphController', () => {
       await request(app.getHttpServer())
         .get('/api/v1/graph/repo-1/nodes/users-controller?direction=sideways')
         .expect(400);
+    });
+  });
+
+  describe('GET /api/v1/graph/:repoId/endpoints/:fqn/flow', () => {
+    const ENDPOINT_FQN = 'acme:default:src/users#UsersController.GET:/users';
+    const encodedFqn = encodeURIComponent(ENDPOINT_FQN);
+
+    it('returns the ordered request-flow steps for an endpoint', async () => {
+      graphQueryService.getEndpointFlow.mockResolvedValue({
+        flowAvailable: true,
+        endpointFqn: ENDPOINT_FQN,
+        steps: [
+          {
+            order: 1,
+            kind: 'guard',
+            nodeFqn: `${ENDPOINT_FQN}~guard:JwtGuard`,
+            nodeLabel: 'JwtGuard',
+            edgeType: EdgeType.PROTECTS,
+            payloadType: null,
+            approximate: false,
+          },
+          {
+            order: 2,
+            kind: 'handler',
+            nodeFqn: ENDPOINT_FQN,
+            nodeLabel: 'findAll',
+            edgeType: EdgeType.EXPOSES,
+            payloadType: 'CreateUserDto',
+            approximate: false,
+          },
+        ],
+      });
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/graph/repo-1/endpoints/${encodedFqn}/flow`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.flowAvailable).toBe(true);
+      expect(res.body.data.steps).toHaveLength(2);
+      expect(res.body.data.steps[0].kind).toBe('guard');
+      expect(res.body.data.steps[0].edgeType).toBe(EdgeType.PROTECTS);
+      expect(res.body.data.steps[1].payloadType).toBe('CreateUserDto');
+      expect(graphQueryService.getEndpointFlow).toHaveBeenCalledWith('repo-1', ENDPOINT_FQN);
+    });
+
+    it('returns flowAvailable false with empty steps for a pre-flow snapshot', async () => {
+      graphQueryService.getEndpointFlow.mockResolvedValue({
+        flowAvailable: false,
+        endpointFqn: ENDPOINT_FQN,
+        steps: [],
+      });
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/graph/repo-1/endpoints/${encodedFqn}/flow`)
+        .expect(200);
+
+      expect(res.body.data.flowAvailable).toBe(false);
+      expect(res.body.data.steps).toEqual([]);
+    });
+
+    it('returns 404 when the endpoint fqn does not exist in the graph', async () => {
+      graphQueryService.getEndpointFlow.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .get(`/api/v1/graph/repo-1/endpoints/${encodedFqn}/flow`)
+        .expect(404);
     });
   });
 
