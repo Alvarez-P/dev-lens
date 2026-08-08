@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { posix } from 'path';
-import { SourceFile, ClassDeclaration, MethodDeclaration, Decorator } from 'ts-morph';
+import {
+  SourceFile,
+  ClassDeclaration,
+  MethodDeclaration,
+  ParameterDeclaration,
+  Decorator,
+} from 'ts-morph';
 import { Language } from '../../../domain/language.vo';
 import { ParseResult } from '../../../domain/parse-result.vo';
 import {
@@ -12,6 +18,9 @@ import {
   IrDependencyProps,
   IrRelationshipProps,
   IrParamProps,
+  LifecycleEntry,
+  LifecycleKind,
+  TypedParam,
 } from '../../../domain/ir-nodes';
 import { DecoratorRoleRegistry } from '../decorator-role-registry';
 
@@ -25,6 +34,17 @@ const HTTP_METHODS: ReadonlyMap<string, string> = new Map([
   ['Head', 'HEAD'],
   ['All', 'ALL'],
 ]);
+
+/** Roles that classify a method decorator as a lifecycle step on an endpoint. */
+const LIFECYCLE_KINDS: ReadonlySet<string> = new Set([
+  'guard',
+  'pipe',
+  'interceptor',
+  'middleware',
+]);
+
+/** Roles that classify a parameter decorator for the typedParams projection. */
+const PARAMETER_ROLES: ReadonlySet<string> = new Set(['body', 'param', 'query', 'headers']);
 
 const DEFAULT_PACKAGE = 'default';
 
@@ -49,6 +69,8 @@ interface EndpointData {
   httpMethod: string;
   path: string;
   parameters: string[];
+  lifecycle: LifecycleEntry[];
+  typedParams: TypedParam[];
 }
 
 interface PendingClass {
@@ -291,6 +313,8 @@ export class TypeScriptIrBuilder {
   ): EndpointData[] {
     const endpoints: EndpointData[] = [];
     const parameters = method.getParameters().map((param) => param.getName());
+    const lifecycle = this.projectLifecycle(method);
+    const typedParams = this.projectTypedParams(method);
 
     for (const decorator of method.getDecorators()) {
       const httpMethod = HTTP_METHODS.get(decorator.getName());
@@ -304,10 +328,60 @@ export class TypeScriptIrBuilder {
         httpMethod,
         path: this.buildEndpointPath(routePrefix, this.getDecoratorPath(decorator)),
         parameters,
+        lifecycle,
+        typedParams,
       });
     }
 
     return endpoints;
+  }
+
+  /**
+   * Project method-level lifecycle decorators (@UseGuards, @UsePipes,
+   * @UseInterceptors, @Middleware) onto ordered lifecycle entries. Each
+   * decorator argument becomes one entry, preserving declaration order.
+   */
+  private projectLifecycle(method: MethodDeclaration): LifecycleEntry[] {
+    const lifecycle: LifecycleEntry[] = [];
+
+    for (const decorator of method.getDecorators()) {
+      const role = this.roleRegistry.get(decorator.getName());
+
+      if (role === null || !LIFECYCLE_KINDS.has(role)) {
+        continue;
+      }
+
+      for (const argument of decorator.getCallExpression()?.getArguments() ?? []) {
+        lifecycle.push({ kind: role as LifecycleKind, classRef: argument.getText() });
+      }
+    }
+
+    return lifecycle;
+  }
+
+  /**
+   * Project method parameters onto ordered typedParams entries. The decorator
+   * is the first NestJS parameter decorator (@Body/@Param/@Query/@Headers),
+   * or null when the parameter is undecorated.
+   */
+  private projectTypedParams(method: MethodDeclaration): TypedParam[] {
+    return method.getParameters().map((param) => ({
+      name: param.getName(),
+      typeAnnotation: this.parameterType(param),
+      decorator: this.resolveParameterDecorator(param),
+    }));
+  }
+
+  private resolveParameterDecorator(param: ParameterDeclaration): string | null {
+    for (const decorator of param.getDecorators()) {
+      const role = this.roleRegistry.get(decorator.getName());
+
+      if (role !== null && PARAMETER_ROLES.has(role)) {
+        return `@${decorator.getName()}`;
+      }
+    }
+
+    return null;
   }
 
   private getDecoratorPath(decorator: Decorator): string | null {

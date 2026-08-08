@@ -308,4 +308,161 @@ export class Handler implements CanHandle {}
       expect(JSON.stringify(first.diagnostics)).toBe(JSON.stringify(second.diagnostics));
     });
   });
+
+  describe('endpoint lifecycle and typedParams projection (request-flow)', () => {
+    const requestFlowControllerSource = `
+import { Controller, Get, Post, Body, Param, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+
+@Controller('users')
+export class RequestFlowController {
+  @Get(':id')
+  @UseGuards(AuthGuard, RoleGuard)
+  findOne(@Param('id') id: string) {
+    return id;
+  }
+
+  @Post()
+  @UsePipes(ValidationPipe)
+  create(@Body() dto: CreateUserDto) {
+    return dto;
+  }
+
+  @Get('search')
+  findAll(@Query('page') page: number) {
+    return page;
+  }
+
+  @Post('raw')
+  handle(body: any) {
+    return body;
+  }
+
+  @Get('ping')
+  ping() {
+    return 'pong';
+  }
+}
+`;
+
+    function buildRequestFlowFixture() {
+      return new TypeScriptIrBuilder(new DecoratorRoleRegistry()).build(
+        [parseSource(requestFlowControllerSource, '/repo/src/users/request-flow.controller.ts')],
+        { projectName: 'acme', rootPath: '/repo' },
+      );
+    }
+
+    function endpointBy(httpMethod: string, path: string) {
+      const { ir } = buildRequestFlowFixture();
+      const endpoints = ir.packages[0].modules[0].classes[0].endpoints;
+
+      return endpoints.find(
+        (endpoint) => endpoint.httpMethod === httpMethod && endpoint.path === path,
+      );
+    }
+
+    it('should project multiple guards onto lifecycle preserving declaration and argument order', () => {
+      const endpoint = endpointBy('GET', '/users/:id');
+
+      expect(endpoint!.lifecycle).toEqual([
+        { kind: 'guard', classRef: 'AuthGuard' },
+        { kind: 'guard', classRef: 'RoleGuard' },
+      ]);
+    });
+
+    it('should project @UsePipes onto lifecycle as a pipe entry', () => {
+      const endpoint = endpointBy('POST', '/users');
+
+      expect(endpoint!.lifecycle).toEqual([{ kind: 'pipe', classRef: 'ValidationPipe' }]);
+    });
+
+    it('should project @Body DTO params onto typedParams with @-prefixed decorator', () => {
+      const endpoint = endpointBy('POST', '/users');
+
+      expect(endpoint!.typedParams).toEqual([
+        { name: 'dto', typeAnnotation: 'CreateUserDto', decorator: '@Body' },
+      ]);
+    });
+
+    it('should project @Query primitive params without a DTO edge', () => {
+      const endpoint = endpointBy('GET', '/users/search');
+
+      expect(endpoint!.typedParams).toEqual([
+        { name: 'page', typeAnnotation: 'number', decorator: '@Query' },
+      ]);
+    });
+
+    it('should project @Param params onto typedParams', () => {
+      const endpoint = endpointBy('GET', '/users/:id');
+
+      expect(endpoint!.typedParams).toEqual([
+        { name: 'id', typeAnnotation: 'string', decorator: '@Param' },
+      ]);
+    });
+
+    it('should set decorator to null for undecorated parameters', () => {
+      const endpoint = endpointBy('POST', '/users/raw');
+
+      expect(endpoint!.typedParams).toEqual([
+        { name: 'body', typeAnnotation: 'any', decorator: null },
+      ]);
+    });
+
+    it('should default lifecycle and typedParams to empty lists when the method has none', () => {
+      const endpoint = endpointBy('GET', '/users/ping');
+
+      expect(endpoint!.lifecycle).toEqual([]);
+      expect(endpoint!.typedParams).toEqual([]);
+    });
+
+    it('should project @UseInterceptors onto lifecycle as an interceptor entry', () => {
+      const { ir } = new TypeScriptIrBuilder(new DecoratorRoleRegistry()).build(
+        [
+          parseSource(
+            `import { Controller, Get, UseInterceptors } from '@nestjs/common';
+@Controller('audit')
+export class AuditController {
+  @Get()
+  @UseInterceptors(LoggingInterceptor)
+  list() {
+    return [];
+  }
+}
+`,
+            '/repo/src/audit/audit.controller.ts',
+          ),
+        ],
+        { projectName: 'acme', rootPath: '/repo' },
+      );
+
+      const endpoint = ir.packages[0].modules[0].classes[0].endpoints[0];
+      expect(endpoint!.lifecycle).toEqual([
+        { kind: 'interceptor', classRef: 'LoggingInterceptor' },
+      ]);
+    });
+
+    it('should resolve the first parameter decorator for multi-decorator parameters', () => {
+      const { ir } = new TypeScriptIrBuilder(new DecoratorRoleRegistry()).build(
+        [
+          parseSource(
+            `import { Controller, Put, Body, Param } from '@nestjs/common';
+@Controller('users')
+export class UsersController {
+  @Put(':id')
+  update(@Param('id') @Body() dto: UpdateUserDto) {
+    return dto;
+  }
+}
+`,
+            '/repo/src/users/users.controller.ts',
+          ),
+        ],
+        { projectName: 'acme', rootPath: '/repo' },
+      );
+
+      const endpoint = ir.packages[0].modules[0].classes[0].endpoints[0];
+      expect(endpoint!.typedParams).toEqual([
+        { name: 'dto', typeAnnotation: 'UpdateUserDto', decorator: '@Param' },
+      ]);
+    });
+  });
 });
