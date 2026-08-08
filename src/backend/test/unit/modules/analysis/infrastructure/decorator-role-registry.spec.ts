@@ -44,4 +44,36 @@ describe('DecoratorRoleRegistry', () => {
       expect(registry.getRole('Controller')).toBe(registry.get('Controller'));
     });
   });
+
+  describe('lifecycle and parameter decorator roles (request-flow)', () => {
+    const freshRegistry = new DecoratorRoleRegistry();
+
+    it('should map UsePipes to pipe', () => {
+      expect(freshRegistry.get('UsePipes')).toBe('pipe');
+    });
+
+    it('should map UseInterceptors to interceptor', () => {
+      expect(freshRegistry.get('UseInterceptors')).toBe('interceptor');
+    });
+
+    it('should map Body to body', () => {
+      expect(freshRegistry.get('Body')).toBe('body');
+    });
+
+    it('should map Param to param', () => {
+      expect(freshRegistry.get('Param')).toBe('param');
+    });
+
+    it('should map Query to query', () => {
+      expect(freshRegistry.get('Query')).toBe('query');
+    });
+
+    it('should map Headers to headers', () => {
+      expect(freshRegistry.get('Headers')).toBe('headers');
+    });
+
+    it('should keep UseGuards mapped to guard (regression check)', () => {
+      expect(freshRegistry.get('UseGuards')).toBe('guard');
+    });
+  });
 });
