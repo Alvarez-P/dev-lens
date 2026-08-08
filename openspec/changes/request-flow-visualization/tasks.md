@@ -38,13 +38,13 @@ TDD: RED first.
 
 ## Phase 2: Backend Graph Model & Flow API (PR 2)
 
-- [ ] 2.1 RED: `semantic-model.builder.spec.ts`: INJECTS, INVOKES C→S→R (approx), ep PROTECTS/TRANSFORMS, DEPENDS_ON (parameter-type)
-- [ ] 2.2 Add `addInjectsEdges`/`addInvokesEdges`/`addEndpointLifecycleEdges`/`addDtoEdges` in `src/backend/src/modules/knowledge-graph/application/semantic-model.builder.ts`
-- [ ] 2.3 Add flow DTOs to `src/backend/src/modules/knowledge-graph/infrastructure/controllers/graph-query.dto.ts`
-- [ ] 2.4 RED: `graph-query.service.spec.ts`: ordered steps, approx tail, `flowAvailable:false` v1
-- [ ] 2.5 Implement `getEndpointFlow()` in `src/backend/src/modules/knowledge-graph/application/graph-query.service.ts`; bump version + `flowAvailable`
-- [ ] 2.6 Add `GET /graph/:repoId/endpoints/:fqn/flow` in `src/backend/src/modules/knowledge-graph/infrastructure/controllers/graph.controller.ts`
-- [ ] 2.7 Supertest e2e: HTTP 200 + ordered steps (no 404/500)
+- [x] 2.1 RED: `semantic-model.builder.spec.ts`: INJECTS, INVOKES C→S→R (approx), ep PROTECTS/TRANSFORMS, DEPENDS_ON (parameter-type)
+- [x] 2.2 Add `addInjectsEdges`/`addInvokesEdges`/`addEndpointLifecycleEdges`/`addDtoEdges` in `src/backend/src/modules/knowledge-graph/application/semantic-model.builder.ts`
+- [x] 2.3 Add flow DTOs to `src/backend/src/modules/knowledge-graph/infrastructure/controllers/graph-query.dto.ts`
+- [x] 2.4 RED: `graph-query.service.spec.ts`: ordered steps, approx tail, `flowAvailable:false` v1
+- [x] 2.5 Implement `getEndpointFlow()` in `src/backend/src/modules/knowledge-graph/application/graph-query.service.ts`; bump version + `flowAvailable`
+- [x] 2.6 Add `GET /graph/:repoId/endpoints/:fqn/flow` in `src/backend/src/modules/knowledge-graph/infrastructure/controllers/graph.controller.ts`
+- [x] 2.7 Supertest e2e: HTTP 200 + ordered steps (no 404/500)
 
 ## Phase 3: Frontend Types, Store & API (PR 3)
 
