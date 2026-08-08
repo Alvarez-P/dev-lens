@@ -233,4 +233,180 @@ describe('GraphQueryService', () => {
       expect(result).toHaveLength(2);
     });
   });
+
+  describe('buildEndpointFlow', () => {
+    const ENDPOINT_FQN = 'acme:users#UsersController.GET:/users';
+
+    function makeFlowNode(
+      type: NodeType,
+      label: string,
+      fqn: string,
+      id: string,
+      properties?: Record<string, unknown>,
+    ): GraphNode {
+      return GraphNode.reconstitute(id, type, label, fqn, properties, 'repo-1', 2, null);
+    }
+
+    function makeFlowEdge(
+      type: EdgeType,
+      source: GraphNode,
+      target: GraphNode,
+      properties?: Record<string, unknown>,
+    ): GraphEdge {
+      return GraphEdge.create(type, source.id, target.id, properties, 2);
+    }
+
+    function buildFlowGraph(): { nodes: GraphNode[]; edges: GraphEdge[] } {
+      const controller = makeFlowNode(
+        NodeType.CONTROLLER,
+        'UsersController',
+        'acme:users#UsersController',
+        'node-controller',
+      );
+      const endpoint = makeFlowNode(NodeType.ENDPOINT, 'findAll', ENDPOINT_FQN, 'node-endpoint');
+      const guard = makeFlowNode(
+        NodeType.GUARD,
+        'JwtGuard',
+        'acme:users#UsersController~guard:JwtGuard',
+        'node-guard',
+        { lifecycleKind: 'guard', order: 0 },
+      );
+      const pipe = makeFlowNode(
+        NodeType.PIPE,
+        'ValidationPipe',
+        'acme:users#UsersController~pipe:ValidationPipe',
+        'node-pipe',
+        { lifecycleKind: 'pipe', order: 1 },
+      );
+      const interceptor = makeFlowNode(
+        NodeType.INTERCEPTOR,
+        'Logging',
+        'acme:users#UsersController~interceptor:Logging',
+        'node-interceptor',
+        { lifecycleKind: 'interceptor', order: 2 },
+      );
+      const service = makeFlowNode(
+        NodeType.SERVICE,
+        'UsersService',
+        'acme:users#UsersService',
+        'node-service',
+      );
+      const repository = makeFlowNode(
+        NodeType.REPOSITORY,
+        'UsersRepository',
+        'acme:users#UsersRepository',
+        'node-repository',
+      );
+      const dto = makeFlowNode(
+        NodeType.DTO,
+        'CreateUserDto',
+        'acme:users#CreateUserDto',
+        'node-dto',
+      );
+
+      const edges = [
+        makeFlowEdge(EdgeType.EXPOSES, controller, endpoint),
+        makeFlowEdge(EdgeType.PROTECTS, guard, endpoint),
+        makeFlowEdge(EdgeType.TRANSFORMS, pipe, endpoint),
+        makeFlowEdge(EdgeType.TRANSFORMS, interceptor, endpoint),
+        makeFlowEdge(EdgeType.INVOKES, controller, service, { approximate: true }),
+        makeFlowEdge(EdgeType.INVOKES, service, repository, { approximate: true }),
+        makeFlowEdge(EdgeType.DEPENDS_ON, endpoint, dto, {
+          reason: 'parameter-type',
+          paramName: 'dto',
+        }),
+      ];
+
+      return {
+        nodes: [controller, endpoint, guard, pipe, interceptor, service, repository, dto],
+        edges,
+      };
+    }
+
+    it('should return ordered lifecycle steps: guard, pipe, interceptor, handler, service, repository', () => {
+      const { nodes, edges } = buildFlowGraph();
+
+      const flow = GraphQueryService.buildEndpointFlow(nodes, edges, 2, ENDPOINT_FQN);
+
+      expect(flow?.flowAvailable).toBe(true);
+      expect(flow?.steps.map((step) => step.kind)).toEqual([
+        'guard',
+        'pipe',
+        'interceptor',
+        'handler',
+        'service',
+        'repository',
+      ]);
+      expect(flow?.steps.map((step) => step.order)).toEqual([1, 2, 3, 4, 5, 6]);
+    });
+
+    it('should mark the approximate service tail with INVOKES edges', () => {
+      const { nodes, edges } = buildFlowGraph();
+
+      const flow = GraphQueryService.buildEndpointFlow(nodes, edges, 2, ENDPOINT_FQN);
+      const steps = flow!.steps;
+
+      expect(steps.slice(0, 4).every((step) => step.approximate === false)).toBe(true);
+      expect(steps.slice(0, 4).map((step) => step.edgeType)).toEqual([
+        EdgeType.PROTECTS,
+        EdgeType.TRANSFORMS,
+        EdgeType.TRANSFORMS,
+        EdgeType.EXPOSES,
+      ]);
+
+      const tail = steps.slice(4);
+      expect(tail.map((step) => step.approximate)).toEqual([true, true]);
+      expect(tail.every((step) => step.edgeType === EdgeType.INVOKES)).toBe(true);
+      expect(tail.map((step) => step.nodeLabel)).toEqual(['UsersService', 'UsersRepository']);
+    });
+
+    it('should expose the DTO payload type on the handler step', () => {
+      const { nodes, edges } = buildFlowGraph();
+
+      const flow = GraphQueryService.buildEndpointFlow(nodes, edges, 2, ENDPOINT_FQN);
+      const handler = flow!.steps.find((step) => step.kind === 'handler');
+
+      expect(handler?.payloadType).toBe('CreateUserDto');
+      expect(
+        flow!.steps
+          .filter((step) => step.kind !== 'handler')
+          .every((step) => step.payloadType === null),
+      ).toBe(true);
+    });
+
+    it('should return flowAvailable false with empty steps for a v1 snapshot', () => {
+      const { nodes, edges } = buildFlowGraph();
+
+      const flow = GraphQueryService.buildEndpointFlow(nodes, edges, 1, ENDPOINT_FQN);
+
+      expect(flow).toEqual({ flowAvailable: false, steps: [], endpointFqn: ENDPOINT_FQN });
+    });
+
+    it('should return null for an fqn that is not an endpoint node', () => {
+      const { nodes, edges } = buildFlowGraph();
+
+      expect(
+        GraphQueryService.buildEndpointFlow(nodes, edges, 2, 'acme:users#UsersController'),
+      ).toBeNull();
+      expect(GraphQueryService.buildEndpointFlow(nodes, edges, 2, 'acme:missing:Thing')).toBeNull();
+    });
+
+    it('should return only the handler when the endpoint has no lifecycle or tail edges', () => {
+      const endpoint = makeFlowNode(NodeType.ENDPOINT, 'ping', ENDPOINT_FQN, 'node-endpoint');
+
+      const flow = GraphQueryService.buildEndpointFlow([endpoint], [], 2, ENDPOINT_FQN);
+
+      expect(flow?.steps).toEqual([
+        {
+          order: 1,
+          kind: 'handler',
+          nodeFqn: ENDPOINT_FQN,
+          nodeLabel: 'ping',
+          edgeType: EdgeType.EXPOSES,
+          payloadType: null,
+          approximate: false,
+        },
+      ]);
+    });
+  });
 });

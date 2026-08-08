@@ -5,6 +5,7 @@ import { NodeType } from '../../domain/node-type.enum';
 import { EdgeType } from '../../domain/edge-type.enum';
 import { GraphNodeJson } from '../../domain/graph-node.vo';
 import { GraphEdgeJson } from '../../domain/graph-edge.vo';
+import { FlowStepKind } from '../../application/graph-query.service';
 
 export class GraphNodesQueryDto {
   @IsOptional()
@@ -92,4 +93,54 @@ export class ExportResponseDto {
     example: { nodeCount: 500, edgeCount: 1200, version: 3 },
   })
   meta!: { nodeCount: number; edgeCount: number; version: number };
+}
+
+export class RequestFlowStepDto {
+  @ApiProperty({ description: 'Position of the step within the request flow, starting at 1' })
+  order!: number;
+
+  @ApiProperty({
+    description: 'Kind of the lifecycle step',
+    enum: ['middleware', 'guard', 'pipe', 'interceptor', 'handler', 'service', 'repository'],
+  })
+  kind!: FlowStepKind;
+
+  @ApiProperty({ description: 'FQN of the graph node representing this step' })
+  nodeFqn!: string;
+
+  @ApiProperty({ description: 'Human-readable label of the step node' })
+  nodeLabel!: string;
+
+  @ApiProperty({
+    description: 'Edge type that connects this step toward the next step in the flow',
+    enum: EdgeType,
+  })
+  edgeType!: EdgeType;
+
+  @ApiProperty({
+    description: 'DTO type annotation for handler steps; null otherwise',
+    nullable: true,
+    example: 'CreateUserDto',
+  })
+  payloadType!: string | null;
+
+  @ApiProperty({
+    description: 'True for the INVOKES-derived service tail, whose order is inferred',
+    example: true,
+  })
+  approximate!: boolean;
+}
+
+export class EndpointFlowResponseDto {
+  @ApiProperty({
+    description: 'Whether the snapshot version carries flow data',
+    example: true,
+  })
+  flowAvailable!: boolean;
+
+  @ApiProperty({ description: 'Ordered request-flow steps', type: [RequestFlowStepDto] })
+  steps!: RequestFlowStepDto[];
+
+  @ApiProperty({ description: 'FQN of the endpoint the flow was computed for' })
+  endpointFqn!: string;
 }

@@ -375,7 +375,7 @@ describe('Graph Controller (E2E)', () => {
       repositoryId: 'repo-1',
       analysisId: '11111111-2222-3333-4444-555555555555',
       commitSha: 'abc123',
-      version: 1,
+      version: 2,
       nodeCount: 6,
       edgeCount: 5,
       status: BuildStatus.BUILT,
@@ -397,7 +397,7 @@ describe('Graph Controller (E2E)', () => {
       type: 'Controller',
       fqn: 'acme:default:src/users#UsersController',
       repoId: 'repo-1',
-      version: 1,
+      version: 2,
     });
     expect(response.body.meta).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 });
   });
@@ -509,7 +509,7 @@ describe('Graph Controller (E2E)', () => {
     expect(response.body.success).toBe(true);
     expect(response.body.data.nodes).toHaveLength(6);
     expect(response.body.data.edges).toHaveLength(5);
-    expect(response.body.data.meta).toEqual({ nodeCount: 6, edgeCount: 5, version: 1 });
+    expect(response.body.data.meta).toEqual({ nodeCount: 6, edgeCount: 5, version: 2 });
   });
 
   it('should filter a node neighborhood by direction', async () => {

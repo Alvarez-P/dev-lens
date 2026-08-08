@@ -312,7 +312,7 @@ describe('Knowledge Graph Incremental Build (E2E)', () => {
 
     expect(store.snapshots).toHaveLength(1);
     expect(store.nodes).toHaveLength(7);
-    expect(store.nodes.every((node) => node.version === 1)).toBe(true);
+    expect(store.nodes.every((node) => node.version === 2)).toBe(true);
     expect(store.nodes.every((node) => node.deprecatedAt === null)).toBe(true);
 
     await service.buildGraph(secondAnalysisId);
@@ -324,15 +324,15 @@ describe('Knowledge Graph Incremental Build (E2E)', () => {
       repositoryId: 'repo-1',
     });
 
-    const versionTwoRows = store.nodes.filter((node) => node.version === 2);
-    const deprecatedVersionTwo = versionTwoRows.filter((node) => node.deprecatedAt !== null);
+    const versionThreeRows = store.nodes.filter((node) => node.version === 3);
+    const deprecatedVersionThree = versionThreeRows.filter((node) => node.deprecatedAt !== null);
 
-    expect(versionTwoRows).toHaveLength(7);
-    expect(deprecatedVersionTwo).toHaveLength(1);
-    expect(deprecatedVersionTwo[0].fqn).toBe('acme:default:src/users#UsersRepository');
-    expect(deprecatedVersionTwo[0].deprecatedAt).toBeInstanceOf(Date);
+    expect(versionThreeRows).toHaveLength(7);
+    expect(deprecatedVersionThree).toHaveLength(1);
+    expect(deprecatedVersionThree[0].fqn).toBe('acme:default:src/users#UsersRepository');
+    expect(deprecatedVersionThree[0].deprecatedAt).toBeInstanceOf(Date);
 
-    for (const row of versionTwoRows) {
+    for (const row of versionThreeRows) {
       if (row.fqn === 'acme:default:src/users#UsersRepository') {
         continue;
       }
@@ -340,17 +340,17 @@ describe('Knowledge Graph Incremental Build (E2E)', () => {
       expect(row.deprecatedAt).toBeNull();
     }
 
-    const versionOneRows = store.nodes.filter((node) => node.version === 1);
-    expect(versionOneRows).toHaveLength(7);
-    expect(versionOneRows.every((node) => node.deprecatedAt === null)).toBe(true);
+    const versionTwoRows = store.nodes.filter((node) => node.version === 2);
+    expect(versionTwoRows).toHaveLength(7);
+    expect(versionTwoRows.every((node) => node.deprecatedAt === null)).toBe(true);
 
-    const controller = versionTwoRows.find(
+    const controller = versionThreeRows.find(
       (node) => node.fqn === 'acme:default:src/users#UsersController',
     );
     expect(controller).toBeDefined();
     expect(controller!.id).not.toBe(
       store.nodes.find(
-        (node) => node.fqn === 'acme:default:src/users#UsersController' && node.version === 1,
+        (node) => node.fqn === 'acme:default:src/users#UsersController' && node.version === 2,
       )!.id,
     );
 
