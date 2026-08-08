@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { StateCreator } from 'zustand';
 import { NodeType, EdgeType, LayoutType, ViewMode } from '../types';
-import type { Viewport } from '../types';
+import type { Viewport, RequestFlowStep } from '../types';
 
 const ALL_NODE_TYPES = Object.values(NodeType);
 const ALL_EDGE_TYPES = Object.values(EdgeType);
@@ -60,8 +60,34 @@ export interface LoadingSlice {
   setLoadProgress: (progress: number) => void;
 }
 
+/**
+ * Request-flow playback state (REQ-VV-008). Loaded via `startFlow(fqn, steps)`
+ * after an endpoint click in the REQUEST_FLOW view; cleared by `resetFlow()`
+ * when the view changes away from REQUEST_FLOW or on navigation.
+ */
+export interface FlowSlice {
+  /** FQN of the endpoint whose flow is currently loaded (null when none). */
+  activeEndpointFqn: string | null;
+  /** Ordered lifecycle steps returned by the flow API. */
+  flowSteps: RequestFlowStep[];
+  /** Index of the lifecycle step the token animation is currently on. */
+  currentStepIndex: number;
+  /** True while the token animation is advancing. */
+  isPlaying: boolean;
+  /** Token travel speed multiplier (1x default). */
+  animationSpeed: number;
+  /** Load a flow: sets the endpoint, resets the step index and starts playback. */
+  startFlow: (endpointFqn: string, steps: RequestFlowStep[]) => void;
+  /** Advance to the next lifecycle step (clamped at the final step). */
+  nextStep: () => void;
+  /** Stop playback, keeping the loaded flow in place. */
+  pauseFlow: () => void;
+  /** Clear every flow field and stop playback (REQ-VV-008 view-switch reset). */
+  resetFlow: () => void;
+}
+
 export interface GraphStore
-  extends SelectionSlice, ViewSlice, FilterSlice, NavigationSlice, LoadingSlice {}
+  extends SelectionSlice, ViewSlice, FilterSlice, NavigationSlice, LoadingSlice, FlowSlice {}
 
 const createSelectionSlice: StateCreator<GraphStore, [], [], SelectionSlice> = (set) => ({
   selectedNodeId: null,
@@ -72,12 +98,19 @@ const createSelectionSlice: StateCreator<GraphStore, [], [], SelectionSlice> = (
   clearSelection: () => set({ selectedNodeId: null, selectedEdgeId: null }),
 });
 
-const createViewSlice: StateCreator<GraphStore, [], [], ViewSlice> = (set) => ({
+const createViewSlice: StateCreator<GraphStore, [], [], ViewSlice> = (set, get) => ({
   viewMode: ViewMode.OVERVIEW,
   layout: LayoutType.FORCE,
   viewport: { x: 0, y: 0, zoom: 1 },
 
-  setViewMode: (viewMode) => set({ viewMode }),
+  setViewMode: (viewMode) => {
+    // REQ-VV-008: leaving REQUEST_FLOW resets the flow slice (stops playback).
+    const state = get();
+    if (state.viewMode !== viewMode && state.viewMode === ViewMode.REQUEST_FLOW) {
+      state.resetFlow();
+    }
+    set({ viewMode });
+  },
   setLayout: (layout) => set({ layout }),
   setViewport: (viewport) => set({ viewport }),
 });
@@ -138,9 +171,34 @@ const createLoadingSlice: StateCreator<GraphStore, [], [], LoadingSlice> = (set)
   setLoadProgress: (loadProgress) => set({ loadProgress: Math.min(Math.max(loadProgress, 0), 1) }),
 });
 
+const createFlowSlice: StateCreator<GraphStore, [], [], FlowSlice> = (set) => ({
+  activeEndpointFqn: null,
+  flowSteps: [],
+  currentStepIndex: 0,
+  isPlaying: false,
+  animationSpeed: 1,
+
+  startFlow: (endpointFqn, flowSteps) =>
+    set({ activeEndpointFqn: endpointFqn, flowSteps, currentStepIndex: 0, isPlaying: true }),
+
+  nextStep: () =>
+    set((state) => ({
+      // Clamp at the final step so the token never advances past the lifecycle.
+      currentStepIndex:
+        state.flowSteps.length === 0
+          ? 0
+          : Math.min(state.currentStepIndex + 1, state.flowSteps.length - 1),
+    })),
+
+  pauseFlow: () => set({ isPlaying: false }),
+
+  resetFlow: () =>
+    set({ activeEndpointFqn: null, flowSteps: [], currentStepIndex: 0, isPlaying: false }),
+});
+
 /**
- * Single Zustand store combining the four slices (VI-001 selection,
- * VV-001 view, VV-002 filters, GN-003/004/005 navigation).
+ * Single Zustand store combining the slices (VI-001 selection, VV-001 view,
+ * VV-002 filters, GN-003/004/005 navigation, REQ-VV-008 request flow).
  */
 export const useGraphStore = create<GraphStore>()((set, get, api) => ({
   ...createSelectionSlice(set, get, api),
@@ -148,4 +206,5 @@ export const useGraphStore = create<GraphStore>()((set, get, api) => ({
   ...createFilterSlice(set, get, api),
   ...createNavigationSlice(set, get, api),
   ...createLoadingSlice(set, get, api),
+  ...createFlowSlice(set, get, api),
 }));

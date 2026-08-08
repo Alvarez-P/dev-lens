@@ -59,4 +59,16 @@ describe('GraphToolbar — view switcher (VV-001)', () => {
       'false',
     );
   });
+
+  it('renders a Request Flow chip as the 8th view that activates the flow view (REQ-VV-001)', () => {
+    render(<GraphToolbar />);
+
+    const chip = screen.getByRole('button', { name: 'Request Flow' });
+    expect(chip).toBeInTheDocument();
+
+    fireEvent.click(chip);
+
+    expect(useGraphStore.getState().viewMode).toBe(ViewMode.REQUEST_FLOW);
+    expect(useGraphStore.getState().layout).toBe('hierarchical');
+  });
 });

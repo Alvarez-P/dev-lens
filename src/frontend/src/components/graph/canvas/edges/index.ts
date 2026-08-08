@@ -8,6 +8,8 @@ import { ExposesEdge } from './exposes-edge';
 import { ImportsEdge } from './imports-edge';
 import { ProtectsEdge } from './protects-edge';
 import { TransformsEdge } from './transforms-edge';
+import { InvokesEdge } from './invokes-edge';
+import { InjectsEdge } from './injects-edge';
 
 export {
   BelongsToEdge,
@@ -18,6 +20,8 @@ export {
   ImportsEdge,
   ProtectsEdge,
   TransformsEdge,
+  InvokesEdge,
+  InjectsEdge,
 };
 
 /**
@@ -36,4 +40,6 @@ export const edgeTypes: EdgeTypes = {
   [EdgeType.IMPORTS]: ImportsEdge as EdgeTypes[string],
   [EdgeType.PROTECTS]: ProtectsEdge as EdgeTypes[string],
   [EdgeType.TRANSFORMS]: TransformsEdge as EdgeTypes[string],
+  [EdgeType.INVOKES]: InvokesEdge as EdgeTypes[string],
+  [EdgeType.INJECTS]: InjectsEdge as EdgeTypes[string],
 };

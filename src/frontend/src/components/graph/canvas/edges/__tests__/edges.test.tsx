@@ -82,6 +82,18 @@ describe('edge style config (VE-001 edge table)', () => {
       arrow: false,
       width: 1,
     }); // surface-500
+    expect(EDGE_STYLE[EdgeType.INVOKES]).toEqual({
+      color: '#a78bfa',
+      dash: 'dashed',
+      arrow: true,
+      width: 1.5,
+    }); // violet-400 — inferred service invocation (approximate)
+    expect(EDGE_STYLE[EdgeType.INJECTS]).toEqual({
+      color: '#22d3ee',
+      dash: 'solid',
+      arrow: true,
+      width: 1.5,
+    }); // cyan-400 — DI constructor injection
   });
 
   it('translates dash styles into SVG dasharrays', () => {

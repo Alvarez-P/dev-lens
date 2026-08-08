@@ -24,7 +24,7 @@ export enum NodeType {
   UNKNOWN = 'Unknown',
 }
 
-/** Mirror of the backend `EdgeType` enum (8 members). */
+/** Mirror of the backend `EdgeType` enum (10 members). */
 export enum EdgeType {
   BELONGS_TO = 'BELONGS_TO',
   IMPLEMENTS = 'IMPLEMENTS',
@@ -34,6 +34,8 @@ export enum EdgeType {
   EXPOSES = 'EXPOSES',
   PROTECTS = 'PROTECTS',
   TRANSFORMS = 'TRANSFORMS',
+  INVOKES = 'INVOKES',
+  INJECTS = 'INJECTS',
 }
 
 /** Mirror of the backend `BuildStatus` enum. */
@@ -52,7 +54,7 @@ export enum LayoutType {
   CIRCULAR = 'circular',
 }
 
-/** The 7 visualization views (VV-001). */
+/** The 8 visualization views (VV-001). */
 export enum ViewMode {
   OVERVIEW = 'overview',
   MODULES = 'modules',
@@ -61,6 +63,7 @@ export enum ViewMode {
   LAYER_ARCHITECTURE = 'layer-architecture',
   DOMAIN_RELATIONSHIPS = 'domain-relationships',
   EVENT_FLOW = 'event-flow',
+  REQUEST_FLOW = 'request-flow',
 }
 
 /** Type guard: is `value` a known NodeType? */
@@ -170,3 +173,35 @@ export type LayoutEngine = (
   edges: GraphEdge[],
   layout: LayoutType,
 ) => LayoutResult;
+
+/** Mirror of the backend `FlowStepKind` union — lifecycle step roles. */
+export type FlowStepKind =
+  'middleware' | 'guard' | 'pipe' | 'interceptor' | 'handler' | 'service' | 'repository';
+
+/** One ordered lifecycle step (mirror of backend `RequestFlowStep`). */
+export interface RequestFlowStep {
+  order: number;
+  kind: FlowStepKind;
+  nodeFqn: string;
+  nodeLabel: string;
+  /** Graph edge type connecting this step toward the flow (REQ-VV-006). */
+  edgeType: EdgeType;
+  /** DTO type annotation from the endpoint's typedParams (handler steps only). */
+  payloadType: string | null;
+  /** True for the INVOKES-derived service tail (inferred, not from method bodies). */
+  approximate: boolean;
+}
+
+/** Aggregated request flow for one endpoint: endpoint + ordered lifecycle steps. */
+export interface RequestFlow {
+  endpointFqn: string;
+  steps: RequestFlowStep[];
+}
+
+/** `GET /graph/:repoId/endpoints/:fqn/flow` response (mirror of backend `EndpointFlowResponse`). */
+export interface EndpointFlowResponse {
+  /** False for snapshots below the flow-data graph version (REQ-VV-010). */
+  flowAvailable: boolean;
+  steps: RequestFlowStep[];
+  endpointFqn: string;
+}

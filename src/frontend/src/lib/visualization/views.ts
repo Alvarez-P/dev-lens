@@ -83,6 +83,15 @@ export const VIEWS: ViewConfig[] = [
     edgeTypes: [],
     isEmptyState: true,
   },
+  {
+    mode: ViewMode.REQUEST_FLOW,
+    label: 'Request Flow',
+    description:
+      'Select an endpoint to visualize its request flow. The canvas shows the ordered lifecycle steps the request travels through.',
+    layout: LayoutType.HIERARCHICAL,
+    nodeTypes: [...ALL_NODE_TYPES],
+    edgeTypes: [EdgeType.PROTECTS, EdgeType.TRANSFORMS, EdgeType.INVOKES, EdgeType.INJECTS],
+  },
 ];
 
 /** Resolve the config for a view mode (throws on unknown modes). */
@@ -97,10 +106,18 @@ export function getViewConfig(mode: ViewMode): ViewConfig {
 /**
  * Switch views in one store transaction (VV-001): sets the view mode, the
  * layout the view prescribes, and the view's node/edge filters. Used by the
- * toolbar chips and the 1–7 keyboard shortcuts.
+ * toolbar chips and the 1–8 keyboard shortcuts.
+ *
+ * REQ-VV-008: leaving REQUEST_FLOW for another view resets the flow slice
+ * (stops playback and clears the loaded flow).
  */
 export function applyViewMode(mode: ViewMode): void {
   const config = getViewConfig(mode);
+  const state = useGraphStore.getState();
+
+  if (state.viewMode !== mode && state.viewMode === ViewMode.REQUEST_FLOW) {
+    state.resetFlow();
+  }
 
   useGraphStore.setState({
     viewMode: mode,

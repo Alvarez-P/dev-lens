@@ -33,4 +33,6 @@ export const EDGE_STYLE: Record<EdgeType, EdgeStyle> = {
   [EdgeType.IMPORTS]: { color: '#505054', dash: 'dashed', arrow: false, width: 1 }, // surface-500, no arrow
   [EdgeType.PROTECTS]: { color: '#f87171', dash: 'solid', arrow: true, width: 1.5 }, // error-400 — guard → endpoint
   [EdgeType.TRANSFORMS]: { color: '#60a5fa', dash: 'dashed', arrow: true, width: 1.5 }, // blue-400 — pipe → param
+  [EdgeType.INVOKES]: { color: '#a78bfa', dash: 'dashed', arrow: true, width: 1.5 }, // violet-400 — inferred service invocation (approximate)
+  [EdgeType.INJECTS]: { color: '#22d3ee', dash: 'solid', arrow: true, width: 1.5 }, // cyan-400 — DI constructor injection
 };
