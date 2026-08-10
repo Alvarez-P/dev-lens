@@ -68,35 +68,36 @@ export class SemanticModelBuilder {
 
       for (const mod of pkg.modules) {
         knownFqns.add(mod.fqn);
-        nodes.push(this.moduleNode(mod));
+        const sourceFile = normalizeSourceFile(mod.path, ir.rootPath);
+        nodes.push(this.moduleNode(mod, sourceFile));
         edges.push(this.belongsTo(mod.fqn, pkg.fqn));
 
         for (const cls of mod.classes) {
           knownFqns.add(cls.fqn);
-          const classNode = this.classNode(cls, mod.path, enrichment);
+          const classNode = this.classNode(cls, sourceFile, enrichment);
           nodes.push(classNode);
           edges.push(this.belongsTo(cls.fqn, mod.fqn));
 
           if (enrichment !== undefined) {
-            this.addLifecycleNodes(cls, enrichment, nodes, edges);
+            this.addLifecycleNodes(cls, enrichment, ir.rootPath, nodes, edges);
           }
 
           for (const endpoint of cls.endpoints) {
             knownFqns.add(endpoint.fqn);
-            nodes.push(this.endpointNode(endpoint, mod.path));
+            nodes.push(this.endpointNode(endpoint, sourceFile));
             edges.push(this.exposes(cls.fqn, endpoint.fqn));
           }
         }
 
         for (const iface of mod.interfaces) {
           knownFqns.add(iface.fqn);
-          nodes.push(this.interfaceNode(iface, mod.path));
+          nodes.push(this.interfaceNode(iface, sourceFile));
           edges.push(this.belongsTo(iface.fqn, mod.fqn));
         }
 
         for (const fn of mod.functions) {
           knownFqns.add(fn.fqn);
-          nodes.push(this.functionNode(fn, mod.path));
+          nodes.push(this.functionNode(fn, sourceFile));
           edges.push(this.belongsTo(fn.fqn, mod.fqn));
         }
       }
@@ -126,11 +127,13 @@ export class SemanticModelBuilder {
   ): void {
     for (const pkg of ir.packages) {
       for (const mod of pkg.modules) {
+        const sourceFile = normalizeSourceFile(mod.path, ir.rootPath);
+
         for (const cls of mod.classes) {
           const classNodeType = this.resolveClassType(cls, mod.path, enrichment);
 
           for (const endpoint of cls.endpoints) {
-            this.addEndpointLifecycleEdges(endpoint, cls, mod.path, nodes, edges);
+            this.addEndpointLifecycleEdges(endpoint, cls, sourceFile, nodes, edges);
             this.addDtoEdges(endpoint, nodes, edges);
           }
 
@@ -150,7 +153,7 @@ export class SemanticModelBuilder {
   private addEndpointLifecycleEdges(
     endpoint: IrEndpoint,
     cls: IrClass,
-    filePath: string,
+    sourceFile: string | null,
     nodes: SemanticNode[],
     edges: SemanticEdge[],
   ): void {
@@ -169,7 +172,7 @@ export class SemanticModelBuilder {
           label: entry.classRef,
           fqn: lifecycleFqn,
           properties: { lifecycleKind: entry.kind, order: index },
-          sourceFile: filePath,
+          sourceFile,
         });
       }
 
@@ -287,7 +290,7 @@ export class SemanticModelBuilder {
           label: dependency.target,
           fqn: dependency.target,
           properties: {},
-          sourceFile: '',
+          sourceFile: null,
         };
 
         externalNodes.set(dependency.target, node);
@@ -339,7 +342,7 @@ export class SemanticModelBuilder {
       label: ir.name,
       fqn: ir.fqn,
       properties,
-      sourceFile: '',
+      sourceFile: null,
     };
   }
 
@@ -355,21 +358,25 @@ export class SemanticModelBuilder {
       label: pkg.name,
       fqn: pkg.fqn,
       properties,
-      sourceFile: '',
+      sourceFile: null,
     };
   }
 
-  private moduleNode(mod: IrModule): SemanticNode {
+  private moduleNode(mod: IrModule, sourceFile: string | null): SemanticNode {
     return {
       type: NodeType.MODULE,
       label: mod.name,
       fqn: mod.fqn,
       properties: {},
-      sourceFile: mod.path,
+      sourceFile,
     };
   }
 
-  private classNode(cls: IrClass, filePath: string, enrichment?: IrEnrichment): SemanticNode {
+  private classNode(
+    cls: IrClass,
+    sourceFile: string | null,
+    enrichment?: IrEnrichment,
+  ): SemanticNode {
     const properties: Record<string, unknown> = {
       isAbstract: cls.isAbstract,
       isExported: cls.isExported,
@@ -390,11 +397,11 @@ export class SemanticModelBuilder {
     }
 
     return {
-      type: this.resolveClassType(cls, filePath, enrichment),
+      type: this.resolveClassType(cls, sourceFile ?? '', enrichment),
       label: cls.name,
       fqn: cls.fqn,
       properties,
-      sourceFile: filePath,
+      sourceFile,
     };
   }
 
@@ -451,6 +458,7 @@ export class SemanticModelBuilder {
   private addLifecycleNodes(
     cls: IrClass,
     enrichment: IrEnrichment,
+    rootPath: string,
     nodes: SemanticNode[],
     edges: SemanticEdge[],
   ): void {
@@ -484,7 +492,7 @@ export class SemanticModelBuilder {
         label: parsed.name,
         fqn: lifecycleFqn,
         properties: { lifecycleKind: parsed.kind },
-        sourceFile: aiEntry.sourceFile,
+        sourceFile: normalizeSourceFile(aiEntry.sourceFile, rootPath),
       });
 
       edges.push({
@@ -495,33 +503,33 @@ export class SemanticModelBuilder {
     }
   }
 
-  private interfaceNode(iface: IrInterface, filePath: string): SemanticNode {
+  private interfaceNode(iface: IrInterface, sourceFile: string | null): SemanticNode {
     return {
       type: NodeType.INTERFACE,
       label: iface.name,
       fqn: iface.fqn,
       properties: { isExported: iface.isExported },
-      sourceFile: filePath,
+      sourceFile,
     };
   }
 
-  private functionNode(fn: IrFunction, filePath: string): SemanticNode {
+  private functionNode(fn: IrFunction, sourceFile: string | null): SemanticNode {
     return {
       type: NodeType.UNKNOWN,
       label: fn.name,
       fqn: fn.fqn,
       properties: { isAsync: fn.isAsync, isExported: fn.isExported },
-      sourceFile: filePath,
+      sourceFile,
     };
   }
 
-  private endpointNode(endpoint: IrEndpoint, filePath: string): SemanticNode {
+  private endpointNode(endpoint: IrEndpoint, sourceFile: string | null): SemanticNode {
     return {
       type: NodeType.ENDPOINT,
       label: endpoint.name,
       fqn: endpoint.fqn,
       properties: { httpMethod: endpoint.httpMethod, path: endpoint.path },
-      sourceFile: filePath,
+      sourceFile,
     };
   }
 
@@ -575,4 +583,23 @@ export class SemanticModelBuilder {
 
 function compareStrings(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
+ * REQ-KG: turns an IR file path into a normalized, repo-relative `sourceFile`.
+ * Strips the repository root prefix, converts backslashes to forward slashes,
+ * and drops a leading `./`. Returns null when no meaningful path remains
+ * (synthesized nodes such as PROJECT, PACKAGE, EXTERNAL_DEPENDENCY).
+ */
+function normalizeSourceFile(filePath: string, rootPath: string): string | null {
+  let relative = filePath;
+  const normalizedRoot = rootPath.replace(/\/+$/, '');
+
+  if (normalizedRoot.length > 0 && relative.startsWith(normalizedRoot)) {
+    relative = relative.slice(normalizedRoot.length).replace(/^\/+/, '');
+  }
+
+  relative = relative.replace(/\\/g, '/').replace(/^\.\//, '');
+
+  return relative.length > 0 ? relative : null;
 }

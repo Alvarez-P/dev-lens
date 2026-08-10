@@ -8,7 +8,7 @@ const MODULE_NODE: SemanticNode = {
   label: 'users',
   fqn: 'acme:default:src/users',
   properties: {},
-  sourceFile: '/repo/src/users/users.module.ts',
+  sourceFile: 'src/users/users.module.ts',
 };
 
 const SERVICE_NODE: SemanticNode = {
@@ -16,7 +16,7 @@ const SERVICE_NODE: SemanticNode = {
   label: 'UsersService',
   fqn: 'acme:default:src/users#UsersService',
   properties: { isExported: true },
-  sourceFile: '/repo/src/users/users.service.ts',
+  sourceFile: 'src/users/users.service.ts',
 };
 
 function baseModel(): SemanticModel {
@@ -59,11 +59,11 @@ describe('GraphBuilder', () => {
       );
       expect(service?.properties).toEqual({
         isExported: true,
-        filePath: '/repo/src/users/users.service.ts',
+        filePath: 'src/users/users.service.ts',
       });
 
       const module = result.nodes.find((node) => node.fqn === 'acme:default:src/users');
-      expect(module?.properties).toEqual({ filePath: '/repo/src/users/users.module.ts' });
+      expect(module?.properties).toEqual({ filePath: 'src/users/users.module.ts' });
     });
 
     it('should stamp the sourceFile onto the node', () => {
@@ -72,10 +72,10 @@ describe('GraphBuilder', () => {
       const service = result.nodes.find(
         (node) => node.fqn === 'acme:default:src/users#UsersService',
       );
-      expect(service?.sourceFile).toBe('/repo/src/users/users.service.ts');
+      expect(service?.sourceFile).toBe('src/users/users.service.ts');
 
       const module = result.nodes.find((node) => node.fqn === 'acme:default:src/users');
-      expect(module?.sourceFile).toBe('/repo/src/users/users.module.ts');
+      expect(module?.sourceFile).toBe('src/users/users.module.ts');
     });
 
     it('should leave sourceFile null for nodes without a file', () => {
@@ -86,7 +86,7 @@ describe('GraphBuilder', () => {
             label: 'acme',
             fqn: 'acme',
             properties: {},
-            sourceFile: '',
+            sourceFile: null,
           },
         ],
         edges: [],
@@ -105,7 +105,7 @@ describe('GraphBuilder', () => {
 
       const deprecated = new GraphBuilder().buildDeprecatedNode(service!, 'repo-1', 2);
 
-      expect(deprecated.sourceFile).toBe('/repo/src/users/users.service.ts');
+      expect(deprecated.sourceFile).toBe('src/users/users.service.ts');
     });
 
     it('should assign deterministic UUID ids', () => {

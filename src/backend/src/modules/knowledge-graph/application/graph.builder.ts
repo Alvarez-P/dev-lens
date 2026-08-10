@@ -89,7 +89,7 @@ export class GraphBuilder {
   private buildNode(semanticNode: SemanticNode, repoId: string, version: number): GraphNode {
     const properties: Record<string, unknown> = { ...semanticNode.properties };
 
-    if (semanticNode.sourceFile !== '') {
+    if (semanticNode.sourceFile !== null) {
       properties.filePath = semanticNode.sourceFile;
     }
 
@@ -102,7 +102,7 @@ export class GraphBuilder {
       repoId,
       version,
       null,
-      semanticNode.sourceFile === '' ? null : semanticNode.sourceFile,
+      semanticNode.sourceFile,
     );
   }
 }
