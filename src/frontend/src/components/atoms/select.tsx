@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  type KeyboardEvent,
-  type SelectHTMLAttributes,
-} from 'react';
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from 'react';
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 
@@ -16,7 +9,10 @@ export interface SelectOption {
   label: string;
 }
 
-export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+export interface SelectProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onChange'
+> {
   label?: string;
   error?: string;
   helperText?: string;
