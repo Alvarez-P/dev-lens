@@ -5,6 +5,7 @@ import {
   ContextBudgetExceededError,
   AIDidNotMeetSchemaError,
   AIRateLimitError,
+  AIAuthenticationError,
   AIInvalidResponseError,
   AISecretsExposureError,
   CapabilityNotFoundError,
@@ -71,6 +72,18 @@ describe('AIRateLimitError', () => {
 
     expect(error.code).toBe('AI_RATE_LIMIT');
     expect(error.retriable).toBe(true);
+  });
+});
+
+describe('AIAuthenticationError', () => {
+  it('should be non-retriable with AI_AUTHENTICATION code and 401 status', () => {
+    const error = new AIAuthenticationError('openai', 'gpt-4o', 'invalid api key');
+
+    expect(error.code).toBe('AI_AUTHENTICATION');
+    expect(error.statusCode).toBe(401);
+    expect(error.retriable).toBe(false);
+    expect(error.provider_id).toBe('openai');
+    expect(error.model).toBe('gpt-4o');
   });
 });
 
