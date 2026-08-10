@@ -61,7 +61,7 @@ TDD: RED first.
 - [ ] 4.1 `edge-path.tsx`: animationToken prop; rAF + getPointAtLength circle on `<g>` (no re-render); respect culling
 - [ ] 4.2 `graph-workspace.tsx`: endpoint click → fetch+startFlow; ignore non-endpoint; old-snapshot msg
 - [ ] 4.3 `graph-detail-panel.tsx`: step list + (approx) badge + dashed edge
-- [ ] 4.4 Tests: token travel, dashed edges, click wiring, fallback, reset
+- [x] 4.4 Tests: token travel, dashed edges, click wiring, fallback, reset
 - [ ] 4.5 Verify 60fps @ 500+ nodes w/ culling
 
 ## Phase 5: Verification & Cleanup

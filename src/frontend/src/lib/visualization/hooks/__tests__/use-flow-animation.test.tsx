@@ -115,4 +115,22 @@ describe('useFlowAnimation (REQ-VV-007 playback controller)', () => {
     expect(useGraphStore.getState().currentStepIndex).toBe(0);
     expect(useGraphStore.getState().isPlaying).toBe(false);
   });
+
+  it('stays cleared after pause then reset — no pending timer revives playback', () => {
+    renderHook(() => useFlowAnimation());
+
+    act(() => {
+      useGraphStore.getState().startFlow('ep#1', [makeStep(1), makeStep(2), makeStep(3)]);
+      useGraphStore.getState().nextStep();
+      useGraphStore.getState().pauseFlow();
+      useGraphStore.getState().resetFlow();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(FLOW_STEP_INTERVAL_MS * 3);
+    });
+
+    expect(useGraphStore.getState().currentStepIndex).toBe(0);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
+  });
 });

@@ -357,6 +357,20 @@ describe('flowSlice (REQ-VV-008)', () => {
     expect(state.isPlaying).toBe(false);
   });
 
+  it('pause then reset clears the flow and playback state (task 4.4 reset)', () => {
+    useGraphStore.getState().startFlow('fqn-A', [makeStep(0), makeStep(1), makeStep(2)]);
+    useGraphStore.getState().nextStep();
+    useGraphStore.getState().pauseFlow();
+
+    useGraphStore.getState().resetFlow();
+
+    const state = useGraphStore.getState();
+    expect(state.activeEndpointFqn).toBeNull();
+    expect(state.flowSteps).toEqual([]);
+    expect(state.currentStepIndex).toBe(0);
+    expect(state.isPlaying).toBe(false);
+  });
+
   it('switching away from REQUEST_FLOW via setViewMode resets the flow', () => {
     useGraphStore.getState().setViewMode(ViewMode.REQUEST_FLOW);
     useGraphStore.getState().startFlow('fqn-A', [makeStep(0), makeStep(1)]);

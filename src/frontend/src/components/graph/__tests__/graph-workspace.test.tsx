@@ -8,7 +8,7 @@ import type {
   RequestFlowStep,
   EndpointFlowResponse,
 } from '@/lib/visualization/types';
-import type { ApiResponse } from '@/lib/api-client';
+import { ApiError, type ApiResponse } from '@/lib/api-client';
 import { useGraphStore } from '@/lib/visualization/store/graph-store';
 import type { GraphStore } from '@/lib/visualization/store/graph-store';
 
@@ -425,6 +425,100 @@ describe('GraphWorkspace — Request Flow view (REQ-VV-005/006/010)', () => {
     });
 
     expect(useGraphStore.getState().activeEndpointFqn).toBeNull();
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
+  });
+
+  it('shows a loading indicator while the endpoint flow is being fetched (REQ-VV-006)', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode, otherEndpointNode] });
+    let resolveFetch!: (value: ApiResponse<EndpointFlowResponse>) => void;
+    getEndpointFlowMock.mockReturnValue(
+      new Promise<ApiResponse<EndpointFlowResponse>>((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    // While the fetch is in flight the canvas shows a loading chip, not the prompt.
+    expect(await screen.findByRole('status', { name: /loading flow/i })).toBeInTheDocument();
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+
+    act(() => {
+      resolveFetch(flowResponse([makeFlowStep(1), makeFlowStep(2)]));
+    });
+
+    await waitFor(() => expect(useGraphStore.getState().isPlaying).toBe(true));
+    expect(screen.queryByRole('status', { name: /loading flow/i })).not.toBeInTheDocument();
+  });
+
+  it('shows an error state instead of crashing when the flow fetch fails', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode] });
+    getEndpointFlowMock.mockRejectedValue(new ApiError('Flow service unavailable', 503));
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/flow service unavailable/i);
+    // The failed fetch leaves the flow state untouched and playback stopped.
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
+  });
+
+  it('handles a network timeout gracefully without crashing', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode] });
+    getEndpointFlowMock.mockRejectedValue(new ApiError('Request timed out', 408));
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/request timed out/i);
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
+  });
+
+  it('clears a flow error and loads the new flow when a different endpoint is clicked', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode, otherEndpointNode] });
+    getEndpointFlowMock
+      .mockRejectedValueOnce(new ApiError('Flow service unavailable', 503))
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          flowAvailable: true,
+          steps: [{ ...makeFlowStep(1), nodeFqn: otherEndpointNode.fqn, nodeLabel: 'POST /users' }],
+          endpointFqn: otherEndpointNode.fqn,
+        },
+      });
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/flow service unavailable/i);
+
+    fireEvent.click(screen.getByTestId('rf-node-ep-2'));
+
+    await waitFor(() =>
+      expect(useGraphStore.getState().activeEndpointFqn).toBe(otherEndpointNode.fqn),
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows a no-flow-data state when the API returns an empty step list', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode] });
+    getEndpointFlowMock.mockResolvedValue({
+      success: true,
+      data: { flowAvailable: true, steps: [], endpointFqn: endpointNode.fqn },
+    });
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    expect(await screen.findByText(/no flow data for this endpoint/i)).toBeInTheDocument();
     expect(useGraphStore.getState().flowSteps).toEqual([]);
     expect(useGraphStore.getState().isPlaying).toBe(false);
   });

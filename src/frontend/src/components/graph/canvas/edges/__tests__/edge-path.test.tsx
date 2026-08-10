@@ -225,4 +225,26 @@ describe('EdgePath token animation (REQ-VV-007)', () => {
     expect(rafSpy).not.toHaveBeenCalled();
     expect(screen.queryByTestId('token-circle-plain')).not.toBeInTheDocument();
   });
+
+  it('keeps concurrent tokens on different edges independent (no shared state)', () => {
+    const edgeA = makeEdge('eA');
+    const edgeB = makeEdge('eB');
+    const { rerender } = render(<EdgePath {...makeProps(edgeA)} animationToken="tA" />);
+    render(<EdgePath {...makeProps(edgeB)} animationToken="tB" />);
+
+    advance(TOKEN_TRAVEL_MS / 2);
+
+    // Both tokens travel simultaneously along their own edge paths.
+    expect(screen.getByTestId('token-circle-eA').getAttribute('cx')).toBe('50');
+    expect(screen.getByTestId('token-circle-eB').getAttribute('cx')).toBe('50');
+
+    // Clearing edge A's token removes only its circle and leaves edge B's
+    // in-flight travel running untouched (separate DOM nodes + rAF loops).
+    rerender(<EdgePath {...makeProps(edgeA)} animationToken={null} />);
+    advance(200);
+
+    expect(screen.queryByTestId('token-circle-eA')).not.toBeInTheDocument();
+    const circleB = screen.getByTestId('token-circle-eB');
+    expect(Number(circleB.getAttribute('cx'))).toBeGreaterThan(50);
+  });
 });
