@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { NodeType, EdgeType, ViewMode } from '@/lib/visualization/types';
-import type { GraphNode, GraphEdge } from '@/lib/visualization/types';
+import type {
+  GraphNode,
+  GraphEdge,
+  RequestFlowStep,
+  EndpointFlowResponse,
+} from '@/lib/visualization/types';
+import { ApiError, type ApiResponse } from '@/lib/api-client';
 import { useGraphStore } from '@/lib/visualization/store/graph-store';
 import type { GraphStore } from '@/lib/visualization/store/graph-store';
 
@@ -10,6 +16,10 @@ vi.mock('@xyflow/react', async () => {
   const { xyflowMock } = await import('@/components/graph/canvas/__tests__/helpers/xyflow-mock');
   return xyflowMock;
 });
+
+vi.mock('@/lib/visualization/graph-api', () => ({
+  getEndpointFlow: vi.fn(),
+}));
 
 vi.mock('@/lib/visualization/hooks/use-progressive-load', async () => {
   const actual = await vi.importActual<
@@ -49,6 +59,7 @@ import { useGraphExport } from '@/lib/visualization/hooks/use-graph-export';
 import { useDrillDown } from '@/lib/visualization/hooks/use-drill-down';
 import { useGraphSearch } from '@/lib/visualization/hooks/use-graph-search';
 import { useNodeDetail } from '@/lib/visualization/hooks/use-node-detail';
+import { getEndpointFlow } from '@/lib/visualization/graph-api';
 
 import { GraphWorkspace, mergeEdges } from '../graph-workspace';
 
@@ -57,6 +68,7 @@ const useGraphExportMock = useGraphExport as unknown as Mock;
 const useDrillDownMock = useDrillDown as unknown as Mock;
 const useGraphSearchMock = useGraphSearch as unknown as Mock;
 const useNodeDetailMock = useNodeDetail as unknown as Mock;
+const getEndpointFlowMock = getEndpointFlow as unknown as Mock;
 
 function makeNode(id: string, type: NodeType, label: string, fqn: string): GraphNode {
   return {
@@ -245,5 +257,269 @@ describe('GraphWorkspace — Event Flow view', () => {
 
     expect(await screen.findByText(/event data is not yet available/i)).toBeInTheDocument();
     expect(screen.queryByTestId('rf-node-mod-1')).not.toBeInTheDocument();
+  });
+});
+
+describe('GraphWorkspace — Request Flow view (REQ-VV-005/006/010)', () => {
+  const endpointNode = makeNode(
+    'ep-1',
+    NodeType.ENDPOINT,
+    'GET /users',
+    'auth/UsersController~GET /users',
+  );
+  const otherEndpointNode = makeNode(
+    'ep-2',
+    NodeType.ENDPOINT,
+    'POST /users',
+    'auth/UsersController~POST /users',
+  );
+  const controllerNode = makeNode(
+    'ctrl-1',
+    NodeType.CONTROLLER,
+    'UsersController',
+    'auth/UsersController',
+  );
+
+  function makeFlowStep(order: number, overrides: Partial<RequestFlowStep> = {}): RequestFlowStep {
+    return {
+      order,
+      kind: order === 1 ? 'handler' : 'service',
+      nodeFqn: order === 1 ? endpointNode.fqn : `auth/UsersService#${order}`,
+      nodeLabel: order === 1 ? 'GET /users' : `UsersService.step${order}`,
+      edgeType: order === 1 ? EdgeType.EXPOSES : EdgeType.INVOKES,
+      payloadType: order === 1 ? 'CreateUserDto' : null,
+      approximate: order !== 1,
+      ...overrides,
+    };
+  }
+
+  function flowResponse(steps: RequestFlowStep[]): ApiResponse<EndpointFlowResponse> {
+    return {
+      success: true,
+      data: { flowAvailable: true, steps, endpointFqn: endpointNode.fqn },
+    };
+  }
+
+  function enterFlowView(): void {
+    act(() => {
+      useGraphStore.getState().setViewMode(ViewMode.REQUEST_FLOW);
+    });
+  }
+
+  it('prompts to select an endpoint when the flow view opens with flow data available', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode, controllerNode] });
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+
+    expect(
+      await screen.findByText(/select an endpoint to visualize its request flow/i),
+    ).toBeInTheDocument();
+    // The interactive canvas is still rendered so endpoints can be clicked.
+    expect(screen.getByTestId('rf-node-ep-1')).toBeInTheDocument();
+  });
+
+  it('fetches the flow and starts playback when an endpoint is clicked (REQ-VV-006)', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode, controllerNode] });
+    const steps = [makeFlowStep(1), makeFlowStep(2)];
+    getEndpointFlowMock.mockResolvedValue(flowResponse(steps));
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    await waitFor(() => {
+      expect(getEndpointFlowMock).toHaveBeenCalledWith('repo-1', endpointNode.fqn);
+    });
+    await waitFor(() => {
+      expect(useGraphStore.getState().activeEndpointFqn).toBe(endpointNode.fqn);
+      expect(useGraphStore.getState().flowSteps).toHaveLength(2);
+      expect(useGraphStore.getState().currentStepIndex).toBe(0);
+      expect(useGraphStore.getState().isPlaying).toBe(true);
+    });
+  });
+
+  it('ignores clicks on non-endpoint nodes in the flow view (REQ-VV-006)', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode, controllerNode] });
+    getEndpointFlowMock.mockResolvedValue(flowResponse([makeFlowStep(1)]));
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ctrl-1'));
+
+    expect(getEndpointFlowMock).not.toHaveBeenCalled();
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().selectedNodeId).toBeNull();
+  });
+
+  it('replaces the loaded flow when a different endpoint is clicked (REQ-VV-006)', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode, otherEndpointNode] });
+    getEndpointFlowMock
+      .mockResolvedValueOnce(flowResponse([makeFlowStep(1), makeFlowStep(2)]))
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          flowAvailable: true,
+          steps: [{ ...makeFlowStep(1), nodeFqn: otherEndpointNode.fqn, nodeLabel: 'POST /users' }],
+          endpointFqn: otherEndpointNode.fqn,
+        },
+      });
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+    await waitFor(() => expect(useGraphStore.getState().flowSteps).toHaveLength(2));
+
+    fireEvent.click(screen.getByTestId('rf-node-ep-2'));
+
+    await waitFor(() => {
+      expect(useGraphStore.getState().activeEndpointFqn).toBe(otherEndpointNode.fqn);
+      expect(useGraphStore.getState().flowSteps).toHaveLength(1);
+      expect(useGraphStore.getState().currentStepIndex).toBe(0);
+    });
+  });
+
+  it('shows the unavailable message for old snapshots and makes no endpoint clickable (REQ-VV-010)', async () => {
+    mockLoad({ snapshotVersion: 1, nodes: [endpointNode] });
+    getEndpointFlowMock.mockResolvedValue(flowResponse([makeFlowStep(1)]));
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+
+    expect(
+      await screen.findByText(/flow data is not available for this snapshot/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('rf-node-ep-1')).not.toBeInTheDocument();
+    expect(getEndpointFlowMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the unavailable message when the API reports flowAvailable false (REQ-VV-010)', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode] });
+    getEndpointFlowMock.mockResolvedValue({
+      success: true,
+      data: { flowAvailable: false, steps: [], endpointFqn: endpointNode.fqn },
+    });
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    expect(
+      await screen.findByText(/flow data is not available for this snapshot/i),
+    ).toBeInTheDocument();
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
+  });
+
+  it('clears the flow when switching away from the flow view (REQ-VV-008 reset wiring)', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode] });
+    getEndpointFlowMock.mockResolvedValue(flowResponse([makeFlowStep(1), makeFlowStep(2)]));
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+    await waitFor(() => expect(useGraphStore.getState().isPlaying).toBe(true));
+
+    act(() => {
+      useGraphStore.getState().setViewMode(ViewMode.OVERVIEW);
+    });
+
+    expect(useGraphStore.getState().activeEndpointFqn).toBeNull();
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
+  });
+
+  it('shows a loading indicator while the endpoint flow is being fetched (REQ-VV-006)', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode, otherEndpointNode] });
+    let resolveFetch!: (value: ApiResponse<EndpointFlowResponse>) => void;
+    getEndpointFlowMock.mockReturnValue(
+      new Promise<ApiResponse<EndpointFlowResponse>>((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    // While the fetch is in flight the canvas shows a loading chip, not the prompt.
+    expect(await screen.findByRole('status', { name: /loading flow/i })).toBeInTheDocument();
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+
+    act(() => {
+      resolveFetch(flowResponse([makeFlowStep(1), makeFlowStep(2)]));
+    });
+
+    await waitFor(() => expect(useGraphStore.getState().isPlaying).toBe(true));
+    expect(screen.queryByRole('status', { name: /loading flow/i })).not.toBeInTheDocument();
+  });
+
+  it('shows an error state instead of crashing when the flow fetch fails', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode] });
+    getEndpointFlowMock.mockRejectedValue(new ApiError('Flow service unavailable', 503));
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/flow service unavailable/i);
+    // The failed fetch leaves the flow state untouched and playback stopped.
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
+  });
+
+  it('handles a network timeout gracefully without crashing', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode] });
+    getEndpointFlowMock.mockRejectedValue(new ApiError('Request timed out', 408));
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/request timed out/i);
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
+  });
+
+  it('clears a flow error and loads the new flow when a different endpoint is clicked', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode, otherEndpointNode] });
+    getEndpointFlowMock
+      .mockRejectedValueOnce(new ApiError('Flow service unavailable', 503))
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          flowAvailable: true,
+          steps: [{ ...makeFlowStep(1), nodeFqn: otherEndpointNode.fqn, nodeLabel: 'POST /users' }],
+          endpointFqn: otherEndpointNode.fqn,
+        },
+      });
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/flow service unavailable/i);
+
+    fireEvent.click(screen.getByTestId('rf-node-ep-2'));
+
+    await waitFor(() =>
+      expect(useGraphStore.getState().activeEndpointFqn).toBe(otherEndpointNode.fqn),
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows a no-flow-data state when the API returns an empty step list', async () => {
+    mockLoad({ snapshotVersion: 2, nodes: [endpointNode] });
+    getEndpointFlowMock.mockResolvedValue({
+      success: true,
+      data: { flowAvailable: true, steps: [], endpointFqn: endpointNode.fqn },
+    });
+    enterFlowView();
+
+    render(<GraphWorkspace repoId="repo-1" />);
+    fireEvent.click(await screen.findByTestId('rf-node-ep-1'));
+
+    expect(await screen.findByText(/no flow data for this endpoint/i)).toBeInTheDocument();
+    expect(useGraphStore.getState().flowSteps).toEqual([]);
+    expect(useGraphStore.getState().isPlaying).toBe(false);
   });
 });

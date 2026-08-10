@@ -16,6 +16,8 @@ export interface GraphCanvasProps {
   edges: GraphEdge[];
   /** Shared ref so the toolbar can drive fit/zoom on the adapter. */
   adapterRef?: React.RefObject<GraphRendererAdapter | null>;
+  /** Replaces the default select-on-click (REQUEST_FLOW loads flows instead). */
+  onNodeClick?: (nodeId: string) => void;
   /** Replaces the default select-on-double-click (drill-down, GN-002). */
   onNodeDoubleClick?: (nodeId: string) => void;
   /** Right-click on a node with the cursor position (REQ-VI-004). */
@@ -32,6 +34,7 @@ export function GraphCanvas({
   nodes,
   edges,
   adapterRef,
+  onNodeClick,
   onNodeDoubleClick,
   onNodeContextMenu,
   className,
@@ -88,19 +91,27 @@ export function GraphCanvas({
     }
   }, [viewport, ref]);
 
-  // Latest prop callbacks for the stable adapter handlers (double-click
-  // defaults to selection unless the workspace supplies drill-down).
+  // Latest prop callbacks for the stable adapter handlers (click defaults to
+  // selection unless the workspace overrides it; double-click defaults to
+  // selection unless the workspace supplies drill-down).
   const handlerRef = useRef<{
+    onNodeClick?: (nodeId: string) => void;
     onNodeDoubleClick?: (nodeId: string) => void;
     onNodeContextMenu?: (nodeId: string, position: { x: number; y: number }) => void;
   }>({});
-  handlerRef.current = { onNodeDoubleClick, onNodeContextMenu };
+  handlerRef.current = { onNodeClick, onNodeDoubleClick, onNodeContextMenu };
 
   useEffect(() => {
     const adapter = ref.current;
     if (!adapter) return;
 
-    adapter.onNodeClick((nodeId) => useGraphStore.getState().setSelectedNode(nodeId));
+    adapter.onNodeClick((nodeId) => {
+      if (handlerRef.current.onNodeClick) {
+        handlerRef.current.onNodeClick(nodeId);
+      } else {
+        useGraphStore.getState().setSelectedNode(nodeId);
+      }
+    });
     adapter.onNodeDoubleClick((nodeId) => {
       if (handlerRef.current.onNodeDoubleClick) {
         handlerRef.current.onNodeDoubleClick(nodeId);
