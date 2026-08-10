@@ -1,6 +1,7 @@
 # Intermediate Representation Specification
 
 > **Archived from**: `epic-005-static-analysis` (2026-08-04)
+> **Updated by**: `request-flow-visualization` (2026-08-10) — `IrEndpoint.lifecycle`/`typedParams` projections, `LifecycleEntry`/`TypedParam` concepts, `constructorParams` on `IrClass`
 
 ## Purpose
 
@@ -12,18 +13,20 @@ The Intermediate Representation (IR) is the canonical, language-independent mode
 
 The IR SHALL model the following concepts as immutable value objects:
 
-| Concept      | Key Fields                   | Relationships                           |
-| ------------ | ---------------------------- | --------------------------------------- |
-| Project      | name, rootPath, language     | contains Packages                       |
-| Package      | name, version                | contains Modules                        |
-| Module       | name, path                   | contains Classes, Interfaces, Functions |
-| Class        | name, isAbstract, isExported | extends Class, implements Interface     |
-| Interface    | name                         | extended by Classes                     |
-| Function     | name, isAsync, isExported    | —                                       |
-| Method       | name, visibility, isStatic   | belongs to Class                        |
-| Endpoint     | httpMethod, path, parameters | belongs to Class                        |
-| Dependency   | source, target, type         | connects any two IR nodes               |
-| Relationship | kind, from, to               | explicit named relation                 |
+| Concept      | Key Fields                                                  | Relationships                           |
+| ------------ | ----------------------------------------------------------- | --------------------------------------- |
+| Project      | name, rootPath, language                                    | contains Packages                       |
+| Package      | name, version                                               | contains Modules                        |
+| Module       | name, path                                                  | contains Classes, Interfaces, Functions |
+| Class        | name, isAbstract, isExported, decorators, constructorParams | extends Class, implements Interface     |
+| Interface    | name                                                        | extended by Classes                     |
+| Function     | name, isAsync, isExported                                   | —                                       |
+| Method       | name, visibility, isStatic, decorators, params, returnType  | belongs to Class                        |
+| Endpoint     | httpMethod, path, parameters, lifecycle, typedParams        | belongs to Class                        |
+| Dependency   | source, target, type                                        | connects any two IR nodes               |
+| Relationship | kind, from, to                                              | explicit named relation                 |
+| Lifecycle    | kind, classRef                                              | referenced by Endpoint                  |
+| TypedParam   | name, typeAnnotation, decorator                             | referenced by Endpoint                  |
 
 Every IR node SHALL have a unique, stable identifier (e.g., `project:package:module:name`).
 
@@ -32,6 +35,57 @@ Every IR node SHALL have a unique, stable identifier (e.g., `project:package:mod
 - GIVEN a NestJS project with controllers, services, and DTOs
 - WHEN the IR builder processes the parse results
 - THEN the IR contains at least one Project, Package, Module, Class, Method, Endpoint, and Dependency
+
+#### Scenario: Endpoint with decorated method projects lifecycle
+
+- GIVEN a controller class with method `@UseGuards(AuthGuard) getUsers()`
+- WHEN `buildEndpoints()` creates the IrEndpoint from the IrMethod
+- THEN `IrEndpoint.lifecycle` contains `[{ kind: 'guard', classRef: 'AuthGuard' }]`
+- AND `IrEndpoint.typedParams` reflects the method's `IrMethod.params`
+
+### Requirement: IrEndpoint Lifecycle Projection
+
+`IrEndpoint` SHALL gain a `lifecycle` field — an ordered list of lifecycle steps projected from the owning `IrMethod.decorators`. Each step SHALL have `kind` (`guard | pipe | interceptor | middleware`) and `classRef` (the FQN resolved from the decorator argument). The projection SHALL happen in `buildEndpoints()` — each `IrEndpoint` already knows its owning `IrMethod` via the build context. An endpoint whose method has no lifecycle decorators SHALL have an empty `lifecycle` list. Declaration order SHALL be preserved.
+
+#### Scenario: Method with @UseGuards projects lifecycle onto IrEndpoint
+
+- GIVEN a controller method `@UseGuards(AuthGuard) getUsers()` producing `IrMethod.decorators = ['@UseGuards(AuthGuard)']`
+- WHEN `buildEndpoints()` projects the method onto the resulting `IrEndpoint`
+- THEN `IrEndpoint.lifecycle` contains `[{ kind: 'guard', classRef: 'AuthGuard' }]`
+
+#### Scenario: Multiple guards preserve order
+
+- GIVEN a method `@UseGuards(AuthGuard, RoleGuard)` producing two decorator entries
+- WHEN `buildEndpoints()` projects onto `IrEndpoint`
+- THEN `lifecycle` is `[{ kind: 'guard', classRef: 'AuthGuard' }, { kind: 'guard', classRef: 'RoleGuard' }]`
+
+#### Scenario: Endpoint with no decorators
+
+- GIVEN a controller method with no lifecycle decorators on the method
+- WHEN `buildEndpoints()` projects it
+- THEN `IrEndpoint.lifecycle` is `[]`
+
+### Requirement: IrEndpoint TypedParams Projection
+
+`IrEndpoint` SHALL gain a `typedParams` field — an ordered list of `{ name, typeAnnotation, decorator }` objects projected from the owning `IrMethod.params`. `typeAnnotation` is the TypeScript type as a string (e.g., `'CreateUserDto'`). `decorator` is the NestJS parameter decorator (`@Body`, `@Param`, `@Query`, `@Headers`). Parameters without a decorator or resolvable type SHALL have `null` for the missing field. The projection SHALL happen in `buildEndpoints()` alongside the lifecycle projection.
+
+#### Scenario: @Body() DTO parameter projected
+
+- GIVEN a controller method `create(@Body() dto: CreateUserDto)` producing `IrMethod.params[0] = { name: 'dto', type: 'CreateUserDto', decorators: ['Body'] }`
+- WHEN `buildEndpoints()` projects onto `IrEndpoint`
+- THEN `typedParams` contains `{ name: 'dto', typeAnnotation: 'CreateUserDto', decorator: '@Body' }`
+
+#### Scenario: @Query() primitive type projected without DTO edge
+
+- GIVEN a method `findAll(@Query('page') page: number)` producing `IrMethod.params[0] = { name: 'page', type: 'number', decorators: ['Query'] }`
+- WHEN `buildEndpoints()` projects onto `IrEndpoint`
+- THEN `typedParams` contains `{ name: 'page', typeAnnotation: 'number', decorator: '@Query' }`
+
+#### Scenario: Undecorated parameter has null decorator
+
+- GIVEN a method `handler(body: any)` with no parameter decorators
+- WHEN projected onto `IrEndpoint`
+- THEN `typedParams` entry has `decorator: null`
 
 ### Requirement: TS AST → IR Builder
 
@@ -89,3 +143,6 @@ All IR nodes SHALL be immutable after construction. The IR published as an analy
 
 - RFC-006 §7–10 (IR Design), §13 (Immutability), §14 (Validation)
 - EPIC-005 §2.5 (Domain Analysis), §2.7 (Metadata Generation)
+- Knowledge Graph Model spec: `lifecycle` entries drive `PROTECTS`/`TRANSFORMS` edges; `typedParams` DTO types drive `DEPENDS_ON` (parameter-type) edges; `constructorParams` drive `INJECTS` edges
+- TypeScript Parser spec: `IrMethod.decorators`/`IrMethod.params`/`IrClass.constructorParams` are the source data for the projections
+- Visualization Views spec: the flow endpoint assembles `lifecycle` + `typedParams` + `constructorParams` into an ordered step sequence

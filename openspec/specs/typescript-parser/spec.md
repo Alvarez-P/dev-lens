@@ -1,6 +1,7 @@
 # TypeScript Parser Specification
 
 > **Archived from**: `epic-005-static-analysis` (2026-08-04)
+> **Updated by**: `request-flow-visualization` (2026-08-10) — method-level `@UsePipes`/`@UseInterceptors` and parameter-level decorator roles (`@Body`/`@Param`/`@Query`/`@Headers`) in the `DecoratorRoleRegistry`
 
 ## Purpose
 
@@ -28,15 +29,29 @@ The TypeScript parser SHALL use ts-morph to parse `.ts` and `.tsx` files. Each f
 
 The parser SHALL classify NestJS decorators into architectural roles. Recognized decorator-to-role mappings SHALL include at minimum:
 
-| Decorator                                      | Role          |
-| ---------------------------------------------- | ------------- |
-| `@Controller()`                                | `controller`  |
-| `@Injectable()`                                | `service`     |
-| `@Module()`                                    | `module`      |
-| `@Injectable()` + `implements CanActivate`     | `guard`       |
-| `@Injectable()` + `implements NestInterceptor` | `interceptor` |
-| `@Injectable()` + `implements PipeTransform`   | `pipe`        |
-| `@EntityRepository()`                          | `repository`  |
+| Decorator                                      | Role               |
+| ---------------------------------------------- | ------------------ |
+| `@Controller()`                                | `controller`       |
+| `@Injectable()`                                | `service`          |
+| `@Module()`                                    | `module`           |
+| `@Injectable()` + `implements CanActivate`     | `guard`            |
+| `@Injectable()` + `implements NestInterceptor` | `interceptor`      |
+| `@Injectable()` + `implements PipeTransform`   | `pipe`             |
+| `@EntityRepository()`                          | `repository`       |
+| `@Catch()`                                     | `exception-filter` |
+| `@UseGuards()`                                 | `guard`            |
+| `@Middleware()`                                | `middleware`       |
+| `@UsePipes()`                                  | `pipe`             |
+| `@UseInterceptors()`                           | `interceptor`      |
+
+**Parameter-level decorators** (method parameter classification):
+
+| Decorator    | Role      |
+| ------------ | --------- |
+| `@Body()`    | `body`    |
+| `@Param()`   | `param`   |
+| `@Query()`   | `query`   |
+| `@Headers()` | `headers` |
 
 Role classification MUST be attached to the ParseResult as metadata for the IR builder.
 
@@ -59,6 +74,53 @@ Role classification MUST be attached to the ParseResult as metadata for the IR b
 - WHEN the TypeScript parser processes it
 - THEN no architectural role is assigned
 - AND parsing continues without error
+
+### Requirement: Method-Level Decorator Registry Additions
+
+The `DecoratorRoleRegistry` SHALL register `UsePipes` → role `pipe` and `UseInterceptors` → role `interceptor`. These entries enable the existing decorator-walking infrastructure to classify method-level `@UsePipes(...)` and `@UseInterceptors(...)` decorators as lifecycle roles. The existing `UseGuards` → `guard` and `Middleware` → `middleware` entries are already registered.
+
+#### Scenario: @UsePipes classified as pipe role
+
+- GIVEN a controller class with method `@UsePipes(ValidationPipe) create()`
+- WHEN the TypeScript parser processes the decorators
+- THEN the `UsePipes` decorator is classified with role `pipe`
+
+#### Scenario: @UseInterceptors classified as interceptor role
+
+- GIVEN a controller class with method `@UseInterceptors(LoggingInterceptor) get()`
+- WHEN the TypeScript parser processes the decorators
+- THEN the `UseInterceptors` decorator is classified with role `interceptor`
+
+#### Scenario: @UseGuards still classified as guard (regression check)
+
+- GIVEN a controller class with method `@UseGuards(JwtGuard) get()`
+- WHEN the TypeScript parser processes it
+- THEN the decorator is classified with role `guard`
+- (Existing behavior from ai-enrichment — unaffected by registry additions)
+
+### Requirement: Parameter Decorator Registry Additions
+
+The `DecoratorRoleRegistry` SHALL register `Body` → role `body`, `Param` → role `param`, `Query` → role `query`, and `Headers` → role `headers`. These entries SHALL enable the parser to identify which NestJS parameter decorator is applied to each method parameter. The classification SHALL be consumed by `buildEndpoints()` when projecting `IrEndpoint.typedParams`.
+
+#### Scenario: @Body() parameter identified
+
+- GIVEN a method signature `create(@Body() dto: CreateUserDto)`
+- WHEN the TypeScript parser processes the parameter's decorators
+- THEN the parameter's decorator list includes `Body`
+- AND `getRole('Body')` returns `'body'`
+
+#### Scenario: @Query() parameter identified
+
+- GIVEN a method signature `findAll(@Query('status') status: string)`
+- WHEN the TypeScript parser processes it
+- THEN the parameter's decorator list includes `Query`
+- AND `getRole('Query')` returns `'query'`
+
+#### Scenario: Multi-decorator parameter supported
+
+- GIVEN a method signature `update(@Param('id') @Body() dto: UpdateDto)`
+- WHEN the TypeScript parser processes the parameter
+- THEN the parameter's decorator list contains both `Param` and `Body`
 
 ### Requirement: Deterministic Output
 
