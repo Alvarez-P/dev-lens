@@ -44,6 +44,28 @@ describe('SourceFileFilter (REQ-CA-004)', () => {
     });
   });
 
+  describe('secret-file deny-list (ai-context-assembly R5)', () => {
+    it('should deny *.pem and *.key files with the secret-file rule', () => {
+      expect(filter.classify('certs/server.pem').include).toBe(false);
+      expect(filter.classify('certs/server.key').include).toBe(false);
+    });
+
+    it('should deny filenames containing secret or credential', () => {
+      for (const path of ['config/secrets.yaml', 'src/credentials.json', 'api/secret.config.ts']) {
+        const result = filter.classify(path);
+
+        expect(result.include).toBe(false);
+        expect(result.rule).toBe('secret-file');
+      }
+    });
+
+    it('should still allow source extensions added by R5 (.py, .java, .go)', () => {
+      expect(filter.classify('src/train/model.py').include).toBe(true);
+      expect(filter.classify('src/main/java/com/acme/App.java').include).toBe(true);
+      expect(filter.classify('cmd/server/main.go').include).toBe(true);
+    });
+  });
+
   describe('ignored directories', () => {
     it('should deny files under node_modules, dist, and .git', () => {
       expect(filter.classify('node_modules/foo/index.ts').include).toBe(false);

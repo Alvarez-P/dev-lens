@@ -1,13 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IGNORED_DIRECTORIES } from '../../analysis/application/file-manifest.service';
 
-/** Source extensions allowed into AI context (REQ-CA-004). */
-const ALLOWED_EXTENSIONS: ReadonlySet<string> = new Set(['.ts', '.tsx', '.js', '.jsx']);
+/** Source extensions allowed into AI context (REQ-CA-004, ai-context-assembly R5). */
+const ALLOWED_EXTENSIONS: ReadonlySet<string> = new Set([
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.py',
+  '.java',
+  '.go',
+]);
 
 /** Files matching this pattern are excluded unconditionally (REQ-CA-004). */
 const ENV_FILE_PATTERN = /(^|[/\\])\.env($|\.)/;
 
-export type DenyRule = '.env*' | 'ignored-directory';
+/** Files whose name suggests they hold secrets (ai-context-assembly R5 deny-list). */
+const SECRET_FILE_PATTERN = /\.(pem|key)$|secret|credential/i;
+
+export type DenyRule = '.env*' | 'ignored-directory' | 'secret-file';
 
 export interface FileClassification {
   include: boolean;
@@ -16,10 +27,12 @@ export interface FileClassification {
 }
 
 /**
- * Allow/deny-list enforcement BEFORE sketch construction (REQ-CA-004).
+ * Allow/deny-list enforcement BEFORE sketch construction (REQ-CA-004) and
+ * before KG context assembly (ai-context-assembly R5).
  *
- * - Allow: `.ts`, `.tsx`, `.js`, `.jsx`
+ * - Allow: `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.java`, `.go`
  * - Deny: `.env*` files — excluded unconditionally, logged at warn
+ * - Deny: secret-bearing filenames (`*.pem`, `*.key`, `*secret*`, `*credential*`)
  * - Deny: `IGNORED_DIRECTORIES` — excluded, logged at warn
  * - Everything else: silently skipped (no warning)
  */
@@ -32,6 +45,10 @@ export class SourceFileFilter {
 
     if (envRule !== null) {
       return { include: false, rule: envRule };
+    }
+
+    if (this.isSecretFile(filePath)) {
+      return { include: false, rule: 'secret-file' };
     }
 
     if (this.isInIgnoredDirectory(filePath)) {
@@ -69,6 +86,10 @@ export class SourceFileFilter {
 
   private envDenyRule(filePath: string): DenyRule | null {
     return ENV_FILE_PATTERN.test(filePath) ? '.env*' : null;
+  }
+
+  private isSecretFile(filePath: string): boolean {
+    return SECRET_FILE_PATTERN.test(filePath);
   }
 
   private isInIgnoredDirectory(filePath: string): boolean {
