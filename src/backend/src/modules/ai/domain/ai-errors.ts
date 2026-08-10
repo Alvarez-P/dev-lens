@@ -35,7 +35,7 @@ export class ProviderUnavailableError extends BaseAIError {
   }
 }
 
-/** Assembled context exceeds `budget.max_total_tokens`. Not retriable. */
+/** Assembled context exceeds `budget.maxTotalTokens`. Not retriable. */
 export class ContextBudgetExceededError extends BaseAIError {
   constructor(providerId: string, model: string, message: string) {
     super(message, 'CONTEXT_BUDGET_EXCEEDED', 422, providerId, model, false);

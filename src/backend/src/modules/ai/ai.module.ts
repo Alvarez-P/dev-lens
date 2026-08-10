@@ -69,9 +69,9 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
         const openai = ai.providers.openai;
 
         return new OpenAIProvider(
-          openai?.model ?? 'gpt-4o',
-          openai?.api_key_env ? process.env[openai.api_key_env] : undefined,
-          ai.timeout_ms,
+          openai?.defaultModel ?? 'gpt-4o',
+          openai?.apiKeyEnv ? process.env[openai.apiKeyEnv] : undefined,
+          ai.timeoutMs,
         );
       },
       inject: [ConfigService],
@@ -83,9 +83,9 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
         const ollama = ai.providers.ollama;
 
         return new OllamaProvider(
-          ollama?.base_url ?? 'http://localhost:11434',
-          ollama?.model ?? 'llama3.2',
-          ai.timeout_ms,
+          ollama?.baseUrl ?? 'http://localhost:11434',
+          ollama?.defaultModel ?? 'llama3.2',
+          ai.timeoutMs,
         );
       },
       inject: [ConfigService],

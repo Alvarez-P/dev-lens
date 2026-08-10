@@ -6,10 +6,9 @@ import { ProviderUnavailableError } from '../domain/ai-errors';
 import { AI_PROVIDER_REGISTRY } from '../ai.tokens';
 
 /**
- * Resolves the active provider from `ai.default_model` (`provider/model`
- * format) and falls back to the first available provider when the default
- * is unhealthy. Transparent to consumers — they always call
- * `AIProvider.enrich()` (REQ-AP-006).
+ * Resolves the active provider from `ai.defaultProvider` and falls back to
+ * the first available provider when the default is unhealthy. Transparent to
+ * consumers — they always call `AIProvider.enrich()` (REQ-AP-006).
  */
 @Injectable()
 export class ProviderSelectorService {
@@ -22,9 +21,8 @@ export class ProviderSelectorService {
   ) {}
 
   async getProvider(): Promise<AIProvider> {
-    const { default_model } = this.configService.ai;
-    const providerName = default_model.split('/')[0];
-    const configured = this.providers.get(providerName);
+    const { defaultProvider, defaultModel } = this.configService.ai;
+    const configured = this.providers.get(defaultProvider);
 
     if (configured && (await configured.healthCheck())) {
       return configured;
@@ -32,12 +30,12 @@ export class ProviderSelectorService {
 
     if (configured) {
       this.logger.warn(
-        `Provider "${providerName}" (${default_model}) is unavailable — falling back`,
+        `Provider "${defaultProvider}" (${defaultProvider}/${defaultModel}) is unavailable — falling back`,
       );
     }
 
     for (const [name, provider] of this.providers) {
-      if (name === providerName) {
+      if (name === defaultProvider) {
         continue;
       }
 
@@ -48,9 +46,9 @@ export class ProviderSelectorService {
     }
 
     throw new ProviderUnavailableError(
-      providerName,
-      default_model,
-      `No available AI provider (default_model="${default_model}")`,
+      defaultProvider,
+      defaultModel,
+      `No available AI provider (defaultProvider="${defaultProvider}", defaultModel="${defaultModel}")`,
     );
   }
 }
