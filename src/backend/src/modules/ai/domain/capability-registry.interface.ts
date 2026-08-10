@@ -1,17 +1,11 @@
+import type { AICapability } from './ai-capability';
+
 /**
- * Minimum capability shape the registry depends on.
- *
- * PR1 ships only the registry-facing contract. The full capability entity
- * (`contextStrategy`, `promptTemplate`, `outputFormat`, `validationRules`)
- * lands in PR2 (`domain/ai-capability.ts`) and is structurally compatible —
- * TypeScript accepts a richer object wherever this minimal type is expected.
+ * Re-exported for backward compatibility with PR1 consumers; the full
+ * capability entity (with `contextStrategy`, `promptTemplate`, `outputFormat`
+ * and `validationRules`) now lives in `domain/ai-capability.ts` (PR2).
  */
-export interface AICapability {
-  id: string;
-  name: string;
-  version: number;
-  enabled: boolean;
-}
+export type { AICapability } from './ai-capability';
 
 /**
  * Contract for the capability store. Registration and lookup semantics are

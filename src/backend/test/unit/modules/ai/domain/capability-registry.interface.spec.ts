@@ -1,17 +1,46 @@
+import { NodeType } from '@/modules/knowledge-graph/domain/node-type.enum';
 import {
   AICapability,
   CapabilityRegistry,
 } from '@/modules/ai/domain/capability-registry.interface';
 import { CapabilityNotFoundError } from '@/modules/ai/domain/ai-errors';
+import { createContextStrategy } from '@/modules/ai/domain/context-strategy';
+import { createPromptTemplate } from '@/modules/ai/domain/prompt-template';
+import { createOutputFormat } from '@/modules/ai/domain/output/output-format';
+
+/** Full capability definition (spec R1) shared by the contract tests. */
+function makeCapability(overrides: Partial<AICapability> = {}): AICapability {
+  return {
+    id: 'explain-module',
+    name: 'Explain Module',
+    description: 'Summarize what a module does, its dependencies, and its role',
+    version: 1,
+    tier: 'free',
+    enabled: true,
+    contextStrategy: createContextStrategy({
+      targetNodeType: NodeType.MODULE,
+      relationshipDepth: 1,
+      includeDependents: true,
+      includeDependencies: true,
+      includeApiSurface: true,
+      includeEventSurface: false,
+      includeDomainContext: false,
+    }),
+    promptTemplate: createPromptTemplate({
+      systemInstruction: 'You are a DevLens architect.',
+      contextPlaceholder: '{{context}}',
+      userQueryWrapper: 'Question: {query}',
+      capabilityInstructions: 'Explain the module in the context.',
+    }),
+    outputFormat: createOutputFormat({ type: 'markdown' }),
+    validationRules: [],
+    ...overrides,
+  };
+}
 
 describe('AICapability contract', () => {
   it('should carry id, name, version and enabled state', () => {
-    const capability: AICapability = {
-      id: 'explain-module',
-      name: 'Explain Module',
-      version: 1,
-      enabled: true,
-    };
+    const capability: AICapability = makeCapability();
 
     expect(capability.id).toBe('explain-module');
     expect(capability.name).toBe('Explain Module');
@@ -20,33 +49,22 @@ describe('AICapability contract', () => {
   });
 
   it('should represent a disabled capability', () => {
-    const capability: AICapability = {
-      id: 'analyze-impact',
-      name: 'Analyze Impact',
-      version: 1,
-      enabled: false,
-    };
+    const capability: AICapability = makeCapability({ enabled: false });
 
     expect(capability.enabled).toBe(false);
   });
 
-  it('should accept a richer capability object (structural typing)', () => {
-    // PR2's full AICapability entity carries contextStrategy, promptTemplate,
-    // outputFormat and validationRules. A value with extra fields must satisfy
-    // the minimal registry-facing contract once it is a variable, not a literal.
-    const richCapability = {
-      id: 'lifecycle-enrichment',
-      name: 'Lifecycle Enrichment',
-      version: 2,
-      enabled: true,
-      contextStrategy: { relationshipDepth: 1 },
-      outputFormat: { type: 'json' },
-    };
+  it('should carry the full definition with contextStrategy and promptTemplate populated', () => {
+    // Spec R1 scenario: the returned capability has all required fields
+    // populated and its contextStrategy and promptTemplate are non-null.
+    const capability: AICapability = makeCapability();
 
-    const capability: AICapability = richCapability;
-
-    expect(capability.id).toBe('lifecycle-enrichment');
-    expect(capability.enabled).toBe(true);
+    expect(capability.description.length).toBeGreaterThan(0);
+    expect(capability.tier).toBe('free');
+    expect(capability.contextStrategy.targetNodeType).toBe(NodeType.MODULE);
+    expect(capability.promptTemplate.systemInstruction).toBe('You are a DevLens architect.');
+    expect(capability.outputFormat.type).toBe('markdown');
+    expect(capability.validationRules).toEqual([]);
   });
 });
 
@@ -81,12 +99,7 @@ describe('CapabilityRegistry contract', () => {
 
   it('should register and retrieve a capability by id', () => {
     const registry: CapabilityRegistry = new InMemoryRegistry();
-    const capability: AICapability = {
-      id: 'explain-module',
-      name: 'Explain Module',
-      version: 1,
-      enabled: true,
-    };
+    const capability: AICapability = makeCapability();
 
     registry.register(capability);
 
@@ -96,9 +109,9 @@ describe('CapabilityRegistry contract', () => {
   it('should list only enabled capabilities by default', () => {
     const registry: CapabilityRegistry = new InMemoryRegistry();
 
-    registry.register({ id: 'a', name: 'A', version: 1, enabled: true });
-    registry.register({ id: 'b', name: 'B', version: 1, enabled: false });
-    registry.register({ id: 'c', name: 'C', version: 1, enabled: true });
+    registry.register(makeCapability({ id: 'a', name: 'A' }));
+    registry.register(makeCapability({ id: 'b', name: 'B', enabled: false }));
+    registry.register(makeCapability({ id: 'c', name: 'C' }));
 
     const enabled = registry.list();
 
@@ -108,8 +121,8 @@ describe('CapabilityRegistry contract', () => {
   it('should list all capabilities when enabledOnly is false', () => {
     const registry: CapabilityRegistry = new InMemoryRegistry();
 
-    registry.register({ id: 'a', name: 'A', version: 1, enabled: true });
-    registry.register({ id: 'b', name: 'B', version: 1, enabled: false });
+    registry.register(makeCapability({ id: 'a', name: 'A' }));
+    registry.register(makeCapability({ id: 'b', name: 'B', enabled: false }));
 
     const all = registry.list(false);
 
@@ -120,8 +133,8 @@ describe('CapabilityRegistry contract', () => {
   it('should report availability for enabled capabilities only', () => {
     const registry: CapabilityRegistry = new InMemoryRegistry();
 
-    registry.register({ id: 'a', name: 'A', version: 1, enabled: true });
-    registry.register({ id: 'b', name: 'B', version: 1, enabled: false });
+    registry.register(makeCapability({ id: 'a', name: 'A' }));
+    registry.register(makeCapability({ id: 'b', name: 'B', enabled: false }));
 
     expect(registry.isAvailable('a')).toBe(true);
     expect(registry.isAvailable('b')).toBe(false);
