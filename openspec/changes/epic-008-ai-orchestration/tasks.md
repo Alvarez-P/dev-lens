@@ -40,7 +40,7 @@ Chain strategy: stacked-to-main
 ## Phase 2: Infrastructure (PR5-7)
 
 - [x] 2.1 PR5 `providers/openai.provider.ts` (complete/streamComplete/healthCheck/estimateCost)
-- [ ] 2.2 PR6 `providers/ollama.provider.ts` + `mock.provider.ts`
+- [x] 2.2 PR6 `providers/ollama.provider.ts` + `mock.provider.ts`
 - [ ] 2.3 PR7 `cache/context-cache.service.ts` (`context:{cap}:{nodeId}:{depth}`, TTL 5m)
 
 ## Phase 3: Application Services (PR8-11)

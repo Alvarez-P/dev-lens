@@ -1,11 +1,18 @@
-import { Observable } from 'rxjs';
+import { lastValueFrom, Observable, tap } from 'rxjs';
 import { OllamaProvider } from '@/modules/ai/infrastructure/ollama.provider';
-import { AIRequest, AIResponse, AIEnrichmentRequest } from '@/modules/ai/domain/ai-request.vo';
+import {
+  AIChunk,
+  AIRequest,
+  AIResponse,
+  AIEnrichmentRequest,
+} from '@/modules/ai/domain/ai-request.vo';
 import {
   ProviderUnavailableError,
   AIRateLimitError,
+  AIAuthenticationError,
   AIInvalidResponseError,
 } from '@/modules/ai/domain/ai-errors';
+import { AIProviderConfig } from '@/config/configuration';
 
 type FetchLike = typeof fetch;
 
@@ -14,6 +21,37 @@ const jsonResponse = (body: unknown, status = 200): Response =>
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+
+/** Ollama /api/generate NDJSON stream body (one JSON object per line). */
+const ndjsonResponse = (lines: unknown[]): Response => {
+  const encoder = new TextEncoder();
+  const body = lines.map((line) => JSON.stringify(line)).join('\n') + '\n';
+
+  return new Response(encoder.encode(body), {
+    status: 200,
+    headers: { 'Content-Type': 'application/x-ndjson' },
+  });
+};
+
+const tokenLine = (response: string, done = false): unknown => ({
+  model: 'llama3.2',
+  response,
+  done,
+});
+
+const doneLine = (evalCount: number): unknown => ({
+  model: 'llama3.2',
+  response: '',
+  done: true,
+  prompt_eval_count: 10,
+  eval_count: evalCount,
+});
+
+const providerConfig: AIProviderConfig = {
+  enabled: true,
+  baseUrl: 'http://localhost:11434',
+  defaultModel: 'llama3.2',
+};
 
 const request: AIRequest = {
   messages: [
@@ -26,12 +64,43 @@ const request: AIRequest = {
 describe('OllamaProvider', () => {
   let fetchMock: jest.Mock<ReturnType<FetchLike>>;
 
+  const createProvider = (
+    config: AIProviderConfig | undefined = providerConfig,
+    timeoutMs = 1000,
+  ): OllamaProvider => new OllamaProvider(config, timeoutMs, fetchMock);
+
   beforeEach(() => {
     fetchMock = jest.fn();
   });
 
+  describe('provider metadata', () => {
+    it('should expose stable id, name and supportedModels for the router', () => {
+      const provider = createProvider();
+
+      expect(provider.id).toBe('ollama');
+      expect(provider.name).toBe('Ollama');
+      expect(provider.supportedModels).toEqual(['llama3.2']);
+    });
+
+    it('should derive the model and base URL from the PR4 AIProviderConfig section', () => {
+      const provider = createProvider({
+        enabled: true,
+        baseUrl: 'http://ollama.internal:8080',
+        defaultModel: 'qwen2.5',
+      });
+
+      expect(provider.supportedModels).toEqual(['qwen2.5']);
+    });
+
+    it('should fall back to default model when no config section is provided', () => {
+      const provider = createProvider(undefined);
+
+      expect(provider.supportedModels).toEqual(['llama3.2']);
+    });
+  });
+
   describe('complete', () => {
-    it('should POST to /api/generate and return an AIResponse', async () => {
+    it('should POST to /api/generate using the config base URL and return an AIResponse', async () => {
       fetchMock.mockResolvedValue(
         jsonResponse({
           model: 'llama3.2',
@@ -42,7 +111,7 @@ describe('OllamaProvider', () => {
         }),
       );
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
       const response: AIResponse = await provider.complete(request);
 
       expect(fetchMock).toHaveBeenCalledWith(
@@ -61,15 +130,29 @@ describe('OllamaProvider', () => {
     it('should wrap an HTTP 429 in AIRateLimitError', async () => {
       fetchMock.mockResolvedValue(new Response('rate limited', { status: 429 }));
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
 
       await expect(provider.complete(request)).rejects.toBeInstanceOf(AIRateLimitError);
+    });
+
+    it('should wrap an HTTP 401 in a non-retriable AIAuthenticationError', async () => {
+      fetchMock.mockResolvedValue(new Response('unauthorized', { status: 401 }));
+
+      const provider = createProvider();
+
+      await expect(provider.complete(request)).rejects.toBeInstanceOf(AIAuthenticationError);
+      await expect(provider.complete(request)).rejects.toMatchObject({
+        code: 'AI_AUTHENTICATION',
+        statusCode: 401,
+        retriable: false,
+        provider_id: 'ollama',
+      });
     });
 
     it('should wrap an HTTP 500 in ProviderUnavailableError', async () => {
       fetchMock.mockResolvedValue(new Response('boom', { status: 500 }));
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
 
       await expect(provider.complete(request)).rejects.toBeInstanceOf(ProviderUnavailableError);
     });
@@ -77,7 +160,7 @@ describe('OllamaProvider', () => {
     it('should wrap a network failure in ProviderUnavailableError', async () => {
       fetchMock.mockRejectedValue(new Error('ECONNREFUSED'));
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
 
       await expect(provider.complete(request)).rejects.toBeInstanceOf(ProviderUnavailableError);
     });
@@ -107,7 +190,7 @@ describe('OllamaProvider', () => {
         }),
       );
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
       const enrichmentRequest: AIEnrichmentRequest = {
         messages: [{ role: 'user', content: 'classify' }],
         capability: 'classify-lifecycle',
@@ -132,7 +215,7 @@ describe('OllamaProvider', () => {
         jsonResponse({ model: 'llama3.2', response: 'not json', done: true }),
       );
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
 
       await expect(
         provider.enrich({
@@ -149,7 +232,7 @@ describe('OllamaProvider', () => {
     it('should return true when GET /api/tags succeeds with 200', async () => {
       fetchMock.mockResolvedValue(jsonResponse({ models: [] }, 200));
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
 
       await expect(provider.healthCheck()).resolves.toBe(true);
       expect(fetchMock).toHaveBeenCalledWith('http://localhost:11434/api/tags', expect.anything());
@@ -158,7 +241,7 @@ describe('OllamaProvider', () => {
     it('should return false on non-200 response', async () => {
       fetchMock.mockResolvedValue(new Response('down', { status: 503 }));
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
 
       await expect(provider.healthCheck()).resolves.toBe(false);
     });
@@ -166,7 +249,7 @@ describe('OllamaProvider', () => {
     it('should return false on network failure', async () => {
       fetchMock.mockRejectedValue(new Error('ECONNREFUSED'));
 
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
 
       await expect(provider.healthCheck()).resolves.toBe(false);
     });
@@ -174,7 +257,7 @@ describe('OllamaProvider', () => {
 
   describe('estimateCost', () => {
     it('should return a token-based cost estimate', () => {
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+      const provider = createProvider();
 
       const cost = provider.estimateCost({
         messages: [{ role: 'user', content: 'hello world' }],
@@ -185,8 +268,84 @@ describe('OllamaProvider', () => {
   });
 
   describe('streamComplete', () => {
-    it('should return an Observable (MVP stub)', () => {
-      const provider = new OllamaProvider('http://localhost:11434', 'llama3.2', 1000, fetchMock);
+    it('should stream token chunks and finish with a done chunk carrying usage', async () => {
+      fetchMock.mockResolvedValue(
+        ndjsonResponse([tokenLine('Hello'), tokenLine(' world'), doneLine(5)]),
+      );
+
+      const provider = createProvider();
+      const chunks: AIChunk[] = [];
+
+      await lastValueFrom(provider.streamComplete(request).pipe(tap((c) => chunks.push(c))));
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:11434/api/generate',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('"stream":true'),
+          signal: expect.any(AbortSignal),
+        }),
+      );
+      expect(chunks.filter((c) => c.type === 'token').map((c) => c.content)).toEqual([
+        'Hello',
+        ' world',
+      ]);
+      expect(chunks.at(-1)).toMatchObject({
+        type: 'done',
+        tokens: 5,
+        model: 'llama3.2',
+      });
+    });
+
+    it('should ignore empty deltas and still emit a done chunk', async () => {
+      fetchMock.mockResolvedValue(ndjsonResponse([tokenLine(''), doneLine(0)]));
+
+      const provider = createProvider();
+      const chunks: AIChunk[] = [];
+
+      await lastValueFrom(provider.streamComplete(request).pipe(tap((c) => chunks.push(c))));
+
+      expect(chunks.filter((c) => c.type === 'token')).toHaveLength(0);
+      expect(chunks.at(-1)).toMatchObject({ type: 'done', tokens: 0 });
+    });
+
+    it('should map a non-OK streaming response to a typed error', async () => {
+      fetchMock.mockResolvedValue(new Response('rate limited', { status: 429 }));
+
+      const provider = createProvider();
+
+      await expect(lastValueFrom(provider.streamComplete(request))).rejects.toBeInstanceOf(
+        AIRateLimitError,
+      );
+    });
+
+    it('should map a mid-stream network failure to ProviderUnavailableError', async () => {
+      fetchMock.mockRejectedValue(new Error('ECONNRESET'));
+
+      const provider = createProvider();
+
+      await expect(lastValueFrom(provider.streamComplete(request))).rejects.toBeInstanceOf(
+        ProviderUnavailableError,
+      );
+    });
+
+    it('should abort the in-flight request when unsubscribed', async () => {
+      const pending = new Promise<Response>(() => {
+        /* never resolves — stream stays open */
+      });
+      fetchMock.mockReturnValue(pending as unknown as ReturnType<FetchLike>);
+
+      const provider = createProvider();
+      const subscription = provider.streamComplete(request).subscribe();
+
+      subscription.unsubscribe();
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(init.signal?.aborted).toBe(true);
+    });
+
+    it('should return an Observable even with an empty request', () => {
+      const provider = createProvider();
 
       expect(provider.streamComplete({ messages: [] })).toBeInstanceOf(Observable);
     });
