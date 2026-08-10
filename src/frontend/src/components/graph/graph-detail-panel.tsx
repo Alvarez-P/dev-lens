@@ -1,9 +1,9 @@
 'use client';
 
 import { clsx } from 'clsx';
-import { X, MousePointer2, ArrowRight } from 'lucide-react';
+import { X, MousePointer2, ArrowRight, Waypoints } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { GraphNode, GraphEdge } from '@/lib/visualization/types';
+import type { GraphNode, GraphEdge, RequestFlowStep } from '@/lib/visualization/types';
 import { useGraphStore } from '@/lib/visualization/store/graph-store';
 import { NODE_STYLE } from './canvas/nodes/node-style';
 import { Badge } from '@/components/atoms/badge';
@@ -65,11 +65,16 @@ export function GraphDetailPanel({
   const selectedNodeId = useGraphStore((state) => state.selectedNodeId);
   const selectedEdgeId = useGraphStore((state) => state.selectedEdgeId);
   const clearSelection = useGraphStore((state) => state.clearSelection);
+  const flowSteps = useGraphStore((state) => state.flowSteps);
+  const activeEndpointFqn = useGraphStore((state) => state.activeEndpointFqn);
 
   const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? null;
   const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId) ?? null;
 
-  const isClosed = !selectedNodeId && !selectedEdgeId;
+  // REQ-VV-007/009: while a flow is loaded, the panel body shows the step list.
+  const isFlowActive = activeEndpointFqn !== null && flowSteps.length > 0;
+
+  const isClosed = !selectedNodeId && !selectedEdgeId && !isFlowActive;
 
   return (
     <div
@@ -105,7 +110,9 @@ export function GraphDetailPanel({
           </header>
 
           <div className="flex-1 px-6 py-4">
-            {selectedNodeId ? (
+            {isFlowActive ? (
+              <FlowStepList steps={flowSteps} endpointFqn={activeEndpointFqn} />
+            ) : selectedNodeId ? (
               isDetailLoading ? (
                 <div aria-label="Loading node details">
                   <Skeleton width="70%" height="0.75rem" className="mb-3" />
@@ -277,6 +284,79 @@ function EdgeDetails({ edge, nodes }: { edge: GraphEdge; nodes: GraphNode[] }): 
           </tbody>
         </table>
       )}
+    </div>
+  );
+}
+
+/**
+ * REQ-VV-007/009: ordered request-flow step list for the active flow. Each
+ * step row shows its order, kind badge, label, optional DTO payload type, and
+ * an `(approx)` muted badge when the step is part of the inferred service
+ * tail. The connector below each step represents its outgoing edge — dashed
+ * (violet) for approximate steps, solid (muted) for accurate ones.
+ */
+function FlowStepList({
+  steps,
+  endpointFqn,
+}: {
+  steps: RequestFlowStep[];
+  endpointFqn: string;
+}): React.ReactNode {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Waypoints className="h-4 w-4 text-surface-500" aria-hidden="true" />
+        <h3 className="text-sm font-semibold text-surface-100">Request Flow</h3>
+      </div>
+
+      <p className="truncate font-mono text-xs text-surface-400">{endpointFqn}</p>
+
+      <ol aria-label="Request flow steps" className="space-y-1">
+        {steps.map((step, index) => (
+          <li key={step.order} className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/[0.05] text-[10px] font-medium text-surface-400"
+              >
+                {step.order}
+              </span>
+              <Badge variant="default" size="sm">
+                {step.kind}
+              </Badge>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-surface-200">
+                {step.nodeLabel}
+              </span>
+              {step.approximate && (
+                <span className="shrink-0 text-xs text-surface-500/80">(approx)</span>
+              )}
+            </div>
+
+            {step.payloadType && (
+              <p className="pl-8 font-mono text-xs text-surface-400">payload: {step.payloadType}</p>
+            )}
+
+            {index < steps.length - 1 && (
+              <svg
+                data-testid={`flow-connector-${step.order}`}
+                data-approximate={step.approximate ? 'true' : undefined}
+                aria-hidden="true"
+                className="ml-[11px] mt-1 block h-3 w-3"
+              >
+                <line
+                  x1="6"
+                  y1="0"
+                  x2="6"
+                  y2="12"
+                  stroke={step.approximate ? '#a78bfa' : '#3f3f46'}
+                  strokeWidth="1.5"
+                  strokeDasharray={step.approximate ? '3 2' : undefined}
+                />
+              </svg>
+            )}
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
