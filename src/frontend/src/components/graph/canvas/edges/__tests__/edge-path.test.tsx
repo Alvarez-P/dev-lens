@@ -212,4 +212,17 @@ describe('EdgePath token animation (REQ-VV-007)', () => {
 
     expect(screen.getByTestId(`token-circle-${edge.id}`).getAttribute('cx')).toBe('50');
   });
+
+  it('starts no animation loop for token-less edges (constant per-frame cost at scale, task 4.5)', () => {
+    // Only the active step edge carries a token, so per-frame work never grows
+    // with graph size — every other edge contributes zero rAF callbacks.
+    const rafSpy = vi.spyOn(window, 'requestAnimationFrame');
+    const plainEdge = makeEdge('plain');
+
+    render(<EdgePath {...makeProps(plainEdge)} />);
+    advance(100);
+
+    expect(rafSpy).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('token-circle-plain')).not.toBeInTheDocument();
+  });
 });
