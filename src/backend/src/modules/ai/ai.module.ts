@@ -66,11 +66,10 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
       provide: OpenAIProvider,
       useFactory: (config: ConfigService): OpenAIProvider => {
         const ai = config.ai;
-        const openai = ai.providers.openai;
 
         return new OpenAIProvider(
-          openai?.defaultModel ?? 'gpt-4o',
-          openai?.apiKeyEnv ? process.env[openai.apiKeyEnv] : undefined,
+          ai.providers.openai,
+          ai.providers.openai?.apiKeyEnv ? process.env[ai.providers.openai.apiKeyEnv] : undefined,
           ai.timeoutMs,
         );
       },

@@ -81,6 +81,7 @@ export {
   ContextBudgetExceededError,
   AIDidNotMeetSchemaError,
   AIRateLimitError,
+  AIAuthenticationError,
   AIInvalidResponseError,
   AISecretsExposureError,
   CapabilityNotFoundError,

@@ -56,6 +56,16 @@ export class AIRateLimitError extends BaseAIError {
   }
 }
 
+/**
+ * Provider rejects credentials (HTTP 401/403). Not retriable — the router
+ * SHALL fail immediately without fallback (ai-provider-abstraction R4).
+ */
+export class AIAuthenticationError extends BaseAIError {
+  constructor(providerId: string, model: string, message: string) {
+    super(message, 'AI_AUTHENTICATION', 401, providerId, model, false);
+  }
+}
+
 /** Malformed JSON, empty response, or parse failure. Retriable once. */
 export class AIInvalidResponseError extends BaseAIError {
   constructor(providerId: string, model: string, message: string) {
