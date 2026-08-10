@@ -119,6 +119,9 @@ describe('EnrichmentService 7-stage pipeline (REQ-EP-003/006/008)', () => {
     eventDispatcher.dispatch.mockResolvedValue(undefined);
 
     provider = {
+      id: 'mock',
+      name: 'Mock Provider',
+      supportedModels: ['mock'],
       enrich: jest.fn().mockResolvedValue(validResponse),
       complete: jest.fn(),
       streamComplete: jest.fn(),

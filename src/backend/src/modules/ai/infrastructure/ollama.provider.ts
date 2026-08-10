@@ -25,6 +25,10 @@ const TOKENS_PER_4_CHARS = 0.25;
  */
 @Injectable()
 export class OllamaProvider implements AIProvider {
+  readonly id = 'ollama';
+  readonly name = 'Ollama';
+  readonly supportedModels: string[];
+
   private readonly logger = new Logger(OllamaProvider.name);
 
   constructor(
@@ -32,7 +36,9 @@ export class OllamaProvider implements AIProvider {
     private readonly model: string,
     private readonly timeoutMs: number = DEFAULT_TIMEOUT_MS,
     private readonly fetchFn: typeof fetch = fetch,
-  ) {}
+  ) {
+    this.supportedModels = [model];
+  }
 
   async complete(req: AIRequest): Promise<AIResponse> {
     const data = await this.generate(req, false);

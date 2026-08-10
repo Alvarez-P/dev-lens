@@ -69,3 +69,17 @@ export class AISecretsExposureError extends BaseAIError {
     super(message, 'AI_SECRETS_EXPOSURE', 422, providerId, model, false);
   }
 }
+
+/** Lookup of a capability id that was never registered. */
+export class CapabilityNotFoundError extends DomainError {
+  constructor(public readonly capabilityId: string) {
+    super(`AI capability "${capabilityId}" is not registered`, 'CAPABILITY_NOT_FOUND', 404);
+  }
+}
+
+/** Registration of a capability id that is already registered. */
+export class DuplicateCapabilityError extends DomainError {
+  constructor(public readonly capabilityId: string) {
+    super(`AI capability "${capabilityId}" is already registered`, 'DUPLICATE_CAPABILITY', 409);
+  }
+}
