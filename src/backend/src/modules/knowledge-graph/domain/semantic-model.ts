@@ -13,6 +13,8 @@ export interface SemanticEdge {
   type: EdgeType;
   sourceFqn: string;
   targetFqn: string;
+  /** Optional metadata carried onto the persisted GraphEdge properties (e.g. INVOKES.approximate). */
+  properties?: Record<string, unknown>;
 }
 
 export interface SemanticModel {

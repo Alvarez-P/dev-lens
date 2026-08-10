@@ -9,6 +9,7 @@ import { GraphBuilder } from './graph.builder';
 import { GraphRepository } from '../infrastructure/persistence/repositories/graph.repository';
 import { GraphSnapshot } from '../domain/graph-snapshot.entity';
 import { BuildStatus } from '../domain/build-status.enum';
+import { GRAPH_FLOW_VERSION } from '../domain/graph-version';
 import { GraphBuiltEvent, GraphUpdatedEvent, GraphBuildFailedEvent } from '../domain/graph-events';
 
 export interface KnowledgeGraphJobData {
@@ -46,7 +47,10 @@ export class KnowledgeGraphService {
 
     const repositoryId = analysis.repositoryId.toString();
     const latest = await this.graphRepository.findLatestByRepo(repositoryId);
-    const version = latest !== null && latest.nodes.length > 0 ? latest.nodes[0].version + 1 : 1;
+    const computedVersion =
+      latest !== null && latest.nodes.length > 0 ? latest.nodes[0].version + 1 : 1;
+    // Bump pre-flow-data snapshots (v1) so every build signals flow support (REQ-FLOW).
+    const version = Math.max(computedVersion, GRAPH_FLOW_VERSION);
     const commitSha = await this.resolveCommitSha(
       analysisId,
       repositoryId,

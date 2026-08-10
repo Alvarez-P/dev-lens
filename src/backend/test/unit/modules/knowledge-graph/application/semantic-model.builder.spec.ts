@@ -532,6 +532,513 @@ describe('SemanticModelBuilder', () => {
     });
   });
 
+  describe('INJECTS edges (constructor DI)', () => {
+    it('should create an INJECTS edge from a class to its constructor-injected dependency', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    constructorParams: [
+                      { name: 'userService', type: 'UsersService', decorators: [] },
+                    ],
+                  },
+                  { name: 'UsersService', role: 'service' },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(model.edges).toContainEqual({
+        type: EdgeType.INJECTS,
+        sourceFqn: 'acme:default:src/users#UsersController',
+        targetFqn: 'acme:default:src/users#UsersService',
+      });
+    });
+
+    it('should create one INJECTS edge per injected dependency', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    constructorParams: [
+                      { name: 'a', type: 'ServiceA', decorators: [] },
+                      { name: 'b', type: 'ServiceB', decorators: [] },
+                    ],
+                  },
+                  { name: 'ServiceA', role: 'service' },
+                  { name: 'ServiceB', role: 'service' },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      const injects = model.edges.filter((edge) => edge.type === EdgeType.INJECTS);
+      expect(injects).toHaveLength(2);
+      expect(injects.map((edge) => edge.targetFqn).sort()).toEqual([
+        'acme:default:src/users#ServiceA',
+        'acme:default:src/users#ServiceB',
+      ]);
+    });
+
+    it('should skip an injected dependency that resolves to no node', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    constructorParams: [{ name: 'svc', type: 'MissingService', decorators: [] }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(model.edges.some((edge) => edge.type === EdgeType.INJECTS)).toBe(false);
+    });
+  });
+
+  describe('INVOKES edges (approximate call chain)', () => {
+    it('should create an approximate INVOKES edge from a controller to its service', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    constructorParams: [
+                      { name: 'userService', type: 'UsersService', decorators: [] },
+                    ],
+                  },
+                  { name: 'UsersService', role: 'service' },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(model.edges).toContainEqual({
+        type: EdgeType.INVOKES,
+        sourceFqn: 'acme:default:src/users#UsersController',
+        targetFqn: 'acme:default:src/users#UsersService',
+        properties: { approximate: true },
+      });
+    });
+
+    it('should create an approximate INVOKES edge from a service to its repository', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersService',
+                    role: 'service',
+                    constructorParams: [
+                      { name: 'userRepo', type: 'UsersRepository', decorators: [] },
+                    ],
+                  },
+                  { name: 'UsersRepository', role: 'repository' },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(model.edges).toContainEqual({
+        type: EdgeType.INVOKES,
+        sourceFqn: 'acme:default:src/users#UsersService',
+        targetFqn: 'acme:default:src/users#UsersRepository',
+        properties: { approximate: true },
+      });
+    });
+
+    it('should not create INVOKES edges from classes that are not controllers or services', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'CreateUserDto',
+                    role: 'dto',
+                    constructorParams: [{ name: 'svc', type: 'UsersService', decorators: [] }],
+                  },
+                  { name: 'UsersService', role: 'service' },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(model.edges.some((edge) => edge.type === EdgeType.INVOKES)).toBe(false);
+      expect(model.edges).toContainEqual({
+        type: EdgeType.INJECTS,
+        sourceFqn: 'acme:default:src/users#CreateUserDto',
+        targetFqn: 'acme:default:src/users#UsersService',
+      });
+    });
+  });
+
+  describe('endpoint lifecycle edges (PROTECTS / TRANSFORMS)', () => {
+    it('should create a PROTECTS edge from a guard lifecycle node to the endpoint', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    endpoints: [
+                      {
+                        name: 'findAll',
+                        httpMethod: 'GET',
+                        path: '/users',
+                        parameters: [],
+                        lifecycle: [{ kind: 'guard', classRef: 'JwtGuard' }],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      const guardNode = model.nodes.find(
+        (node) => node.fqn === 'acme:default:src/users#UsersController~guard:JwtGuard',
+      );
+      expect(guardNode?.type).toBe(NodeType.GUARD);
+      expect(guardNode?.label).toBe('JwtGuard');
+      expect(guardNode?.properties).toEqual({ lifecycleKind: 'guard', order: 0 });
+
+      expect(model.edges).toContainEqual({
+        type: EdgeType.PROTECTS,
+        sourceFqn: 'acme:default:src/users#UsersController~guard:JwtGuard',
+        targetFqn: 'acme:default:src/users#UsersController.GET:/users',
+      });
+    });
+
+    it('should create TRANSFORMS edges for pipe and interceptor lifecycle entries', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    endpoints: [
+                      {
+                        name: 'create',
+                        httpMethod: 'POST',
+                        path: '/users',
+                        parameters: [],
+                        lifecycle: [
+                          { kind: 'pipe', classRef: 'ValidationPipe' },
+                          { kind: 'interceptor', classRef: 'Logging' },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(model.nodes.some((node) => node.type === NodeType.PIPE)).toBe(true);
+      expect(model.nodes.some((node) => node.type === NodeType.INTERCEPTOR)).toBe(true);
+
+      const transforms = model.edges.filter((edge) => edge.type === EdgeType.TRANSFORMS);
+      expect(transforms).toHaveLength(2);
+      expect(
+        transforms.every(
+          (edge) => edge.targetFqn === 'acme:default:src/users#UsersController.POST:/users',
+        ),
+      ).toBe(true);
+    });
+
+    it('should preserve the decorator order of lifecycle nodes', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    endpoints: [
+                      {
+                        name: 'findAll',
+                        httpMethod: 'GET',
+                        path: '/users',
+                        parameters: [],
+                        lifecycle: [
+                          { kind: 'guard', classRef: 'AuthGuard' },
+                          { kind: 'guard', classRef: 'RoleGuard' },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      const authGuard = model.nodes.find(
+        (node) => node.fqn === 'acme:default:src/users#UsersController~guard:AuthGuard',
+      );
+      const roleGuard = model.nodes.find(
+        (node) => node.fqn === 'acme:default:src/users#UsersController~guard:RoleGuard',
+      );
+      expect(authGuard?.properties.order).toBe(0);
+      expect(roleGuard?.properties.order).toBe(1);
+    });
+  });
+
+  describe('DEPENDS_ON edges from parameter types', () => {
+    it('should create a DEPENDS_ON edge with reason parameter-type for a DTO body param', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    endpoints: [
+                      {
+                        name: 'create',
+                        httpMethod: 'POST',
+                        path: '/users',
+                        parameters: [],
+                        typedParams: [
+                          { name: 'dto', typeAnnotation: 'CreateUserDto', decorator: '@Body' },
+                        ],
+                      },
+                    ],
+                  },
+                  { name: 'CreateUserDto', role: 'dto' },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(model.edges).toContainEqual({
+        type: EdgeType.DEPENDS_ON,
+        sourceFqn: 'acme:default:src/users#UsersController.POST:/users',
+        targetFqn: 'acme:default:src/users#CreateUserDto',
+        properties: { reason: 'parameter-type', paramName: 'dto' },
+      });
+    });
+
+    it('should not create a DEPENDS_ON edge for a primitive-typed parameter', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    endpoints: [
+                      {
+                        name: 'findAll',
+                        httpMethod: 'GET',
+                        path: '/users',
+                        parameters: [],
+                        typedParams: [
+                          { name: 'page', typeAnnotation: 'number', decorator: '@Query' },
+                          { name: 'id', typeAnnotation: 'string', decorator: '@Param' },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(
+        model.edges.some(
+          (edge) =>
+            edge.type === EdgeType.DEPENDS_ON &&
+            edge.sourceFqn === 'acme:default:src/users#UsersController.GET:/users',
+        ),
+      ).toBe(false);
+    });
+
+    it('should skip a parameter type that resolves to no node', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/users',
+                path: '/repo/src/users/users.module.ts',
+                classes: [
+                  {
+                    name: 'UsersController',
+                    role: 'controller',
+                    endpoints: [
+                      {
+                        name: 'create',
+                        httpMethod: 'POST',
+                        path: '/users',
+                        parameters: [],
+                        typedParams: [
+                          { name: 'dto', typeAnnotation: 'UnresolvedDto', decorator: '@Body' },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      expect(model.edges.some((edge) => edge.type === EdgeType.DEPENDS_ON)).toBe(false);
+    });
+  });
+
   describe('determinism', () => {
     it('should produce byte-identical output on repeated construction', () => {
       const ir = IrProject.create({

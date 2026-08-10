@@ -258,4 +258,54 @@ describe('GraphQueryService DB-backed', () => {
       await expect(service.getEdges('repo-1', {})).resolves.toEqual({ data: [], total: 0 });
     });
   });
+
+  describe('getEndpointFlow', () => {
+    const ENDPOINT_FQN = 'acme:users#UsersController.GET:/users';
+
+    function buildFlowGraph(): { nodes: GraphNode[]; edges: GraphEdge[] } {
+      const controller = makeNode('acme:users#UsersController', NodeType.CONTROLLER);
+      const endpoint = makeNode(ENDPOINT_FQN, NodeType.ENDPOINT);
+      const service = makeNode('acme:users#UsersService', NodeType.SERVICE);
+
+      return {
+        nodes: [controller, endpoint, service],
+        edges: [
+          GraphEdge.reconstitute(
+            'edge-exposes',
+            EdgeType.EXPOSES,
+            controller.id,
+            endpoint.id,
+            {},
+            2,
+          ),
+          GraphEdge.reconstitute(
+            'edge-invokes',
+            EdgeType.INVOKES,
+            controller.id,
+            service.id,
+            { approximate: true },
+            2,
+          ),
+        ],
+      };
+    }
+
+    it('should load the latest graph and return the endpoint flow', async () => {
+      graphRepository.findLatestByRepo.mockResolvedValue(buildLatest());
+      graphRepository.findAllNodesAndEdges.mockResolvedValue(buildFlowGraph());
+
+      const result = await service.getEndpointFlow('repo-1', ENDPOINT_FQN);
+
+      expect(graphRepository.findAllNodesAndEdges).toHaveBeenCalledWith('repo-1', 2);
+      expect(result?.flowAvailable).toBe(true);
+      expect(result?.steps.map((step) => step.kind)).toEqual(['handler', 'service']);
+      expect(result?.steps[1]).toMatchObject({ approximate: true, edgeType: EdgeType.INVOKES });
+    });
+
+    it('should return null when no graph exists for the repository', async () => {
+      graphRepository.findLatestByRepo.mockResolvedValue(null);
+
+      await expect(service.getEndpointFlow('repo-1', ENDPOINT_FQN)).resolves.toBeNull();
+    });
+  });
 });

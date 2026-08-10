@@ -120,7 +120,7 @@ describe('KnowledgeGraphService incremental', () => {
     eventDispatcher.dispatch.mockResolvedValue(undefined);
   });
 
-  it('should run a full build at version 1 with a built event when no previous graph exists', async () => {
+  it('should run a full build at the flow-data version with a built event when no previous graph exists', async () => {
     analysisRepository.findById.mockResolvedValue(
       buildAnalysis(
         buildFixtureIr([{ name: 'UsersController', role: 'controller' }]),
@@ -132,7 +132,7 @@ describe('KnowledgeGraphService incremental', () => {
 
     expect(graphRepository.saveGraph).toHaveBeenCalledTimes(1);
     const persistedNodes = graphRepository.saveGraph.mock.calls[0][0] as GraphNode[];
-    expect(persistedNodes.every((node) => node.version === 1)).toBe(true);
+    expect(persistedNodes.every((node) => node.version === 2)).toBe(true);
     expect(persistedNodes.every((node) => node.deprecatedAt === null)).toBe(true);
     expect(eventDispatcher.dispatch).toHaveBeenCalledWith(expect.any(GraphBuiltEvent));
   });

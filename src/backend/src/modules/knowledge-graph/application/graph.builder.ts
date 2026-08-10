@@ -32,7 +32,9 @@ export class GraphBuilder {
     const seenEdges = new Set<string>();
 
     for (const semanticEdge of model.edges) {
-      const edgeKey = `${semanticEdge.type}|${semanticEdge.sourceFqn}|${semanticEdge.targetFqn}`;
+      const edgeKey = `${semanticEdge.type}|${semanticEdge.sourceFqn}|${semanticEdge.targetFqn}|${JSON.stringify(
+        semanticEdge.properties ?? {},
+      )}`;
 
       if (seenEdges.has(edgeKey)) {
         continue;
@@ -61,7 +63,7 @@ export class GraphBuilder {
           semanticEdge.type,
           sourceNode.id,
           targetNode.id,
-          undefined,
+          semanticEdge.properties,
           version,
         ),
       );

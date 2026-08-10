@@ -149,7 +149,7 @@ describe('KnowledgeGraphService', () => {
     expect(analysisRepository.findById).toHaveBeenCalledWith(AnalysisId.from('analysis-1'));
     expect(graphRepository.findByAnalysisId).toHaveBeenCalledWith('analysis-1');
     expect(semanticModelBuilder.build).toHaveBeenCalledWith(expect.any(IrProject), undefined);
-    expect(graphBuilder.build).toHaveBeenCalledWith(expect.anything(), 'repo-1', 1);
+    expect(graphBuilder.build).toHaveBeenCalledWith(expect.anything(), 'repo-1', 2);
 
     expect(graphRepository.saveGraph).toHaveBeenCalledTimes(1);
     const savedSnapshot = graphRepository.saveGraph.mock.calls[0][2] as GraphSnapshot;
