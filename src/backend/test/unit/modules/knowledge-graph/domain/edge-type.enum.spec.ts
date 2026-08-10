@@ -11,6 +11,8 @@ describe('EdgeType enum', () => {
       'EXPOSES',
       'PROTECTS',
       'TRANSFORMS',
+      'INVOKES',
+      'INJECTS',
     ]);
   });
 
@@ -23,5 +25,7 @@ describe('EdgeType enum', () => {
     expect(EdgeType.EXPOSES).toBe('EXPOSES');
     expect(EdgeType.PROTECTS).toBe('PROTECTS');
     expect(EdgeType.TRANSFORMS).toBe('TRANSFORMS');
+    expect(EdgeType.INVOKES).toBe('INVOKES');
+    expect(EdgeType.INJECTS).toBe('INJECTS');
   });
 });

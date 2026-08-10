@@ -2,83 +2,89 @@
 
 ## Technical Approach
 
-Extract NestJS lifecycle decorators (`@UseGuards`, `@UsePipes`, `@UseInterceptors`), parameter type annotations, and constructor injection from the TypeScript AST via ts-morph. New IR fields feed four additional node types and edge types in the semantic model. A `GET /graph/:repoId/endpoints/:fqn/flow` endpoint traverses the graph to assemble ordered lifecycle steps. The frontend renders a REQUEST_FLOW view with SVG-direct token animation driven by click-to-play.
+**Hybrid (Approach C)**: endpoint-level lifecycle data is projected from existing IR fields (`IrMethod.decorators/params`, `IrClass.constructorParams`) — these are already populated by the parser. The design adds two projection layers: `IrEndpoint.lifecycle` + `IrEndpoint.typedParams` in `buildEndpoints()`, and edge creation in `SemanticModelBuilder`. No method-body AST analysis — service call order is `approximate: true`, derived from DI + import reachability.
+
+```
+Parser (ts-morph) ──→ IrMethod.decorators/params ──→ buildEndpoints() ──→ IrEndpoint.lifecycle/typedParams
+                                                       (projection)
+                                                                          │
+                              IrClass.constructorParams ──────────────────┤
+                                                                          ▼
+                                                    SemanticModelBuilder ──→ GraphNodes + Edges
+                                                                                    │
+                    GET /graph/:repoId/endpoints/:fqn/flow ← graph-query.service ←─┘
+                                 │
+                                 ▼
+                    Frontend: getEndpointFlow() → flowSlice → token animation (rAF)
+```
 
 ## Architecture Decisions
 
-| Decision                                                 | Choice                                                                                                                | Rationale                                                                                           |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| AST extraction strategy                                  | Deterministic only: class references (`@UseGuards(AuthGuard)`) — no factory calls, no `APP_GUARD` module providers    | Spec requires never guessing; unsupported forms silently omitted                                    |
-| Lifecycle data in IR vs. raw AST                         | New `IrEndpoint.lifecycle`, `IrEndpoint.typedParams`, `IrClass.injectedDependencies` fields on existing value objects | Keeps IR as the contract between parser and graph builder; avoids AST leakage                       |
-| Flow query: graph traversal vs. pre-baked endpoint field | Graph traversal — the `/flow` endpoint queries PROTECTS/TRANSFORMS/INVOKES edges + INJECTS for service tail           | Mirrors relationship data already persisted; no new storage; approximate tail derived at query time |
-| Old snapshot compatibility                               | Version check: if snapshot version < 4 (FLOW_MIN_VERSION), return `flowAvailable: false`                              | No data fabrication; re-analysis required                                                           |
-| Token animation                                          | SVG-direct: `requestAnimationFrame` + `path.getPointAtLength()` mutating `<g>` element directly                       | Zero per-frame React re-renders; guaranteed 60fps                                                   |
-| Flow layout                                              | Top-to-bottom pipeline: guards → pipes → interceptor → handler → services, positioned manually                        | Not force-directed; pipeline is deterministic — no layout engine needed                             |
-
-## Data Flow
-
-```
-Parser (ts-morph) → IR (lifecycle/typedParams/injectedDependencies)
-    → SemanticModelBuilder (Guard/Pipe/Interceptor/Middleware nodes + PROTECTS/TRANSFORMS/INVOKES/INJECTS edges)
-    → GraphRepository (jsonb properties, varchar type — additive, no migration)
-    → GraphQueryService.getEndpointFlow() (graph traversal)
-    → GET /graph/:repoId/endpoints/:fqn/flow
-    → Frontend flowSlice (Zustand) → TokenAnimation (rAF SVG)
-```
-
-Old snapshots: version check → `{ flowAvailable: false }` → empty state "Re-analyze to enable flow visualization."
+| Decision               | Choice                                                     | Rationale                                                                                                                                   |
+| ---------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **IR projection**      | Project `IrMethod` onto `IrEndpoint` in `buildEndpoints()` | Method already in scope; avoids re-parsing. Fields named `lifecycle`/`typedParams` (reconciled from stale delta)                            |
+| **Lifecycle node FQN** | Reuse `${cls.fqn}~kind:name`                               | Same scheme as `addLifecycleNodes()` — FQN dedup prevents duplicate nodes when class-level (AI) and endpoint-level (parser) entries overlap |
+| **INVOKES vs CALLS**   | `INVOKES` now; `CALLS` deferred                            | Separates certainty: INVOKES carries `approximate: true`; CALLS reserved for future body analysis                                           |
+| **Graph version**      | v1→v2; `flowAvailable: false` for v1                       | Graceful fallback: post-enrichment v1 snapshots have class-level lifecycle nodes — return as approximate tail                               |
+| **Token animation**    | SVG-direct: `<circle>` + `rAF` + `getPointAtLength()`      | No per-frame React state. Direct DOM mutation on `EdgePath`'s existing `<g>` avoids jank with `onlyRenderVisibleElements`                   |
+| **EVENT_FLOW**         | Preserved as #7; REQUEST_FLOW as #8                        | EVENT_FLOW is async/message-driven — repurposing confuses future domain                                                                     |
 
 ## File Changes
 
-| File                                                                  | Action | Description                                                                                                          |
-| --------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
-| `analysis/domain/ir-nodes.ts`                                         | Modify | Add `lifecycle`, `typedParams` to `IrEndpointProps`/`IrEndpoint`; `injectedDependencies` to `IrClassProps`/`IrClass` |
-| `analysis/infrastructure/parsers/typescript/typescript-parser.ts`     | Modify | Extract method-level decorators, param types, constructor injection from AST                                         |
-| `analysis/infrastructure/parsers/typescript/typescript-ir-builder.ts` | Modify | Populate new IR fields from parser output                                                                            |
-| `knowledge-graph/domain/node-type.enum.ts`                            | Modify | Add Guard, Pipe, Interceptor, Middleware                                                                             |
-| `knowledge-graph/domain/edge-type.enum.ts`                            | Modify | Add PROTECTS, TRANSFORMS, INVOKES, INJECTS                                                                           |
-| `knowledge-graph/application/semantic-model.builder.ts`               | Modify | Create lifecycle nodes + edges from IR fields                                                                        |
-| `knowledge-graph/application/graph-query.service.ts`                  | Modify | Add `getEndpointFlow()`: traverse graph, assemble ordered steps                                                      |
-| `knowledge-graph/infrastructure/controllers/graph.controller.ts`      | Modify | Add `GET /:repoId/endpoints/:fqn/flow` endpoint                                                                      |
-| `knowledge-graph/infrastructure/controllers/graph-query.dto.ts`       | Modify | Add `EndpointFlowQueryDto`, `FlowResponseDto`                                                                        |
-| `frontend/lib/visualization/types.ts`                                 | Modify | Mirror expanded enums; add `FlowStep`, `EndpointFlowResponse`                                                        |
-| `frontend/lib/visualization/views.ts`                                 | Modify | Add REQUEST_FLOW view config (mode 8)                                                                                |
-| `frontend/lib/visualization/graph-api.ts`                             | Modify | Add `getEndpointFlow()` client function                                                                              |
-| `frontend/lib/visualization/store/graph-store.ts`                     | Modify | Add `FlowSlice` (activeEndpointFqn, flowSteps, currentStepIndex, isPlaying, animationSpeed + actions)                |
-| `frontend/components/graph/canvas/edges/`                             | Create | New edge components for PROTECTS, TRANSFORMS, INVOKES, INJECTS                                                       |
-| `frontend/components/graph/canvas/nodes/`                             | Create | New node components for Guard, Pipe, Interceptor, Middleware                                                         |
-| `frontend/components/graph/canvas/edges/edge-path.tsx`                | Modify | Support dashed style for approximate edges; optional token child element                                             |
-| `frontend/components/graph/flow/request-flow-canvas.tsx`              | Create | Pipeline layout canvas for REQUEST_FLOW view                                                                         |
-| `frontend/components/graph/flow/token-animation.ts`                   | Create | rAF-based SVG token animation (no React state per frame)                                                             |
-| `frontend/components/graph/flow/flow-control-bar.tsx`                 | Create | Play/pause/reset controls                                                                                            |
-| `frontend/components/graph/graph-workspace.tsx`                       | Modify | Route REQUEST_FLOW view to RequestFlowCanvas; handle `flowAvailable: false`                                          |
+| File                                         | Action | Description                                                                                                                                         |
+| -------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/backend/.../edge-type.enum.ts`          | Modify | Add `INVOKES`, `INJECTS` (8→10)                                                                                                                     |
+| `src/backend/.../ir-nodes.ts`                | Modify | Add `IrEndpointProps.lifecycle` + `typedParams`; `LifecycleEntry`/`TypedParam` interfaces                                                           |
+| `src/backend/.../typescript-ir-builder.ts`   | Modify | `buildEndpoints()` projects `IrMethod.decorators→lifecycle`, `IrMethod.params→typedParams`                                                          |
+| `src/backend/.../decorator-role-registry.ts` | Modify | Add `UsePipes`→`pipe`, `UseInterceptors`→`interceptor`, `Body`→`body`, `Param`→`param`, `Query`→`query`, `Headers`→`headers`                        |
+| `src/backend/.../semantic-model.builder.ts`  | Modify | `build()` calls new `addEndpointLifecycleEdges()`, `addInjectsEdges()`, `addInvokesEdges()`, `addDtoEdges()` after existing loop; reuses FQN scheme |
+| `src/backend/.../graph-query.service.ts`     | Modify | `getEndpointFlow(repoId, fqn)` — assembles ordered steps from neighborhood edges + `typedParams`                                                    |
+| `src/backend/.../graph-query.dto.ts`         | Modify | `EndpointFlowQueryDto` + `EndpointFlowResponseDto`                                                                                                  |
+| `src/backend/.../graph.controller.ts`        | Modify | `GET /graph/:repoId/endpoints/:fqn/flow`                                                                                                            |
+| `src/frontend/.../types.ts`                  | Modify | `EdgeType + INVOKES, INJECTS` (8→10); `RequestFlowStep`, `RequestFlow` interfaces; `ViewMode + REQUEST_FLOW`                                        |
+| `src/frontend/.../views.ts`                  | Modify | `REQUEST_FLOW` ViewConfig (#8, hierarchical, lifecycle edges)                                                                                       |
+| `src/frontend/.../graph-store.ts`            | Modify | `FlowSlice` state + actions (REQ-VV-008)                                                                                                            |
+| `src/frontend/.../graph-api.ts`              | Modify | `getEndpointFlow(repoId, fqn)`                                                                                                                      |
+| `src/frontend/.../edge-path.tsx`             | Modify | Accept optional `animationToken` prop; render traveling `<circle>` mutation via rAF/useRef                                                          |
+| `src/frontend/.../graph-workspace.tsx`       | Modify | REQUEST_FLOW branch: endpoint click → `getEndpointFlow()` → `startFlow()`                                                                           |
+| `src/frontend/.../graph-detail-panel.tsx`    | Modify | Flow step list when `flowSteps` populated; show `(approx)` badge for approximate steps                                                              |
+| `src/frontend/.../node-style.ts`             | Modify | Style entries for INVOKES/INJECTS edges (compiler-enforced)                                                                                         |
+| `src/frontend/.../edges/index.ts`            | Modify | Register `InvokesEdge`, `InjectsEdge` components                                                                                                    |
 
-## Component Tree
+## Data Contracts
 
-```
-GraphWorkspace
-├── GraphToolbar (view switcher: +REQUEST_FLOW chip)
-├── GraphFilterBar
-└── [REQUEST_FLOW mode]
-    ├── RequestFlowCanvas
-    │   ├── FlowNode (per lifecycle step)
-    │   ├── FlowEdge (with dashed style for approximate)
-    │   └── TokenAnimation (attached to FlowEdge, SVG-direct)
-    └── FlowControlBar
-        ├── Play/Pause button
-        ├── Step indicator ("3 / 7")
-        └── Speed selector (1x, 2x)
+**`RequestFlowStep`** (API response):
+
+```typescript
+interface RequestFlowStep {
+  order: number;
+  kind: 'middleware' | 'guard' | 'pipe' | 'interceptor' | 'handler' | 'service' | 'repository';
+  nodeFqn: string;
+  nodeLabel: string;
+  edgeType: EdgeType; // how this step connects to the next
+  payloadType?: string | null; // DTO type from typedParams (null for non-handler steps)
+  approximate: boolean; // true for service tail (INVOKES-derived)
+}
 ```
 
-The adapter isolation boundary (VE-001) is preserved: `RequestFlowCanvas` does NOT import from `@xyflow/react` directly. It manages its own SVG layout since flow is a pipeline, not a free-form graph.
+**`EndpointFlowResponse`**: `{ flowAvailable: boolean; steps: RequestFlowStep[]; endpointFqn: string }`
 
-## Performance Considerations
+**Graceful fallback**: when `flowAvailable: false` and snapshot has class-level lifecycle nodes: return those nodes as approximate steps (single-step, no ordering). When no lifecycle at all: return empty steps + `flowAvailable: false`.
 
-- **Token animation**: Uses `requestAnimationFrame` + direct SVG element mutation (`getPointAtLength()`, `translate` on `<g>`). No `setState` per frame — zero React reconciliation cost.
-- **Flow endpoint response size**: Returns only the endpoint's lifecycle chain (typically <20 steps). Not paginated; payload < 5KB.
-- **Layout computation**: Pipeline is fixed top-to-bottom with pre-computed positions; no force simulation. New flow nodes are laid out at render time in a single pass.
-- **Viewport culling**: REQ-VV-004 applies — off-screen flow edges/nodes are hidden via `onlyRenderVisibleElements`.
+## Testing Strategy
 
-## Open Questions
+| Layer                 | What to Test                                       | Approach                                                     |
+| --------------------- | -------------------------------------------------- | ------------------------------------------------------------ |
+| Unit (backend)        | `buildEndpoints()` lifecycle projection            | Jest: mock IrMethod → assert output                          |
+| Unit (backend)        | `SemanticModelBuilder` INJECTS + endpoint PROTECTS | Jest: IR with `constructorParams` + endpoint `lifecycle`     |
+| Unit (backend)        | `DecoratorRoleRegistry` additions                  | Jest: `getRole('UsePipes')` → `'pipe'`                       |
+| Integration (backend) | Flow endpoint returns ordered steps                | Supertest: seed graph, query flow, assert order              |
+| Unit (frontend)       | `EdgeType` = 10, `ViewMode` = 8                    | Vitest: `types.test.ts` count assertions                     |
+| Unit (frontend)       | `FlowSlice` transitions                            | Vitest: store actions (`startFlow`, `nextStep`, `resetFlow`) |
+| Unit (frontend)       | `getEndpointFlow` query                            | Vitest: `buildQueryString` with fqn encoding                 |
 
-- [ ] Confirm exact `FLOW_MIN_VERSION` value (likely 4, matching the next version bump after this change)
+## Migration / Rollout
+
+- **Version bump**: v1→v2. Old snapshots return `flowAvailable: false`. Frontend shows "Re-analyze to enable." Post-enrichment v1 snapshots already have class-level lifecycle nodes — future enhancement can surface these as approximate without another version bump.
+- **No schema migration**: `varchar(64)` type + `jsonb` properties are additive-friendly.
+- **Rollback**: single revert. Old snapshots stay valid. Frontend drops REQUEST_FLOW chip from registry.

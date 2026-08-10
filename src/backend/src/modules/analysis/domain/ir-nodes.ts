@@ -73,11 +73,31 @@ export interface IrMethodProps {
   returnType?: string;
 }
 
+/** Kind of a lifecycle decorator step on an endpoint (REQ-REQ-004). */
+export type LifecycleKind = 'guard' | 'pipe' | 'interceptor' | 'middleware';
+
+/** One lifecycle step projected from a method-level decorator onto an endpoint. */
+export interface LifecycleEntry {
+  kind: LifecycleKind;
+  classRef: string;
+}
+
+/** One method parameter projected with its type annotation and parameter decorator. */
+export interface TypedParam {
+  name: string;
+  typeAnnotation: string;
+  decorator: string | null;
+}
+
 export interface IrEndpointProps {
   name: string;
   httpMethod: string;
   path: string;
   parameters: string[];
+  /** Ordered lifecycle steps projected from the owning method's decorators (REQ-REQ-004). */
+  lifecycle?: LifecycleEntry[];
+  /** Ordered parameter projections (name, type annotation, parameter decorator) (REQ-REQ-004). */
+  typedParams?: TypedParam[];
 }
 
 export interface IrDependencyProps {
@@ -551,6 +571,8 @@ export class IrEndpoint extends ValueObject {
     public readonly httpMethod: string,
     public readonly path: string,
     public readonly parameters: readonly string[],
+    public readonly lifecycle: readonly LifecycleEntry[],
+    public readonly typedParams: readonly TypedParam[],
     public readonly fqn: string,
   ) {
     super();
@@ -574,12 +596,30 @@ export class IrEndpoint extends ValueObject {
     }
 
     const parameters = Object.freeze(props.parameters.map((parameter) => parameter.trim()));
+    const lifecycle = Object.freeze((props.lifecycle ?? []).map((entry) => ({ ...entry })));
+    const typedParams = Object.freeze((props.typedParams ?? []).map((param) => ({ ...param })));
 
-    return new IrEndpoint(name, httpMethod, path, parameters, `${classFqn}.${httpMethod}:${path}`);
+    return new IrEndpoint(
+      name,
+      httpMethod,
+      path,
+      parameters,
+      lifecycle,
+      typedParams,
+      `${classFqn}.${httpMethod}:${path}`,
+    );
   }
 
   protected getEqualityComponents(): unknown[] {
-    return [this.name, this.httpMethod, this.path, this.parameters, this.fqn];
+    return [
+      this.name,
+      this.httpMethod,
+      this.path,
+      this.parameters,
+      this.lifecycle,
+      this.typedParams,
+      this.fqn,
+    ];
   }
 
   toJSON(): IrEndpointProps {
@@ -588,6 +628,8 @@ export class IrEndpoint extends ValueObject {
       httpMethod: this.httpMethod,
       path: this.path,
       parameters: [...this.parameters],
+      lifecycle: this.lifecycle.map((entry) => ({ ...entry })),
+      typedParams: this.typedParams.map((param) => ({ ...param })),
     };
   }
 }
