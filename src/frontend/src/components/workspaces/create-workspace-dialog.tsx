@@ -86,8 +86,8 @@ export function CreateWorkspaceDialog({
         <Select
           label="Organization"
           options={orgOptions}
-          value={selectedOrgId}
-          onChange={(e) => setSelectedOrgId(e.target.value)}
+          value={organizationId}
+          onChange={(e) => setOrganizationId(e.target.value)}
           className="w-full"
         />
 
