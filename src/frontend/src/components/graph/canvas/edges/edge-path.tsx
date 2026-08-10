@@ -39,7 +39,7 @@ function bezierMidpoint(sx: number, sy: number, tx: number, ty: number): { x: nu
  * geometry APIs. Returns null when the APIs are unavailable (jsdom/SSR) so the
  * animation loop stops instead of guessing a position.
  */
-function pointAtLength(path: SVGElement, progress: number): { x: number; y: number } | null {
+function pointAtLength(path: SVGPathElement, progress: number): { x: number; y: number } | null {
   if (typeof path.getPointAtLength !== 'function') {
     return null;
   }
@@ -98,7 +98,7 @@ export function EdgePath({
   const startToken = useCallback(() => {
     const group = groupRef.current;
     if (!group) return;
-    const pathEl = group.querySelector('path');
+    const pathEl = group.querySelector('path') as SVGPathElement | null;
     // Culling (REQ-VV-004): never animate an edge whose path is not mounted.
     if (!pathEl || !pathEl.isConnected) return;
 
@@ -115,7 +115,7 @@ export function EdgePath({
 
     const tick = (now: number): void => {
       const g = groupRef.current;
-      const p = g ? g.querySelector('path') : null;
+      const p = g ? (g.querySelector('path') as SVGPathElement | null) : null;
       // Culled mid-travel (edge unmounted/hidden) → stop the loop.
       if (!g || !g.isConnected || !p) return;
 
