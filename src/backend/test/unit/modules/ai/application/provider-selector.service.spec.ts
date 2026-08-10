@@ -8,14 +8,15 @@ import { AiConfig } from '@/config/configuration';
 const aiConfig: AiConfig = {
   enabled: true,
   providers: {
-    openai: { api_key_env: 'OPENAI_API_KEY', model: 'gpt-4o', enabled: true },
-    ollama: { base_url: 'http://localhost:11434', model: 'llama3.2', enabled: true },
+    openai: { apiKeyEnv: 'OPENAI_API_KEY', defaultModel: 'gpt-4o', enabled: true },
+    ollama: { baseUrl: 'http://localhost:11434', defaultModel: 'llama3.2', enabled: true },
     mock: { enabled: true },
   },
-  default_model: 'openai/gpt-4o',
-  timeout_ms: 60000,
-  retry: { max_attempts: 2 },
-  budget: { max_total_tokens: 6000 },
+  defaultProvider: 'openai',
+  defaultModel: 'gpt-4o',
+  timeoutMs: 60000,
+  retry: { maxAttempts: 2, backoffMs: 1000 },
+  budget: { maxTotalTokens: 6000 },
 };
 
 const fakeConfigService = {
@@ -38,7 +39,7 @@ const unhealthy = (name: string): AIProvider =>
 
 describe('ProviderSelectorService', () => {
   describe('getProvider', () => {
-    it('should return the provider matching ai.default_model when healthy', async () => {
+    it('should return the provider matching ai.defaultProvider when healthy', async () => {
       const openai = healthy('openai');
       const ollama = healthy('ollama');
       const registry = new Map<string, AIProvider>([
