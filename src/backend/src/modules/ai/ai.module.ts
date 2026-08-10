@@ -79,17 +79,20 @@ import { AI_ENRICHMENT_QUEUE, AI_ENRICHMENT_DLQ, AI_PROVIDER_REGISTRY } from './
       provide: OllamaProvider,
       useFactory: (config: ConfigService): OllamaProvider => {
         const ai = config.ai;
-        const ollama = ai.providers.ollama;
 
-        return new OllamaProvider(
-          ollama?.baseUrl ?? 'http://localhost:11434',
-          ollama?.defaultModel ?? 'llama3.2',
-          ai.timeoutMs,
-        );
+        return new OllamaProvider(ai.providers.ollama, ai.timeoutMs);
       },
       inject: [ConfigService],
     },
-    MockProvider,
+    {
+      provide: MockProvider,
+      useFactory: (config: ConfigService): MockProvider => {
+        const ai = config.ai;
+
+        return new MockProvider(ai.providers.mock);
+      },
+      inject: [ConfigService],
+    },
     {
       provide: AI_PROVIDER_REGISTRY,
       useFactory: (

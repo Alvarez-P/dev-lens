@@ -202,7 +202,7 @@ describe('Enrichment pipeline integration (REQ-EP-003/009)', () => {
       JSON.stringify(validResponse),
       'utf8',
     );
-    provider = new MockProvider(fixtureDir);
+    provider = new MockProvider(undefined, fixtureDir);
     buildPipeline();
   });
 
