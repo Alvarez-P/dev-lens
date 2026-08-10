@@ -33,6 +33,13 @@ export interface AICapability {
   tier: AICapabilityTier;
   /** Whether the capability is currently enabled (MVP gating). */
   enabled: boolean;
+  /**
+   * Model/feature requirements the provider MUST satisfy (ai-provider-abstraction
+   * R2), e.g. ["json_mode"]. Matched against `AIProvider.supportedModels`.
+   * Optional on the interface for PR1/PR2 consumers; the factory defaults to
+   * an empty list — no provider constraint.
+   */
+  requiredCapabilities?: readonly string[];
   /** What context to fetch. */
   contextStrategy: ContextStrategy;
   /** How to structure the prompt. */
@@ -49,6 +56,11 @@ export interface AICapabilityInput {
   description: string;
   version: number;
   enabled: boolean;
+  /**
+   * Model/feature requirements for the provider (ai-provider-abstraction R2).
+   * Defaults to an empty list — no provider constraint.
+   */
+  requiredCapabilities?: readonly string[];
   contextStrategy: ContextStrategy;
   promptTemplate: PromptTemplate;
   outputFormat: OutputFormat;
@@ -98,6 +110,7 @@ export function createCapability(input: AICapabilityInput): AICapability {
     version: input.version,
     tier,
     enabled: input.enabled,
+    requiredCapabilities: Object.freeze([...(input.requiredCapabilities ?? [])]),
     contextStrategy: input.contextStrategy,
     promptTemplate: input.promptTemplate,
     outputFormat: input.outputFormat,
