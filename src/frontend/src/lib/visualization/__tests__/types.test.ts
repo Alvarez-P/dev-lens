@@ -17,6 +17,9 @@ import type {
   Viewport,
   GraphExport,
   GraphNodeDetail,
+  RequestFlowStep,
+  RequestFlow,
+  EndpointFlowResponse,
 } from '../types';
 
 describe('NodeType enum', () => {
@@ -50,7 +53,7 @@ describe('NodeType enum', () => {
 });
 
 describe('EdgeType enum', () => {
-  it('mirrors the 8 backend EdgeType values exactly', () => {
+  it('mirrors the 10 backend EdgeType values exactly', () => {
     expect(Object.values(EdgeType)).toEqual([
       'BELONGS_TO',
       'IMPLEMENTS',
@@ -60,8 +63,15 @@ describe('EdgeType enum', () => {
       'EXPOSES',
       'PROTECTS',
       'TRANSFORMS',
+      'INVOKES',
+      'INJECTS',
     ]);
-    expect(Object.values(EdgeType)).toHaveLength(8);
+    expect(Object.values(EdgeType)).toHaveLength(10);
+  });
+
+  it('exposes the lifecycle edge types added for request flows', () => {
+    expect(EdgeType.INVOKES).toBe('INVOKES');
+    expect(EdgeType.INJECTS).toBe('INJECTS');
   });
 });
 
@@ -76,7 +86,7 @@ describe('LayoutType enum', () => {
 });
 
 describe('ViewMode enum', () => {
-  it('contains the 7 visualization views', () => {
+  it('contains the 8 visualization views including REQUEST_FLOW', () => {
     expect(Object.values(ViewMode)).toEqual([
       'overview',
       'modules',
@@ -85,8 +95,10 @@ describe('ViewMode enum', () => {
       'layer-architecture',
       'domain-relationships',
       'event-flow',
+      'request-flow',
     ]);
-    expect(Object.values(ViewMode)).toHaveLength(7);
+    expect(Object.values(ViewMode)).toHaveLength(8);
+    expect(ViewMode.REQUEST_FLOW).toBe('request-flow');
   });
 });
 
@@ -109,6 +121,8 @@ describe('type guards', () => {
   it('isEdgeType accepts every enum value and rejects unknown strings', () => {
     expect(isEdgeType('DEPENDS_ON')).toBe(true);
     expect(isEdgeType('BELONGS_TO')).toBe(true);
+    expect(isEdgeType('INVOKES')).toBe(true);
+    expect(isEdgeType('INJECTS')).toBe(true);
     expect(isEdgeType('depends_on')).toBe(false);
     expect(isEdgeType('CONTAINS')).toBe(false);
   });
@@ -247,5 +261,117 @@ describe('API response DTO shapes', () => {
 
     expect(detail.node.id).toBe('node-1');
     expect(detail.edges).toHaveLength(1);
+  });
+});
+
+describe('RequestFlowStep DTO shape (mirror of backend RequestFlowStep)', () => {
+  it('accepts a full handler step with payloadType and explicit ordering', () => {
+    const step: RequestFlowStep = {
+      order: 4,
+      kind: 'handler',
+      nodeFqn: 'my-repo:auth:AuthController#login',
+      nodeLabel: 'login()',
+      edgeType: EdgeType.EXPOSES,
+      payloadType: 'LoginDto',
+      approximate: false,
+    };
+
+    expect(step.order).toBe(4);
+    expect(step.kind).toBe('handler');
+    expect(step.nodeFqn).toBe('my-repo:auth:AuthController#login');
+    expect(step.nodeLabel).toBe('login()');
+    expect(step.edgeType).toBe(EdgeType.EXPOSES);
+    expect(step.payloadType).toBe('LoginDto');
+    expect(step.approximate).toBe(false);
+  });
+
+  it('carries payloadType null and approximate true for inferred service-tail steps', () => {
+    const step: RequestFlowStep = {
+      order: 5,
+      kind: 'service',
+      nodeFqn: 'my-repo:auth:AuthService',
+      nodeLabel: 'AuthService',
+      edgeType: EdgeType.INVOKES,
+      payloadType: null,
+      approximate: true,
+    };
+
+    expect(step.kind).toBe('service');
+    expect(step.edgeType).toBe(EdgeType.INVOKES);
+    expect(step.payloadType).toBeNull();
+    expect(step.approximate).toBe(true);
+  });
+
+  it('accepts every lifecycle kind in the backend FlowStepKind union', () => {
+    const kinds = [
+      'middleware',
+      'guard',
+      'pipe',
+      'interceptor',
+      'handler',
+      'service',
+      'repository',
+    ] as const;
+
+    for (const [index, kind] of kinds.entries()) {
+      const step: RequestFlowStep = {
+        order: index,
+        kind,
+        nodeFqn: `fqn-${kind}`,
+        nodeLabel: kind,
+        edgeType: EdgeType.PROTECTS,
+        payloadType: null,
+        approximate: false,
+      };
+      expect(step.kind).toBe(kind);
+    }
+  });
+});
+
+describe('RequestFlow aggregate shape', () => {
+  it('binds an endpoint FQN to its ordered steps', () => {
+    const flow: RequestFlow = {
+      endpointFqn: 'my-repo:auth:AuthController#login',
+      steps: [
+        {
+          order: 0,
+          kind: 'guard',
+          nodeFqn: 'my-repo:auth:JwtAuthGuard',
+          nodeLabel: 'JwtAuthGuard',
+          edgeType: EdgeType.PROTECTS,
+          payloadType: null,
+          approximate: false,
+        },
+      ],
+    };
+
+    expect(flow.endpointFqn).toBe('my-repo:auth:AuthController#login');
+    expect(flow.steps).toHaveLength(1);
+    expect(flow.steps[0].kind).toBe('guard');
+  });
+});
+
+describe('EndpointFlowResponse DTO shape (mirror of backend EndpointFlowResponse)', () => {
+  it('carries flowAvailable true with ordered steps for flow-capable snapshots', () => {
+    const response: EndpointFlowResponse = {
+      flowAvailable: true,
+      steps: [],
+      endpointFqn: 'my-repo:auth:AuthController#login',
+    };
+
+    expect(response.flowAvailable).toBe(true);
+    expect(response.steps).toEqual([]);
+    expect(response.endpointFqn).toBe('my-repo:auth:AuthController#login');
+  });
+
+  it('carries flowAvailable false with empty steps for old (v1) snapshots', () => {
+    const response: EndpointFlowResponse = {
+      flowAvailable: false,
+      steps: [],
+      endpointFqn: 'my-repo:auth:AuthController#login',
+    };
+
+    expect(response.flowAvailable).toBe(false);
+    expect(response.steps).toHaveLength(0);
   });
 });

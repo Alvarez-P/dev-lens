@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useGraphStore } from '../graph-store';
 import type { GraphStore } from '../graph-store';
 import { NodeType, EdgeType, LayoutType, ViewMode } from '../../types';
+import type { RequestFlowStep } from '../../types';
 
 const initialState: GraphStore = useGraphStore.getState();
 
@@ -251,5 +252,133 @@ describe('loadingSlice', () => {
 
     useGraphStore.getState().setLoadProgress(1.4);
     expect(useGraphStore.getState().loadProgress).toBe(1);
+  });
+});
+
+describe('flowSlice (REQ-VV-008)', () => {
+  /** Guard step by default; handler step at order 2 carries a payload type. */
+  function makeStep(order: number, kind: RequestFlowStep['kind'] = 'guard'): RequestFlowStep {
+    return {
+      order,
+      kind,
+      nodeFqn: `fqn-${order}`,
+      nodeLabel: `step-${order}`,
+      edgeType: EdgeType.PROTECTS,
+      payloadType: order === 2 ? 'LoginDto' : null,
+      approximate: order > 2,
+    };
+  }
+
+  it('starts with no active flow, no steps, index 0, paused, 1x speed', () => {
+    const state = useGraphStore.getState();
+
+    expect(state.activeEndpointFqn).toBeNull();
+    expect(state.flowSteps).toEqual([]);
+    expect(state.currentStepIndex).toBe(0);
+    expect(state.isPlaying).toBe(false);
+    expect(state.animationSpeed).toBe(1);
+  });
+
+  it('startFlow populates the slice, resets the index and starts playback', () => {
+    const steps = [makeStep(0), makeStep(1), makeStep(2)];
+
+    useGraphStore.getState().startFlow('repo:auth:AuthController#login', steps);
+
+    const state = useGraphStore.getState();
+    expect(state.activeEndpointFqn).toBe('repo:auth:AuthController#login');
+    expect(state.flowSteps).toEqual(steps);
+    expect(state.currentStepIndex).toBe(0);
+    expect(state.isPlaying).toBe(true);
+  });
+
+  it('startFlow replaces a previously loaded flow (endpoint B replaces A)', () => {
+    useGraphStore.getState().startFlow('fqn-A', [makeStep(0), makeStep(1)]);
+    useGraphStore.getState().nextStep();
+
+    useGraphStore.getState().startFlow('fqn-B', [makeStep(0)]);
+
+    const state = useGraphStore.getState();
+    expect(state.activeEndpointFqn).toBe('fqn-B');
+    expect(state.flowSteps).toHaveLength(1);
+    expect(state.currentStepIndex).toBe(0);
+    expect(state.isPlaying).toBe(true);
+  });
+
+  it('nextStep advances the current step index through the lifecycle', () => {
+    const steps = [makeStep(0, 'guard'), makeStep(1, 'pipe'), makeStep(2, 'handler')];
+
+    useGraphStore.getState().startFlow('fqn-A', steps);
+
+    useGraphStore.getState().nextStep();
+    expect(useGraphStore.getState().currentStepIndex).toBe(1);
+
+    useGraphStore.getState().nextStep();
+    expect(useGraphStore.getState().currentStepIndex).toBe(2);
+  });
+
+  it('nextStep clamps at the final step and never advances past it', () => {
+    useGraphStore.getState().startFlow('fqn-A', [makeStep(0), makeStep(1)]);
+
+    useGraphStore.getState().nextStep();
+    useGraphStore.getState().nextStep();
+    useGraphStore.getState().nextStep();
+
+    expect(useGraphStore.getState().currentStepIndex).toBe(1);
+  });
+
+  it('nextStep is a no-op when no flow is loaded', () => {
+    useGraphStore.getState().nextStep();
+
+    expect(useGraphStore.getState().currentStepIndex).toBe(0);
+  });
+
+  it('pauseFlow stops playback without clearing the loaded flow', () => {
+    useGraphStore.getState().startFlow('fqn-A', [makeStep(0)]);
+
+    useGraphStore.getState().pauseFlow();
+
+    const state = useGraphStore.getState();
+    expect(state.isPlaying).toBe(false);
+    expect(state.activeEndpointFqn).toBe('fqn-A');
+    expect(state.flowSteps).toHaveLength(1);
+    expect(state.currentStepIndex).toBe(0);
+  });
+
+  it('resetFlow clears every flow field and stops playback', () => {
+    useGraphStore.getState().startFlow('fqn-A', [makeStep(0), makeStep(1)]);
+    useGraphStore.getState().nextStep();
+
+    useGraphStore.getState().resetFlow();
+
+    const state = useGraphStore.getState();
+    expect(state.activeEndpointFqn).toBeNull();
+    expect(state.flowSteps).toEqual([]);
+    expect(state.currentStepIndex).toBe(0);
+    expect(state.isPlaying).toBe(false);
+  });
+
+  it('switching away from REQUEST_FLOW via setViewMode resets the flow', () => {
+    useGraphStore.getState().setViewMode(ViewMode.REQUEST_FLOW);
+    useGraphStore.getState().startFlow('fqn-A', [makeStep(0), makeStep(1)]);
+    useGraphStore.getState().nextStep();
+
+    useGraphStore.getState().setViewMode(ViewMode.API_EXPLORER);
+
+    const state = useGraphStore.getState();
+    expect(state.viewMode).toBe(ViewMode.API_EXPLORER);
+    expect(state.activeEndpointFqn).toBeNull();
+    expect(state.flowSteps).toEqual([]);
+    expect(state.currentStepIndex).toBe(0);
+    expect(state.isPlaying).toBe(false);
+  });
+
+  it('switching between non-flow views leaves the loaded flow untouched', () => {
+    useGraphStore.getState().startFlow('fqn-A', [makeStep(0)]);
+
+    useGraphStore.getState().setViewMode(ViewMode.MODULES);
+    useGraphStore.getState().setViewMode(ViewMode.OVERVIEW);
+
+    expect(useGraphStore.getState().activeEndpointFqn).toBe('fqn-A');
+    expect(useGraphStore.getState().flowSteps).toHaveLength(1);
   });
 });

@@ -1,7 +1,16 @@
 'use client';
 
 import { clsx } from 'clsx';
-import { Network, FolderTree, GitBranch, Braces, Layers, Globe, Activity } from 'lucide-react';
+import {
+  Network,
+  FolderTree,
+  GitBranch,
+  Braces,
+  Layers,
+  Globe,
+  Activity,
+  Waypoints,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useGraphStore } from '@/lib/visualization/store/graph-store';
 import { ViewMode } from '@/lib/visualization/types';
@@ -15,6 +24,7 @@ const VIEW_ICONS: Record<ViewMode, LucideIcon> = {
   [ViewMode.LAYER_ARCHITECTURE]: Layers,
   [ViewMode.DOMAIN_RELATIONSHIPS]: Globe,
   [ViewMode.EVENT_FLOW]: Activity,
+  [ViewMode.REQUEST_FLOW]: Waypoints,
 };
 
 export interface GraphToolbarProps {
@@ -22,8 +32,8 @@ export interface GraphToolbarProps {
 }
 
 /**
- * Graph controls: 7 view-mode chips (REQ-VV-001, active chip gets the
- * `primary-500` accent border).
+ * Graph controls: 8 view-mode chips (REQ-VV-001, active chip gets the
+ * `primary-500` accent border; REQUEST_FLOW is the 8th option).
  */
 export function GraphToolbar({ className }: GraphToolbarProps): React.ReactNode {
   const viewMode = useGraphStore((state) => state.viewMode);

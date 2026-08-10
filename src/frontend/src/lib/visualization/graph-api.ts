@@ -1,6 +1,13 @@
 import { get } from '@/lib/api-client';
 import type { ApiResponse } from '@/lib/api-client';
-import type { GraphSnapshot, GraphNode, GraphExport, GraphNodeDetail, NodeType } from './types';
+import type {
+  GraphSnapshot,
+  GraphNode,
+  GraphExport,
+  GraphNodeDetail,
+  NodeType,
+  EndpointFlowResponse,
+} from './types';
 
 export type GraphDirection = 'in' | 'out' | 'both';
 
@@ -85,5 +92,19 @@ export function getNodeDetail(
 
   return get<GraphNodeDetail>(
     withQuery(`/api/v1/graph/${repoId}/nodes/${encodeURIComponent(fqn)}`, query),
+  );
+}
+
+/**
+ * GET /api/v1/graph/:repoId/endpoints/:fqn/flow — ordered lifecycle steps for
+ * an endpoint (REQ-VV-006). The FQN is percent-encoded so `:` separators and
+ * `#` fragment markers survive the URL path.
+ */
+export function getEndpointFlow(
+  repoId: string,
+  fqn: string,
+): Promise<ApiResponse<EndpointFlowResponse | null>> {
+  return get<EndpointFlowResponse | null>(
+    `/api/v1/graph/${repoId}/endpoints/${encodeURIComponent(fqn)}/flow`,
   );
 }
