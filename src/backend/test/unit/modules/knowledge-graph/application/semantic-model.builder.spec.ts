@@ -33,7 +33,7 @@ describe('SemanticModelBuilder', () => {
       );
       expect(node?.type).toBe(NodeType.CONTROLLER);
       expect(node?.label).toBe('UsersController');
-      expect(node?.sourceFile).toBe('/repo/src/users/users.controller.ts');
+      expect(node?.sourceFile).toBe('src/users/users.controller.ts');
       expect(node?.properties).toEqual({
         isAbstract: false,
         isExported: false,
@@ -1036,6 +1036,107 @@ describe('SemanticModelBuilder', () => {
       const model = new SemanticModelBuilder().build(ir);
 
       expect(model.edges.some((edge) => edge.type === EdgeType.DEPENDS_ON)).toBe(false);
+    });
+  });
+
+  describe('sourceFile (REQ-KG: Source File Persistence on Graph Nodes)', () => {
+    it('should store a repo-relative source file path on a class node', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [
+              {
+                name: 'src/modules/orders',
+                path: '/repo/src/modules/orders/OrderService.ts',
+                classes: [{ name: 'OrderService', role: 'service' }],
+              },
+            ],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      const node = model.nodes.find(
+        (candidate) => candidate.fqn === 'acme:default:src/modules/orders#OrderService',
+      );
+      expect(node?.sourceFile).toBe('src/modules/orders/OrderService.ts');
+    });
+
+    it('should set sourceFile to null on a PROJECT node', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      const projectNode = model.nodes.find((node) => node.type === NodeType.PROJECT);
+      expect(projectNode?.sourceFile).toBeNull();
+    });
+
+    it('should normalize a module path with backslashes and a leading ./', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'default',
+            modules: [{ name: 'src/utils', path: './src\\utils\\helpers.ts' }],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      const node = model.nodes.find((node) => node.type === NodeType.MODULE);
+      expect(node?.sourceFile).toBe('src/utils/helpers.ts');
+    });
+
+    it('should set sourceFile to null on an EXTERNAL_DEPENDENCY node', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          { name: 'default', modules: [{ name: 'src/app', path: '/repo/src/app.module.ts' }] },
+        ],
+        dependencies: [
+          { source: 'acme:default:src/app', target: '@nestjs/common', type: 'import' },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      const external = model.nodes.find((node) => node.type === NodeType.EXTERNAL_DEPENDENCY);
+      expect(external?.sourceFile).toBeNull();
+    });
+
+    it('should set sourceFile to null on a PACKAGE node', () => {
+      const ir = IrProject.create({
+        name: 'acme',
+        rootPath: '/repo',
+        language: LANGUAGE,
+        packages: [
+          {
+            name: 'core',
+            version: '1.0.0',
+            modules: [{ name: 'src/app', path: '/repo/src/app.module.ts' }],
+          },
+        ],
+      });
+
+      const model = new SemanticModelBuilder().build(ir);
+
+      const pkg = model.nodes.find((node) => node.type === NodeType.PACKAGE);
+      expect(pkg?.sourceFile).toBeNull();
     });
   });
 

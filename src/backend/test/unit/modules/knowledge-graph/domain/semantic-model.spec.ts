@@ -9,14 +9,14 @@ describe('Semantic model', () => {
       label: 'AuthService',
       fqn: 'acme:core:src/auth#AuthService',
       properties: { exported: true },
-      sourceFile: '/repo/src/auth/auth.service.ts',
+      sourceFile: 'src/auth/auth.service.ts',
     };
 
     expect(node.type).toBe(NodeType.SERVICE);
     expect(node.label).toBe('AuthService');
     expect(node.fqn).toBe('acme:core:src/auth#AuthService');
     expect(node.properties).toEqual({ exported: true });
-    expect(node.sourceFile).toBe('/repo/src/auth/auth.service.ts');
+    expect(node.sourceFile).toBe('src/auth/auth.service.ts');
   });
 
   it('should describe a transient SemanticEdge as a plain object', () => {
@@ -37,7 +37,7 @@ describe('Semantic model', () => {
       label: 'Helper',
       fqn: 'acme:core:src/utils#Helper',
       properties: {},
-      sourceFile: '/repo/src/utils/helper.ts',
+      sourceFile: 'src/utils/helper.ts',
     };
     const edge: SemanticEdge = {
       type: EdgeType.IMPORTS,

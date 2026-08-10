@@ -72,7 +72,7 @@ describe('Graph pipeline round-trip', () => {
 
     const controller = result.nodes.find((node) => node.type === NodeType.CONTROLLER);
     expect(controller?.fqn).toBe('acme:default:src/users#UsersController');
-    expect(controller?.properties.filePath).toBe('/repo/src/users/users.module.ts');
+    expect(controller?.properties.filePath).toBe('src/users/users.module.ts');
 
     const exposes = result.edges.find((edge) => edge.type === EdgeType.EXPOSES);
     expect(exposes?.sourceNodeId).toBe(controller?.id);

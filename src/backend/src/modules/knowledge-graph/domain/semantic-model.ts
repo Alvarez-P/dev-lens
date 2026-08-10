@@ -6,7 +6,8 @@ export interface SemanticNode {
   label: string;
   fqn: string;
   properties: Record<string, unknown>;
-  sourceFile: string;
+  /** Repo-relative path to the source file the node was extracted from; null for synthesized nodes (PROJECT, PACKAGE, EXTERNAL_DEPENDENCY). */
+  sourceFile: string | null;
 }
 
 export interface SemanticEdge {
