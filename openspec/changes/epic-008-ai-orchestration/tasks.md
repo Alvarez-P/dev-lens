@@ -45,8 +45,8 @@ Chain strategy: stacked-to-main
 
 ## Phase 3: Application Services (PR8-11)
 
-- [ ] 3.1 PR8 `capability-registry.service.ts` (register/get/list/isAvailable)
-- [ ] 3.2 PR8 `provider-router.service.ts` (capability+health+cost, retry→fallback)
+- [x] 3.1 PR8 `capability-registry.service.ts` (register/get/list/isAvailable)
+- [x] 3.2 PR8 `provider-router.service.ts` (capability+health+cost, retry→fallback)
 - [ ] 3.3 PR9 `context-assembler.service.ts`: KG retrieval, truncation marker, allow/deny-list, cache
 - [ ] 3.4 PR10 `prompt-builder.service.ts`: substitution, 4-section, ≤6000, injection + templates `ai/capabilities/explain-module/v1/`
 - [ ] 3.5 PR11 `ai.service.ts`: route→context→prompt→stream→observe
