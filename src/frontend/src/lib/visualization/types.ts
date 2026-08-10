@@ -205,3 +205,6 @@ export interface EndpointFlowResponse {
   steps: RequestFlowStep[];
   endpointFqn: string;
 }
+
+/** Minimum graph snapshot version carrying request-flow data (mirror of backend `GRAPH_FLOW_VERSION`). */
+export const FLOW_DATA_GRAPH_VERSION = 2;
