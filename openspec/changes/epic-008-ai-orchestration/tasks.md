@@ -32,7 +32,7 @@ Chain strategy: stacked-to-main
 
 ## Phase 1: Domain & Foundation (PR1-4)
 
-- [ ] 1.1 PR1 `domain/ai-provider.interface.ts` (AIProvider, AIRequest/AIResponse, AIChunk), `ai-errors.ts`, `capability-registry.interface.ts`
+- [x] 1.1 PR1 `domain/ai-provider.interface.ts` (AIProvider, AIRequest/AIResponse, AIChunk), `ai-errors.ts`, `capability-registry.interface.ts`
 - [ ] 1.2 PR2 `domain/ai-capability.ts`, `context-strategy.ts`, `prompt-template.ts`, `output/*.dto.ts`
 - [ ] 1.3 PR3 `graph-node.typeorm-entity.ts`, `graph-node.vo.ts`, `graph.repository.ts`, `semantic-model.builder.ts`: nullable `sourceFile` + migration
 - [ ] 1.4 PR4 `configuration.ts` AIConfig, `config.service.ts` getter, `.env.example`

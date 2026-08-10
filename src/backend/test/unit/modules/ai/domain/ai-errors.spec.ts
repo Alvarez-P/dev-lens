@@ -7,6 +7,8 @@ import {
   AIRateLimitError,
   AIInvalidResponseError,
   AISecretsExposureError,
+  CapabilityNotFoundError,
+  DuplicateCapabilityError,
 } from '@/modules/ai/domain/ai-errors';
 
 describe('BaseAIError', () => {
@@ -87,5 +89,29 @@ describe('AISecretsExposureError', () => {
 
     expect(error.code).toBe('AI_SECRETS_EXPOSURE');
     expect(error.retriable).toBe(false);
+  });
+});
+
+describe('CapabilityNotFoundError', () => {
+  it('should carry CAPABILITY_NOT_FOUND code with 404 status', () => {
+    const error = new CapabilityNotFoundError('explain-module');
+
+    expect(error).toBeInstanceOf(DomainError);
+    expect(error.code).toBe('CAPABILITY_NOT_FOUND');
+    expect(error.statusCode).toBe(404);
+    expect(error.capabilityId).toBe('explain-module');
+    expect(error.message).toContain('explain-module');
+  });
+});
+
+describe('DuplicateCapabilityError', () => {
+  it('should carry DUPLICATE_CAPABILITY code with 409 status', () => {
+    const error = new DuplicateCapabilityError('explain-module');
+
+    expect(error).toBeInstanceOf(DomainError);
+    expect(error.code).toBe('DUPLICATE_CAPABILITY');
+    expect(error.statusCode).toBe(409);
+    expect(error.capabilityId).toBe('explain-module');
+    expect(error.message).toContain('explain-module');
   });
 });

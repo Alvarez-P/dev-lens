@@ -12,6 +12,8 @@ export {
 
 export { AIProvider } from './ai-provider.interface';
 
+export { AICapability, CapabilityRegistry } from './capability-registry.interface';
+
 export {
   AIDtoField,
   AIClassifiedRole,
@@ -32,6 +34,8 @@ export {
   AIRateLimitError,
   AIInvalidResponseError,
   AISecretsExposureError,
+  CapabilityNotFoundError,
+  DuplicateCapabilityError,
 } from './ai-errors';
 
 export {

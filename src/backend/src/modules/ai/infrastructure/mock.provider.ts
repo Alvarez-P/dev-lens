@@ -19,6 +19,10 @@ import { ProviderUnavailableError } from '../domain/ai-errors';
  */
 @Injectable()
 export class MockProvider implements AIProvider {
+  readonly id = 'mock';
+  readonly name = 'Mock Provider';
+  readonly supportedModels: string[] = ['mock'];
+
   private readonly logger = new Logger(MockProvider.name);
 
   constructor(

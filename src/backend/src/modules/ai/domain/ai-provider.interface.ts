@@ -15,6 +15,15 @@ import {
  * as typed `BaseAIError` subtypes (REQ-AP-001).
  */
 export interface AIProvider {
+  /** Stable provider id used by the registry and router, e.g. 'openai'. */
+  id: string;
+
+  /** Human-readable provider name, e.g. 'OpenAI'. */
+  name: string;
+
+  /** Model ids this provider can serve; the router matches capability requirements against it. */
+  supportedModels: string[];
+
   /** Send a prompt and receive the full response. */
   complete(req: AIRequest): Promise<AIResponse>;
 

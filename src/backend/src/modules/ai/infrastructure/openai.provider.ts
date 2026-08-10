@@ -27,6 +27,10 @@ const TOKENS_PER_4_CHARS = 0.25;
  */
 @Injectable()
 export class OpenAIProvider implements AIProvider {
+  readonly id = 'openai';
+  readonly name = 'OpenAI';
+  readonly supportedModels: string[];
+
   private readonly logger = new Logger(OpenAIProvider.name);
   private readonly client: OpenAI | null;
 
@@ -35,6 +39,8 @@ export class OpenAIProvider implements AIProvider {
     apiKey: string | undefined,
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ) {
+    this.supportedModels = [model];
+
     if (!apiKey) {
       this.logger.warn(
         `OpenAI API key missing — healthCheck() will return false, enrichment falls back`,
