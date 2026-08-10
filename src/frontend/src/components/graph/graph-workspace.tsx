@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 import { Activity, AlertTriangle, Filter, GitFork, RefreshCw } from 'lucide-react';
 import { useGraphStore } from '@/lib/visualization/store/graph-store';
-import { ViewMode } from '@/lib/visualization/types';
+import { ViewMode, NodeType, FLOW_DATA_GRAPH_VERSION } from '@/lib/visualization/types';
 import type { GraphNode, GraphEdge } from '@/lib/visualization/types';
+import { isSuccessResponse } from '@/lib/api-client';
+import { getEndpointFlow } from '@/lib/visualization/graph-api';
 import type { GraphDirection } from '@/lib/visualization/graph-api';
 import type { GraphRendererAdapter } from '@/lib/visualization/adapter';
 import { useProgressiveLoad, mergeNodes } from '@/lib/visualization/hooks/use-progressive-load';
@@ -15,6 +17,7 @@ import { useDrillDown, applyFocusMode } from '@/lib/visualization/hooks/use-dril
 import { useKeyboardShortcuts } from '@/lib/visualization/hooks/use-keyboard-shortcuts';
 import { useGraphSearch } from '@/lib/visualization/hooks/use-graph-search';
 import { useNodeDetail } from '@/lib/visualization/hooks/use-node-detail';
+import { useFlowAnimation } from '@/lib/visualization/hooks/use-flow-animation';
 import { filterGraph } from './canvas/filter';
 import { GraphBreadcrumbs } from './graph-breadcrumbs';
 import { GraphToolbar } from './graph-toolbar';
@@ -64,6 +67,14 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
   } | null>(null);
   const [extraNodes, setExtraNodes] = useState<GraphNode[]>([]);
   const [extraEdges, setExtraEdges] = useState<GraphEdge[]>([]);
+  // REQ-VV-010: set when the flow API reports flowAvailable false for a click.
+  const [flowUnavailable, setFlowUnavailable] = useState(false);
+  // Bumped on every flow start so re-clicking the same endpoint restarts the
+  // token animation (the token identity includes this run id).
+  const flowRunRef = useRef(0);
+
+  // Flow playback controller (REQ-VV-007): advances steps / stops at the end.
+  useFlowAnimation();
 
   // Progressive node streaming + full edge set from the export endpoint.
   const load = useProgressiveLoad(repoId, {
@@ -122,6 +133,10 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
   const searchQuery = useGraphStore((state) => state.searchQuery);
   const resetFilters = useGraphStore((state) => state.resetFilters);
   const setFocusNode = useGraphStore((state) => state.setFocusNode);
+  const flowSteps = useGraphStore((state) => state.flowSteps);
+  const currentStepIndex = useGraphStore((state) => state.currentStepIndex);
+  const activeEndpointFqn = useGraphStore((state) => state.activeEndpointFqn);
+  const startFlow = useGraphStore((state) => state.startFlow);
 
   const filtered = useMemo(
     () =>
@@ -167,6 +182,91 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
       setNeighborhood({ fqn: node.fqn, direction });
     }
   };
+
+  const isFlowView = viewMode === ViewMode.REQUEST_FLOW;
+  const isFlowUnavailable =
+    isFlowView && ((load.snapshotVersion ?? 0) < FLOW_DATA_GRAPH_VERSION || flowUnavailable);
+
+  // REQ-VV-010: a fresh snapshot (post re-analysis) makes the flow available
+  // again, so drop the API-level unavailable flag when leaving the view.
+  useEffect(() => {
+    if (viewMode !== ViewMode.REQUEST_FLOW) {
+      setFlowUnavailable(false);
+    }
+  }, [viewMode]);
+
+  /** REQ-VV-006: fetch the endpoint flow and start playback. */
+  const loadEndpointFlow = useCallback(
+    async (fqn: string): Promise<void> => {
+      const response = await getEndpointFlow(repoId, fqn);
+      if (!isSuccessResponse(response) || !response.data) {
+        return; // leave the current flow state untouched on failure
+      }
+      if (!response.data.flowAvailable) {
+        setFlowUnavailable(true); // REQ-VV-010: no flow data to fabricate
+        return;
+      }
+      flowRunRef.current += 1;
+      startFlow(response.data.endpointFqn, response.data.steps);
+    },
+    [repoId, startFlow],
+  );
+
+  /**
+   * REQ-VV-006/010: in REQUEST_FLOW view, only endpoint nodes trigger a flow
+   * fetch; every other node is ignored and the loaded flow/prompt persists.
+   * Outside the flow view the default select-on-click behavior applies.
+   */
+  const handleNodeClick = (nodeId: string): void => {
+    if (!isFlowView) {
+      useGraphStore.getState().setSelectedNode(nodeId);
+      return;
+    }
+    if (isFlowUnavailable) return; // old snapshot → nothing is selectable
+    const node = allNodes.find((candidate) => candidate.id === nodeId);
+    if (!node || node.type !== NodeType.ENDPOINT) return;
+    useGraphStore.getState().setSelectedNode(nodeId);
+    void loadEndpointFlow(node.fqn);
+  };
+
+  // REQ-VV-007: annotate the edge between the current step pair with an
+  // animation token so EdgePath travels a token along it. The token changes on
+  // every step advance (and every flow start via flowRunRef) — edges only care
+  // that the value changed, so the same token never restarts an in-flight run.
+  const flowEdgeTokens = useMemo(() => {
+    if (!isFlowView || flowSteps.length === 0) {
+      return null;
+    }
+    const fromStep = flowSteps[currentStepIndex];
+    const toStep = flowSteps[currentStepIndex + 1];
+    if (!fromStep || !toStep) {
+      return null;
+    }
+    const nodeByFqn = new Map(allNodes.map((node) => [node.fqn, node] as const));
+    const fromId = nodeByFqn.get(fromStep.nodeFqn)?.id;
+    const toId = nodeByFqn.get(toStep.nodeFqn)?.id;
+    if (!fromId || !toId) {
+      return null;
+    }
+    const token = `${activeEndpointFqn ?? fromStep.nodeFqn}#${flowRunRef.current}#${currentStepIndex}`;
+    const tokens = new Map<string, string>();
+    for (const edge of focusEdges) {
+      if (edge.sourceNodeId === fromId && edge.targetNodeId === toId) {
+        tokens.set(edge.id, token);
+      }
+    }
+    return tokens;
+  }, [isFlowView, flowSteps, currentStepIndex, activeEndpointFqn, focusEdges, allNodes]);
+
+  const flowEdges = useMemo(() => {
+    if (!flowEdgeTokens) {
+      return focusEdges;
+    }
+    return focusEdges.map((edge) => {
+      const token = flowEdgeTokens.get(edge.id);
+      return token ? { ...edge, properties: { ...edge.properties, animationToken: token } } : edge;
+    });
+  }, [focusEdges, flowEdgeTokens]);
 
   const contextMenuNode = menu ? allNodes.find((candidate) => candidate.id === menu.nodeId) : null;
 
@@ -234,6 +334,18 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
       );
     }
 
+    if (isFlowUnavailable) {
+      return (
+        <div className="flex h-full items-center justify-center p-6">
+          <EmptyState
+            icon={<Activity className="h-10 w-10" aria-hidden="true" />}
+            title="Flow data is not available for this snapshot"
+            description="Re-analyze the repository to enable request-flow visualization."
+          />
+        </div>
+      );
+    }
+
     if (noResults) {
       return (
         <div className="flex h-full items-center justify-center p-6">
@@ -252,13 +364,28 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
     }
 
     return (
-      <GraphCanvas
-        nodes={focusNodes}
-        edges={focusEdges}
-        adapterRef={adapterRef}
-        onNodeDoubleClick={drillDown.handleNodeDoubleClick}
-        onNodeContextMenu={(nodeId, position) => setMenu({ nodeId, x: position.x, y: position.y })}
-      />
+      <div className="relative h-full w-full">
+        <GraphCanvas
+          nodes={focusNodes}
+          edges={flowEdges}
+          adapterRef={adapterRef}
+          onNodeClick={handleNodeClick}
+          onNodeDoubleClick={drillDown.handleNodeDoubleClick}
+          onNodeContextMenu={(nodeId, position) =>
+            setMenu({ nodeId, x: position.x, y: position.y })
+          }
+        />
+        {isFlowView && flowSteps.length === 0 && (
+          <div
+            className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center"
+            role="status"
+          >
+            <span className="rounded-full border border-white/[0.06] bg-surface-900/80 px-4 py-2 text-sm text-surface-300 backdrop-blur-sm">
+              Select an endpoint to visualize its request flow.
+            </span>
+          </div>
+        )}
+      </div>
     );
   };
 
