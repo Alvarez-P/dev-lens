@@ -150,3 +150,32 @@ describe('custom edge components (6 types)', () => {
     expect(screen.queryByTestId(`edge-label-${edge.id}`)).not.toBeInTheDocument();
   });
 });
+
+// REQ-VV-007/009: the request-flow lifecycle edges (endpoint → guard → pipe →
+// handler → service) must show their type label on hover just like the base
+// graph edges — the label identifies how each step connects to the next.
+const LIFECYCLE_EDGE_TYPES = [
+  EdgeType.PROTECTS,
+  EdgeType.TRANSFORMS,
+  EdgeType.EXPOSES,
+  EdgeType.INVOKES,
+  EdgeType.INJECTS,
+];
+
+for (const type of LIFECYCLE_EDGE_TYPES) {
+  it(`shows the type label on hover for lifecycle edge ${type}`, () => {
+    const Component = edgeTypes[type];
+    const edge = makeEdge(type);
+
+    render(<Component {...makeEdgeProps(edge)} />);
+
+    const group = screen.getByTestId(`edge-group-${edge.id}`);
+    fireEvent.mouseEnter(group);
+
+    expect(screen.getByTestId(`edge-label-${edge.id}`)).toHaveTextContent(type);
+
+    fireEvent.mouseLeave(group);
+
+    expect(screen.queryByTestId(`edge-label-${edge.id}`)).not.toBeInTheDocument();
+  });
+}

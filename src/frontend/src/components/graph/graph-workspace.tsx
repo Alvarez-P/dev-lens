@@ -69,6 +69,13 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
   const [extraEdges, setExtraEdges] = useState<GraphEdge[]>([]);
   // REQ-VV-010: set when the flow API reports flowAvailable false for a click.
   const [flowUnavailable, setFlowUnavailable] = useState(false);
+  // Transient flow-fetch feedback (REQ-VV-006 fallback): a loading chip while
+  // the flow is being fetched, an error chip when the fetch fails (HTTP /
+  // network / timeout rejections), and a "no flow data" chip when the endpoint
+  // reports an empty lifecycle. Cleared when the view is left (see below).
+  const [flowLoading, setFlowLoading] = useState(false);
+  const [flowError, setFlowError] = useState<string | null>(null);
+  const [flowEmpty, setFlowEmpty] = useState(false);
   // Bumped on every flow start so re-clicking the same endpoint restarts the
   // token animation (the token identity includes this run id).
   const flowRunRef = useRef(0);
@@ -192,22 +199,40 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
   useEffect(() => {
     if (viewMode !== ViewMode.REQUEST_FLOW) {
       setFlowUnavailable(false);
+      setFlowError(null);
+      setFlowEmpty(false);
     }
   }, [viewMode]);
 
   /** REQ-VV-006: fetch the endpoint flow and start playback. */
   const loadEndpointFlow = useCallback(
     async (fqn: string): Promise<void> => {
-      const response = await getEndpointFlow(repoId, fqn);
-      if (!isSuccessResponse(response) || !response.data) {
-        return; // leave the current flow state untouched on failure
+      setFlowLoading(true);
+      setFlowError(null);
+      setFlowEmpty(false);
+      try {
+        const response = await getEndpointFlow(repoId, fqn);
+        if (!isSuccessResponse(response) || !response.data) {
+          setFlowError('The flow service returned an invalid response.');
+          return;
+        }
+        if (!response.data.flowAvailable) {
+          setFlowUnavailable(true); // REQ-VV-010: no flow data to fabricate
+          return;
+        }
+        if (response.data.steps.length === 0) {
+          setFlowEmpty(true); // empty lifecycle → explicit no-data state
+          return;
+        }
+        flowRunRef.current += 1;
+        startFlow(response.data.endpointFqn, response.data.steps);
+      } catch (error) {
+        // getEndpointFlow rejects (ApiError on HTTP/network/timeout) — surface
+        // the failure instead of crashing or silently ignoring it.
+        setFlowError(error instanceof Error ? error.message : 'Unknown error loading flow');
+      } finally {
+        setFlowLoading(false);
       }
-      if (!response.data.flowAvailable) {
-        setFlowUnavailable(true); // REQ-VV-010: no flow data to fabricate
-        return;
-      }
-      flowRunRef.current += 1;
-      startFlow(response.data.endpointFqn, response.data.steps);
     },
     [repoId, startFlow],
   );
@@ -375,10 +400,44 @@ export function GraphWorkspace({ repoId, className }: GraphWorkspaceProps): Reac
             setMenu({ nodeId, x: position.x, y: position.y })
           }
         />
-        {isFlowView && flowSteps.length === 0 && (
+        {isFlowView && flowLoading && (
           <div
             className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center"
             role="status"
+            aria-label="Loading flow"
+          >
+            <span className="rounded-full border border-white/[0.06] bg-surface-900/80 px-4 py-2 text-sm text-surface-300 backdrop-blur-sm">
+              Loading flow...
+            </span>
+          </div>
+        )}
+        {isFlowView && !flowLoading && flowError && (
+          <div
+            className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center"
+            role="alert"
+            aria-label="Flow load error"
+          >
+            <span className="rounded-full border border-red-500/40 bg-surface-900/80 px-4 py-2 text-sm text-red-300 backdrop-blur-sm">
+              Could not load the request flow: {flowError}
+            </span>
+          </div>
+        )}
+        {isFlowView && !flowLoading && !flowError && flowEmpty && (
+          <div
+            className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center"
+            role="status"
+            aria-label="No flow data"
+          >
+            <span className="rounded-full border border-white/[0.06] bg-surface-900/80 px-4 py-2 text-sm text-surface-300 backdrop-blur-sm">
+              No flow data for this endpoint.
+            </span>
+          </div>
+        )}
+        {isFlowView && !flowLoading && !flowError && flowSteps.length === 0 && (
+          <div
+            className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center"
+            role="status"
+            aria-label="Select an endpoint"
           >
             <span className="rounded-full border border-white/[0.06] bg-surface-900/80 px-4 py-2 text-sm text-surface-300 backdrop-blur-sm">
               Select an endpoint to visualize its request flow.
