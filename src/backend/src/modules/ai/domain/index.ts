@@ -94,3 +94,16 @@ export {
   EnrichmentFailedEvent,
   EnrichmentSkippedEvent,
 } from './ai-events';
+
+export {
+  AIEvent,
+  AIEventPayload,
+  AIRequestStartedEvent,
+  AIRequestStartedPayload,
+  AIStreamTokenEvent,
+  AIStreamTokenPayload,
+  AIRequestCompletedEvent,
+  AIRequestCompletedPayload,
+  AIRequestFailedEvent,
+  AIRequestFailedPayload,
+} from './ai-request-events';

@@ -53,7 +53,7 @@ Chain strategy: stacked-to-main
 
 ## Phase 4: Transport & Observability (PR12-13)
 
-- [ ] 4.1 PR12 `domain/ai-events.ts` (4 events + payloads) + `ai-observer.service.ts` (15 metrics, dispatch, KG-updated cache invalidation)
+- [x] 4.1 PR12 `domain/ai-events.ts` (4 events + payloads) + `ai-observer.service.ts` (15 metrics, dispatch, KG-updated cache invalidation)
 - [ ] 4.2 PR13 `controllers/ai.controller.ts`: `@Sse('stream')`, token/done/error chunks, cancel on close, sanitized errors, no interceptor buffering; supertest e2e
 
 ## Phase 5: Module Wiring (PR14)
