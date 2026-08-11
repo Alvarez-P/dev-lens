@@ -276,3 +276,153 @@ export function patch<T>(
 export function del<T>(path: string, options?: RequestOptions): Promise<ApiResponse<T>> {
   return request<T>('DELETE', path, undefined, options);
 }
+
+export interface AIChunk {
+  type: 'token' | 'done' | 'error';
+  content: string;
+  tokens?: number;
+  model?: string;
+  code?: string;
+}
+
+export interface StreamOptions {
+  /** External signal merged with the internal one via `combineAbortSignals`. */
+  signal?: AbortSignal;
+}
+
+export interface StreamResult {
+  stream: ReadableStream<AIChunk>;
+  abort: () => void;
+}
+
+/**
+ * Parse one SSE event block (everything between two blank lines) into an
+ * `AIChunk`. Only `data:` lines carry payload; `event:`/`id:`/`retry:` and
+ * comment (`: ...`) lines are ignored. Malformed events are skipped.
+ */
+function parseSseEvent(block: string): AIChunk | null {
+  const dataLines: string[] = [];
+
+  for (const line of block.split('\n')) {
+    if (line.startsWith('data:')) {
+      dataLines.push(line.slice(5).replace(/^ /, ''));
+    }
+  }
+
+  if (dataLines.length === 0) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(dataLines.join('\n')) as AIChunk;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Streaming SSE client for the AI pipeline (task 6.2, PR15; ai-streaming R6).
+ *
+ * GETs `path` (e.g. `/api/v1/ai/stream?capability=...&repoId=...&nodeId=...`)
+ * and exposes the parsed `token`/`done`/`error` chunks as a
+ * `ReadableStream<AIChunk>`. Unlike `request()`, this is a raw fetch with no
+ * JSON response interceptor and no timeout — streams are long-lived.
+ *
+ * Cancellation: call `abort()` (or abort an external signal passed via
+ * `options.signal`, merged with `combineAbortSignals`) to cancel the fetch.
+ * A user-initiated cancel closes the stream silently; network/HTTP failures
+ * emit a single `{ type: 'error', content }` chunk before closing.
+ */
+export function stream(
+  path: string,
+  params?: Record<string, string>,
+  options: StreamOptions = {},
+): StreamResult {
+  const url = new URL(`${BASE_URL}${path}`);
+
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) {
+        url.searchParams.append(key, value);
+      }
+    }
+  }
+
+  const controller = new AbortController();
+  const signal = options.signal
+    ? combineAbortSignals(controller.signal, options.signal)
+    : controller.signal;
+
+  const { headers } = requestInterceptor({});
+
+  const fetchPromise = fetch(url.toString(), {
+    method: 'GET',
+    headers,
+    signal,
+  });
+
+  const chunkStream = new ReadableStream<AIChunk>({
+    async start(streamController) {
+      try {
+        const response = await fetchPromise;
+
+        if (!response.ok) {
+          streamController.enqueue({
+            type: 'error',
+            content: `HTTP ${response.status}: ${response.statusText}`,
+          });
+          streamController.close();
+          return;
+        }
+
+        const body = response.body;
+        if (!body) {
+          streamController.enqueue({ type: 'error', content: 'Empty response body' });
+          streamController.close();
+          return;
+        }
+
+        const reader = body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // Normalize CRLF so SSE events always split on `\n\n`.
+          buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+
+          let boundary = buffer.indexOf('\n\n');
+          while (boundary !== -1) {
+            const eventBlock = buffer.slice(0, boundary);
+            buffer = buffer.slice(boundary + 2);
+
+            const chunk = parseSseEvent(eventBlock);
+            if (chunk) {
+              streamController.enqueue(chunk);
+            }
+
+            boundary = buffer.indexOf('\n\n');
+          }
+        }
+
+        streamController.close();
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          // User-initiated cancellation — close silently, no error chunk.
+          streamController.close();
+          return;
+        }
+
+        streamController.enqueue({
+          type: 'error',
+          content: error instanceof Error ? error.message : 'Unknown stream error',
+        });
+        streamController.close();
+      }
+    },
+  });
+
+  return { stream: chunkStream, abort: () => controller.abort() };
+}

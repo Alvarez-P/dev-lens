@@ -62,7 +62,7 @@ Chain strategy: stacked-to-main
 
 ## Phase 6: Frontend (PR15-16)
 
-- [ ] 6.1 PR15 `lib/store/ai-store.ts` (chunks, status, appendChunk, reset)
-- [ ] 6.2 PR15 `lib/api-client.ts` `stream()`: POST+ReadableStream, timeout 0, combineAbortSignals
+- [x] 6.1 PR15 `lib/store/ai-store.ts` (chunks, status, appendChunk, reset)
+- [x] 6.2 PR15 `lib/api-client.ts` `stream()`: POST+ReadableStream, timeout 0, combineAbortSignals
 - [ ] 6.3 PR16 `graph-detail-panel.tsx` AI panel: progressive tokens, cancel, error states
 - [ ] 6.4 PR16 Playwright e2e: token render, cancel mid-stream, error display
