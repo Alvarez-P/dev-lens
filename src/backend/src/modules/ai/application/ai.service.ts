@@ -217,9 +217,13 @@ export function buildStreamRequest(provider: AIProvider, builtPrompt: BuiltPromp
   };
 }
 
-/** Renders a pipeline failure as an SSE-safe error chunk (ai-streaming R5). */
+/**
+ * Renders a pipeline failure as an SSE-safe error chunk (ai-streaming R5).
+ * The chunk carries the raw message for server-side logging plus the stable
+ * error code the SSE controller uses to sanitize what the client sees.
+ */
 function toErrorChunk(error: unknown): AIChunk {
-  return { type: 'error', content: errorMessage(error) };
+  return { type: 'error', content: errorMessage(error), code: errorCodeOf(error) };
 }
 
 function errorMessage(error: unknown): string {

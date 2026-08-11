@@ -35,6 +35,12 @@ export interface AIChunk {
   tokens?: number;
   cost?: number;
   model?: string;
+  /**
+   * Stable machine-readable error code carried on `error` chunks so the SSE
+   * controller can pick a sanitized, client-safe message (ai-streaming R5).
+   * Absent on token/done chunks.
+   */
+  code?: string;
 }
 
 export interface AIEnrichmentRequest extends AIRequest {

@@ -212,6 +212,9 @@ describe('AIService.enrich (PR11 orchestrator)', () => {
       expect(chunks).toHaveLength(1);
       expect(chunks[0].type).toBe('error');
       expect(chunks[0].content).toContain('ghost-capability');
+      // PR13: error chunks carry the machine-readable code the SSE controller
+      // uses to pick a sanitized, client-safe message.
+      expect(chunks[0].code).toBe('CAPABILITY_NOT_FOUND');
     });
 
     it('should emit an error chunk when the target node is not found in the KG', async () => {
@@ -240,6 +243,7 @@ describe('AIService.enrich (PR11 orchestrator)', () => {
       expect(chunks).toHaveLength(1);
       expect(chunks[0].type).toBe('error');
       expect(chunks[0].content).toBe('invalid API key');
+      expect(chunks[0].code).toBe('AI_AUTHENTICATION');
     });
 
     it('should emit an error chunk carrying budget info when the prompt exceeds the budget', async () => {
