@@ -59,6 +59,7 @@ POST /api/v1/ai/stream  { capability, targetNodeFqn, query? }
 | `src/backend/src/app.module.ts`                                            | Modify | Import `AiModule`                                                                                |
 | `src/frontend/src/lib/api-client.ts`                                       | Modify | Add `stream()`: POST + ReadableStream, timeout 0, reuse `combineAbortSignals`                    |
 | `src/frontend/src/components/graph/graph-detail-panel.tsx`                 | Modify | AI panel section: loading/streaming/error states, cancel button                                  |
+| `src/frontend/src/components/graph/ai-analysis-panel.tsx`                  | Create | Encapsulated AI streaming UI: Analyze button, progressive tokens, Stop, error/done states        |
 | `src/frontend/src/lib/store/ai-store.ts`                                   | Create | Zustand slice: chunks[], status (idle                                                            | streaming | done | error), appendChunk, reset |
 
 ## Interfaces / Contracts

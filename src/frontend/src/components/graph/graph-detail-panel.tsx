@@ -10,6 +10,7 @@ import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Skeleton } from '@/components/atoms/skeleton';
 import { EmptyState } from '@/components/molecules/empty-state';
+import { AIAnalysisPanel } from './ai-analysis-panel';
 
 /** camelCase property keys → Title Case display labels ('fileName' → 'File Name'). */
 export function titleCaseKey(key: string): string {
@@ -122,11 +123,14 @@ export function GraphDetailPanel({
                   <Skeleton width="95%" height="0.75rem" />
                 </div>
               ) : selectedNode ? (
-                <NodeDetails
-                  node={selectedNode}
-                  edges={edges}
-                  onShowNeighborhood={onShowNeighborhood}
-                />
+                <div className="space-y-5">
+                  <NodeDetails
+                    node={selectedNode}
+                    edges={edges}
+                    onShowNeighborhood={onShowNeighborhood}
+                  />
+                  <AIAnalysisPanel node={selectedNode} />
+                </div>
               ) : (
                 <EmptyState
                   title="Node unavailable"
