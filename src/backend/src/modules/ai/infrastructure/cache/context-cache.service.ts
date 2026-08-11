@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 
 /** Cache key prefix for assembled AI context (spec: ai-context-assembly R3). */
@@ -33,7 +33,10 @@ export function contextCacheKey(capability: string, nodeId: string, depth: numbe
 export class ContextCacheService {
   private readonly logger = new Logger(ContextCacheService.name);
 
-  constructor(private readonly client: Redis) {}
+  constructor(
+    @Inject('REDIS_CLIENT')
+    private readonly client: Redis,
+  ) {}
 
   /** Read a cached context value; null on miss or when Redis is unavailable. */
   async get(key: string): Promise<string | null> {

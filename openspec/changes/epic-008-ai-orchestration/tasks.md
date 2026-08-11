@@ -58,7 +58,7 @@ Chain strategy: stacked-to-main
 
 ## Phase 5: Module Wiring (PR14)
 
-- [ ] 5.1 PR14 `ai.tokens.ts` + `ai.module.ts` + import in `app.module.ts`: providers/services/controller, onModuleInit handlers, register explain-module; mock-provider e2e
+- [x] 5.1 PR14 `ai.tokens.ts` + `ai.module.ts` + import in `app.module.ts`: providers/services/controller, onModuleInit handlers, register explain-module; mock-provider e2e
 
 ## Phase 6: Frontend (PR15-16)
 
