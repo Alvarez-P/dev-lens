@@ -51,11 +51,11 @@ Slices: PR1→main/tracker, PR2→PR1, PR3→PR2, PR4→PR3, PR5→PR4, PR6→PR
 
 ## Phase 6: Jobs & API
 
-- [ ] 6.1 [T] `events/documentation-event-handler.ts`: built/updated → enqueue, flag-gated (gen R1)
-- [ ] 6.2 [T] `jobs/documentation.job-processor.ts`: DLQ final attempt, `job.updateProgress` (gen R5)
-- [ ] 6.3 [T] `controllers/documentation.controller.ts`: generate/list/get/download/delete/regenerate + `jobs/:jobId`, owner-only delete, guards (api R1–R7)
-- [ ] 6.4 `documentation.module.ts`: wire, `onModuleInit` handler + bucket ensure (storage R1)
-- [ ] 6.5 `app.module.ts`: register `DocumentationModule`
+- [x] 6.1 [T] `events/documentation-event-handler.ts`: built/updated → enqueue, flag-gated (gen R1)
+- [x] 6.2 [T] `jobs/documentation.job-processor.ts`: DLQ final attempt, `job.updateProgress` (gen R5)
+- [x] 6.3 [T] `controllers/documentation.controller.ts`: generate/list/get/download/delete/regenerate + `jobs/:jobId`, owner-only delete, guards (api R1–R7)
+- [x] 6.4 `documentation.module.ts`: wire, `onModuleInit` handler + bucket ensure (storage R1)
+- [x] 6.5 `app.module.ts`: register `DocumentationModule`
 
 ## Phase 7: Frontend Views
 

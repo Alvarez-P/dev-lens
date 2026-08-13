@@ -341,6 +341,30 @@ describe('DocumentationService (5.4) — generation pipeline', () => {
     });
   });
 
+  describe('onProgress callback (R5 — BullMQ job.updateProgress wiring, task 6.2)', () => {
+    it('should invoke the onProgress callback with the stage and percentage per stage', async () => {
+      const { service } = buildHarness();
+      const onProgress = jest.fn();
+
+      await service.generate('repo-42', 'analysis-1', {
+        docTypes: [DocType.README],
+        onProgress,
+      });
+
+      expect(onProgress).toHaveBeenCalledWith('template-select', 20);
+      expect(onProgress).toHaveBeenCalledWith('render', 80);
+      expect(onProgress).toHaveBeenCalledWith('store', 100);
+    });
+
+    it('should not require the onProgress callback (backward compatible)', async () => {
+      const { service } = buildHarness();
+
+      await expect(
+        service.generate('repo-42', 'analysis-1', { docTypes: [DocType.README] }),
+      ).resolves.toBeDefined();
+    });
+  });
+
   describe('commit resolution (design data flow step 1)', () => {
     it('should resolve the commitSha and version from the latest graph snapshot', async () => {
       const { service, mocks } = buildHarness();
