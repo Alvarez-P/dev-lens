@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "skill": {
+      "*": "allow",
+      "hyperframes*": "deny",
+      "*-video": "deny",
+      "captions-overlay": "deny",
+      "embedded-captions": "deny",
+      "talking-head-recut": "deny",
+      "cut-the-curve": "deny",
+      "seam-craft": "deny",
+      "motion-*": "deny",
+      "oversized-cursor": "deny",
+      "figma": "deny",
+      "media-use": "deny",
+      "slideshow": "deny",
+      "faceless-explainer": "deny",
+      "remotion-to-hyperframes": "deny"
+    }
+  }
+}
