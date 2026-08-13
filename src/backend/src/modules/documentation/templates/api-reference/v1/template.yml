@@ -1,0 +1,24 @@
+id: api-reference
+name: API Reference
+version: 1
+sections:
+  - id: endpoint-list
+    title: Endpoint List
+    source: 'graph.endpoints()'
+    format: table
+  - id: request-response-schemas
+    title: Request / Response Schemas
+    source: 'ai.enrich("request-response-schemas")'
+    format: markdown
+  - id: auth-requirements
+    title: Auth Requirements
+    source: 'ai.enrich("auth-requirements")'
+    format: list
+  - id: error-responses
+    title: Error Responses
+    source: 'ai.enrich("error-responses")'
+    format: table
+  - id: openapi-export
+    title: OpenAPI Export
+    source: 'graph.endpoints()'
+    format: json
