@@ -3,6 +3,7 @@
 > **Archived from**: `epic-006-knowledge-graph` (2026-08-04)
 > **Updated by**: `ai-enrichment` (2026-08-07) — added `sourceFile` tracking (Gap G1)
 > **Updated by**: `request-flow-visualization` (2026-08-10) — `INVOKES`/`INJECTS` edge types, endpoint-level `PROTECTS`/`TRANSFORMS`, parameter-type `DEPENDS_ON`, `flowAvailable` on snapshots
+> **Updated by**: `epic-008-ai-orchestration` (2026-08-10) — `sourceFile` property semantics on the Graph Node Value Object, normalized path storage for capability context assembly
 
 ## Purpose
 
@@ -157,7 +158,7 @@ The system SHALL track whether flow data is available per snapshot. Snapshots bu
 
 ### Requirement: Graph Node Value Object
 
-Every graph node SHALL have: a UUID identifier, a type from the taxonomy, a human-readable label, a fully qualified name (FQN) stable across analysis versions, a JSONB properties bag for extensible metadata, a nullable `deprecated_at` timestamp for soft removal, and a repository identifier with version number.
+Every graph node SHALL have: a UUID identifier, a type from the taxonomy, a human-readable label, a fully qualified name (FQN) stable across analysis versions, a JSONB properties bag for extensible metadata, a nullable `sourceFile` path (relative from repo root to the source file), a nullable `deprecated_at` timestamp for soft removal, and a repository identifier with version number.
 
 The FQN combined with `repo_id` and `version` SHALL uniquely identify a node.
 
@@ -167,6 +168,14 @@ The FQN combined with `repo_id` and `version` SHALL uniquely identify a node.
 - WHEN two separate analyses produce graph nodes for that class
 - THEN both nodes share the same FQN
 - AND differ only by version number
+- AND both carry the same `sourceFile` value
+
+#### Scenario: Node with sourceFile is persisted and queryable
+
+- GIVEN a graph node with `sourceFile: "src/modules/orders/OrderService.ts"`
+- WHEN the node is persisted to the database
+- THEN the `sourceFile` value is stored and retrievable via GraphQueryService
+- AND downstream consumers (e.g., ai-context-assembly) can resolve the file path directly from the graph node without querying `analysis.ir`
 
 ### Requirement: Graph Snapshot Value Object
 
@@ -265,6 +274,28 @@ The migration SHALL be reversible via `ALTER TABLE graph_nodes DROP COLUMN sourc
 - WHEN an older version of the application (without `sourceFile` in `GraphNodeEntity`) connects
 - THEN no errors occur on reads or writes
 - AND TypeORM silently ignores the unmapped column
+
+### Requirement: Source File Persistence on Graph Nodes
+
+Every graph node SHALL carry an optional `sourceFile` property: a relative path from the repository root to the source file from which the node was extracted. The path SHALL be normalized (forward slashes, no leading `./`). This property is populated during graph construction from the Intermediate Representation (IR) and is nullable — nodes synthesized without a source (e.g., PROJECT, EXTERNAL_DEPENDENCY) SHALL have `sourceFile: null`.
+
+#### Scenario: Class node stores its source file path
+
+- GIVEN a TypeScript class defined in `src/modules/orders/OrderService.ts`
+- WHEN `SemanticModelBuilder` processes the IR for that class
+- THEN the resulting graph node has `sourceFile: "src/modules/orders/OrderService.ts"`
+
+#### Scenario: Project node has null sourceFile
+
+- GIVEN a PROJECT node synthesized from repository metadata
+- WHEN the node is created
+- THEN `sourceFile` is `null`
+
+#### Scenario: File path is normalized
+
+- GIVEN an IR module with path `./src\\utils\\helpers.ts`
+- WHEN the `sourceFile` property is set
+- THEN the stored value is `"src/utils/helpers.ts"` (forward slashes, no leading `./`)
 
 ## References
 
