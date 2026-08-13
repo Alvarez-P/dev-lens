@@ -1,6 +1,6 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join, resolve } from 'path';
+import { join } from 'path';
 
 export interface LoadedPromptTemplates {
   capabilityId: string;
@@ -12,8 +12,8 @@ export interface LoadedPromptTemplates {
   examples: unknown | null;
 }
 
-/** Default location relative to the AI module: src/modules/ai/ai.capabilities. */
-const DEFAULT_BASE_DIR = resolve(__dirname, '..', 'ai.capabilities');
+/** Default location: src/modules/ai/ai.capabilities (relative to workspace root). */
+const DEFAULT_BASE_DIR = join(process.cwd(), 'src', 'modules', 'ai', 'ai.capabilities');
 
 const VERSION_DIR_PATTERN = /^v(\d+)$/;
 

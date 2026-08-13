@@ -159,9 +159,15 @@ export default (): AppConfiguration => ({
       mock: {
         enabled: true,
       },
+      deepseek: {
+        apiKeyEnv: 'DEEPSEEK_API_KEY',
+        baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
+        defaultModel: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+        enabled: Boolean(process.env.DEEPSEEK_API_KEY),
+      },
     },
-    defaultProvider: process.env.AI_DEFAULT_PROVIDER || 'ollama',
-    defaultModel: process.env.AI_DEFAULT_MODEL || 'llama3.2',
+    defaultProvider: process.env.AI_DEFAULT_PROVIDER || 'deepseek',
+    defaultModel: process.env.AI_DEFAULT_MODEL || 'deepseek-chat',
     timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || '60000', 10),
     retry: {
       maxAttempts: parseInt(process.env.AI_RETRY_MAX_ATTEMPTS || '2', 10),

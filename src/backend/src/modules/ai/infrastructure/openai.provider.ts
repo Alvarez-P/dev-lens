@@ -33,8 +33,8 @@ const TOKENS_PER_4_CHARS = 0.25;
  */
 @Injectable()
 export class OpenAIProvider implements AIProvider {
-  readonly id = 'openai';
-  readonly name = 'OpenAI';
+  readonly id: string;
+  readonly name: string;
   readonly supportedModels: string[];
 
   private readonly logger = new Logger(OpenAIProvider.name);
@@ -45,7 +45,11 @@ export class OpenAIProvider implements AIProvider {
     config: AIProviderConfig | undefined,
     apiKey: string | undefined,
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
+    providerId = 'openai',
+    providerName = 'OpenAI',
   ) {
+    this.id = providerId;
+    this.name = providerName;
     this.model = config?.defaultModel ?? DEFAULT_MODEL;
     this.supportedModels = [this.model];
 
@@ -55,7 +59,11 @@ export class OpenAIProvider implements AIProvider {
       );
       this.client = null;
     } else {
-      this.client = new OpenAI({ apiKey, timeout: timeoutMs });
+      this.client = new OpenAI({
+        apiKey,
+        baseURL: config?.baseUrl,
+        timeout: timeoutMs,
+      });
     }
   }
 

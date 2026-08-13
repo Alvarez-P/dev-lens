@@ -114,18 +114,37 @@ import {
       inject: [ConfigService],
     },
     {
+      provide: 'DEEPSEEK_PROVIDER',
+      useFactory: (config: ConfigService): OpenAIProvider => {
+        const ai = config.ai;
+
+        return new OpenAIProvider(
+          ai.providers.deepseek,
+          ai.providers.deepseek?.apiKeyEnv
+            ? process.env[ai.providers.deepseek.apiKeyEnv]
+            : undefined,
+          ai.timeoutMs,
+          'deepseek',
+          'DeepSeek',
+        );
+      },
+      inject: [ConfigService],
+    },
+    {
       provide: AI_PROVIDER_REGISTRY,
       useFactory: (
         openai: OpenAIProvider,
         ollama: OllamaProvider,
         mock: MockProvider,
+        deepseek: OpenAIProvider,
       ): Map<string, AIProvider> =>
         new Map<string, AIProvider>([
           ['openai', openai],
           ['ollama', ollama],
           ['mock', mock],
+          ['deepseek', deepseek],
         ]),
-      inject: [OpenAIProvider, OllamaProvider, MockProvider],
+      inject: [OpenAIProvider, OllamaProvider, MockProvider, 'DEEPSEEK_PROVIDER'],
     },
     // Orchestration services (PR14): capability registry, provider routing,
     // prompt building, context cache, the pipeline orchestrator, and the

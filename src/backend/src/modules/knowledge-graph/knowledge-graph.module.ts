@@ -55,5 +55,8 @@ export class KnowledgeGraphModule implements OnModuleInit {
     this.eventDispatcher.registerHandler('analysis.completed', (event) =>
       this.eventHandler.handle(event),
     );
+    this.eventDispatcher.registerHandler('enrichment.completed', (event) =>
+      this.eventHandler.handle(event),
+    );
   }
 }
