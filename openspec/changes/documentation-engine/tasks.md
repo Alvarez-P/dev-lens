@@ -59,11 +59,11 @@ Slices: PR1→main/tracker, PR2→PR1, PR3→PR2, PR4→PR3, PR5→PR4, PR6→PR
 
 ## Phase 7: Frontend Views
 
-- [ ] 7.1 Frontend deps: `react-markdown`, `remark-gfm`, `mermaid`, `rehype-highlight`
-- [ ] 7.2 [T] `docs/page.tsx` + list components: grouped cards, empty state (R1, R2, R7)
-- [ ] 7.3 [T] `docs/[artifact]/page.tsx` + viewer: markdown, mermaid, highlight, AI badge (R3, R6)
-- [ ] 7.4 [T] generate button + progress polling + download buttons (R4, R5)
-- [ ] 7.5 `page.tsx`: "Documentation" nav link (R8)
+- [x] 7.1 Frontend deps: `react-markdown`, `remark-gfm`, `mermaid`, `rehype-highlight`
+- [x] 7.2 [T] `docs/page.tsx` + list components: grouped cards, empty state (R1, R2, R7)
+- [x] 7.3 [T] `docs/[artifact]/page.tsx` + viewer: markdown, mermaid, highlight, AI badge (R3, R6)
+- [x] 7.4 [T] generate button + progress polling + download buttons (R4, R5)
+- [x] 7.5 `page.tsx`: "Documentation" nav link (R8)
 
 ## Phase 8: Verification
 

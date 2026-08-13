@@ -178,4 +178,52 @@ describe('MarkdownRenderer — section fragment rendering', () => {
     const markdown = renderer.render(doc).buffer.toString('utf8');
     expect(markdown).toContain(raw);
   });
+
+  // views R6 (PR6): the stored markdown MUST carry a machine-readable marker
+  // for AI-enriched sections so the frontend viewer can show an
+  // "AI-generated" badge adjacent to the section heading.
+  it('should emit an AI marker after the heading of an aiGenerated section', () => {
+    const doc: GeneratedDocument = {
+      docType: DocType.MODULE_DOCS,
+      templateVersion: '1',
+      title: 'Module Documentation',
+      repositoryId: 'repo-1',
+      commitSha: 'abc123',
+      generatedAt: '2026-01-01T00:00:00.000Z',
+      sections: [
+        {
+          id: 'module-purpose',
+          title: 'Module Purpose',
+          format: SectionFormat.MARKDOWN,
+          content: { markdown: 'This module handles user auth.' },
+          aiGenerated: true,
+        },
+      ],
+    };
+
+    const markdown = renderer.render(doc).buffer.toString('utf8');
+    expect(markdown).toMatch(/## Module Purpose\n<!-- devlens:ai -->/);
+  });
+
+  it('should NOT emit an AI marker for deterministically generated sections', () => {
+    const doc: GeneratedDocument = {
+      docType: DocType.MODULE_DOCS,
+      templateVersion: '1',
+      title: 'Module Documentation',
+      repositoryId: 'repo-1',
+      commitSha: 'abc123',
+      generatedAt: '2026-01-01T00:00:00.000Z',
+      sections: [
+        {
+          id: 'public-api',
+          title: 'Public API',
+          format: SectionFormat.TABLE,
+          content: { rows: [{ method: 'GET', path: '/users' }] },
+        },
+      ],
+    };
+
+    const markdown = renderer.render(doc).buffer.toString('utf8');
+    expect(markdown).not.toContain('devlens:ai');
+  });
 });

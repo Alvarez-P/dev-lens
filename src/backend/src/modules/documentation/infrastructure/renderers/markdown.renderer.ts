@@ -57,9 +57,20 @@ function fence(language: string, body: string): string {
   return ['```' + language, body, '```'].join('\n');
 }
 
+/**
+ * Machine-readable marker emitted right after the heading of an
+ * AI-enriched section (views R6). The frontend Markdown viewer scans for it
+ * to place the "AI-generated" badge next to the section heading.
+ */
+export const AI_SECTION_MARKER = '<!-- devlens:ai -->';
+
 /** Section-level fragments (design: two-layer rendering). */
 export function renderSectionMarkdown(section: DocSection): string {
-  const title = section.title ? `## ${section.title}\n\n` : '';
+  // The AI marker sits directly under the heading line so the frontend viewer
+  // can associate it with the section title (views R6).
+  const title = section.title
+    ? `## ${section.title}\n${section.aiGenerated ? `${AI_SECTION_MARKER}\n` : ''}\n`
+    : '';
 
   switch (section.format) {
     case SectionFormat.TABLE: {
