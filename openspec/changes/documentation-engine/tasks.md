@@ -44,10 +44,10 @@ Slices: PR1→main/tracker, PR2→PR1, PR3→PR2, PR4→PR3, PR5→PR4, PR6→PR
 
 ## Phase 5: Generation Core
 
-- [ ] 5.1 [T] `content-generators/content-generator.interface.ts` + `GeneratedDocument` (R3)
-- [ ] 5.2 [T] 5 `content-generators/*.ts` over `GraphQueryService` (template R2, R4)
-- [ ] 5.3 [T] `doc-enricher.service.ts`: `ProviderSelectorService` + Redis 90d cache `(filePath, contentHash)` (R6)
-- [ ] 5.4 [T] `documentation.service.ts`: 5-stage pipeline, idempotent skip, `force`, progress events (R3, R4, R5)
+- [x] 5.1 [T] `content-generators/content-generator.interface.ts` + `GeneratedDocument` (R3)
+- [x] 5.2 [T] 5 `content-generators/*.ts` over `GraphQueryService` (template R2, R4)
+- [x] 5.3 [T] `doc-enricher.service.ts`: `ProviderSelectorService` + Redis 90d cache `(filePath, contentHash)` (R6)
+- [x] 5.4 [T] `documentation.service.ts`: 5-stage pipeline, idempotent skip, `force`, progress events (R3, R4, R5)
 
 ## Phase 6: Jobs & API
 
