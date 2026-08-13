@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { get, post, isSuccessResponse } from '@/lib/api-client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { get, post, del, isSuccessResponse } from '@/lib/api-client';
 import { PageHeader } from '@/components/molecules/page-header';
 import { Button } from '@/components/atoms/button';
 import { LoadingState } from '@/components/molecules/loading-state';
 import { EmptyState } from '@/components/molecules/empty-state';
 import { RepoCard } from '@/components/repositories/repo-card';
 import { ConnectRepoDialog } from '@/components/repositories/connect-repo-dialog';
+import { useToast } from '@/components/molecules/toast-provider';
 import { Plus, GitBranch } from 'lucide-react';
 import type { RepoStatus } from '@/components/molecules/repo-status-badge';
 
@@ -27,6 +28,7 @@ interface Repository {
 export default function RepositoriesPage(): React.ReactNode {
   const [showConnectDialog, setShowConnectDialog] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['repositories'],
@@ -46,6 +48,26 @@ export default function RepositoriesPage(): React.ReactNode {
   });
 
   const repositories = data ?? [];
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await del<void>(`/api/v1/repositories/${id}`);
+      if (!isSuccessResponse(response)) {
+        throw new Error('Failed to delete repository');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repositories'] });
+      toast('Repository deleted', 'success');
+    },
+    onError: (err) => {
+      toast(err instanceof Error ? err.message : 'Delete failed', 'error');
+    },
+  });
+
+  async function handleDeleteRepo(id: string): Promise<void> {
+    await deleteMutation.mutateAsync(id);
+  }
 
   async function handleConnectRepo(formData: {
     name: string;
@@ -109,7 +131,7 @@ export default function RepositoriesPage(): React.ReactNode {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {repositories.map((repo) => (
-            <RepoCard key={repo.id} {...repo} />
+            <RepoCard key={repo.id} {...repo} onDelete={handleDeleteRepo} />
           ))}
         </div>
       )}

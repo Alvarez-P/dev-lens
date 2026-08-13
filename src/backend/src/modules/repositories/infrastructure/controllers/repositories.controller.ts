@@ -74,14 +74,25 @@ export class RepositoriesController {
     return { success: true, data: result };
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Archive/delete repository' })
+  @Post(':id/archive')
+  @ApiOperation({ summary: 'Archive repository (soft delete)' })
   @ApiResponse({ status: 200, description: 'Repository archived' })
   async archive(
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,
   ): Promise<ApiResponseType<void>> {
     await this.repositoryService.archive(id, user.userId);
+    return { success: true, data: undefined };
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete repository and all associated data' })
+  @ApiResponse({ status: 200, description: 'Repository deleted' })
+  async delete(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+  ): Promise<ApiResponseType<void>> {
+    await this.repositoryService.delete(id, user.userId);
     return { success: true, data: undefined };
   }
 

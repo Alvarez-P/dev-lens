@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, post, del, isSuccessResponse } from '@/lib/api-client';
@@ -8,6 +9,7 @@ import { Button } from '@/components/atoms/button';
 import { Badge } from '@/components/atoms/badge';
 import { LoadingState } from '@/components/molecules/loading-state';
 import { useToast } from '@/components/molecules/toast-provider';
+import { ConfirmDialog } from '@/components/molecules/confirm-dialog';
 import { RepoStatusBadge, type RepoStatus } from '@/components/molecules/repo-status-badge';
 import {
   SyncHistoryTimeline,
@@ -17,11 +19,11 @@ import {
   GitBranch,
   Clock,
   RefreshCw,
-  Archive,
+  Trash2,
   ArrowLeft,
   HardDrive,
   FileText,
-  Share2,
+  Globe,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -100,14 +102,20 @@ export default function RepositoryDetailPage(): React.ReactNode {
     mutationFn: async () => {
       const response = await del<void>(`/api/v1/repositories/${id}`);
       if (!isSuccessResponse(response)) {
-        throw new Error('Failed to archive repository');
+        throw new Error('Failed to delete repository');
       }
     },
     onSuccess: () => {
+      toast('Repository deleted', 'success');
       queryClient.invalidateQueries({ queryKey: ['repositories'] });
       router.push('/repositories');
     },
+    onError: (err) => {
+      toast(err instanceof Error ? err.message : 'Delete failed', 'error');
+    },
   });
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (isLoading) {
     return <LoadingState variant="page" />;
@@ -151,11 +159,11 @@ export default function RepositoryDetailPage(): React.ReactNode {
               Back
             </Button>
             <Link
-              href={`/repositories/${id}/graph`}
+              href={`/repositories/${id}/api`}
               className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-surface-950 transition-colors hover:bg-primary-500"
             >
-              <Share2 className="mr-2 h-4 w-4" />
-              View Graph
+              <Globe className="mr-2 h-4 w-4" />
+              API Endpoints
             </Link>
             <Button
               onClick={() => syncMutation.mutate()}
@@ -164,19 +172,20 @@ export default function RepositoryDetailPage(): React.ReactNode {
             >
               Sync Now
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (window.confirm('Archive this repository? This action cannot be undone.')) {
-                  archiveMutation.mutate();
-                }
-              }}
-              isLoading={archiveMutation.isPending}
-            >
-              <Archive className="h-4 w-4" />
+            <Button variant="ghost" onClick={() => setShowDeleteConfirm(true)}>
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         }
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => archiveMutation.mutate()}
+        title={`Delete "${repo.name}"?`}
+        description="This will permanently remove the repository and all its graph data. This action cannot be undone."
+        isLoading={archiveMutation.isPending}
       />
 
       <div className="rounded-xl border border-white/[0.04] bg-surface-900/60 backdrop-blur-sm p-6">
