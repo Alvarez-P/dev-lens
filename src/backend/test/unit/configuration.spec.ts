@@ -128,20 +128,20 @@ describe('Configuration', () => {
       expect(config.ai.enabled).toBe(false);
     });
 
-    it('should default ai.defaultProvider to ollama', () => {
+    it('should default ai.defaultProvider to deepseek', () => {
       delete process.env.AI_DEFAULT_PROVIDER;
 
       const config: AppConfiguration = configuration();
 
-      expect(config.ai.defaultProvider).toBe('ollama');
+      expect(config.ai.defaultProvider).toBe('deepseek');
     });
 
-    it('should default ai.defaultModel to llama3.2', () => {
+    it('should default ai.defaultModel to deepseek-chat', () => {
       delete process.env.AI_DEFAULT_MODEL;
 
       const config: AppConfiguration = configuration();
 
-      expect(config.ai.defaultModel).toBe('llama3.2');
+      expect(config.ai.defaultModel).toBe('deepseek-chat');
     });
 
     it('should default ai.timeoutMs to 60000', () => {

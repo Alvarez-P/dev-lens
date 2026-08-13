@@ -150,13 +150,14 @@ describe('AiModule', () => {
     expect(AI_ENRICHMENT_DLQ).toBe('ai-enrichment-dlq');
   });
 
-  it('should register all three providers in the AI_PROVIDER_REGISTRY', () => {
+  it('should register all four providers in the AI_PROVIDER_REGISTRY', () => {
     const registry = moduleRef.get<Map<string, AIProvider>>(AI_PROVIDER_REGISTRY);
 
     expect(registry.get('openai')).toBeInstanceOf(OpenAIProvider);
     expect(registry.get('ollama')).toBeInstanceOf(OllamaProvider);
     expect(registry.get('mock')).toBeInstanceOf(MockProvider);
-    expect(registry.size).toBe(3);
+    expect(registry.get('deepseek')).toBeInstanceOf(OpenAIProvider);
+    expect(registry.size).toBe(4);
   });
 
   it('should resolve ProviderSelectorService with the registry and config', () => {
