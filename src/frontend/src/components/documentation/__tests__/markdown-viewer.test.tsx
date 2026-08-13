@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MarkdownViewer } from '../markdown-viewer';
+import { MarkdownViewer, extractAiSectionTitles } from '../markdown-viewer';
 
 vi.mock('mermaid', () => ({
   default: {
@@ -130,5 +130,29 @@ Short paragraph.
     );
     expect(container.firstElementChild).not.toBeNull();
     expect(screen.getByText('Short paragraph.')).toBeInTheDocument();
+  });
+});
+
+describe('extractAiSectionTitles (7.3)', () => {
+  it('detects AI sections when the marker sits directly under the heading (backend format)', () => {
+    const titles = extractAiSectionTitles('## Module Purpose\n<!-- devlens:ai -->\n\nbody');
+    expect(titles).toEqual(new Set(['Module Purpose']));
+  });
+
+  it('detects AI sections when blank lines separate the heading from the marker', () => {
+    const titles = extractAiSectionTitles('## Module Purpose\n\n\n<!-- devlens:ai -->\n\nbody');
+    expect(titles).toEqual(new Set(['Module Purpose']));
+  });
+
+  it('ignores headings whose following non-blank line is not the marker', () => {
+    const titles = extractAiSectionTitles(
+      '## Public API\n\ntable content\n\n## Real AI\n<!-- devlens:ai -->',
+    );
+    expect(titles).toEqual(new Set(['Real AI']));
+  });
+
+  it('returns an empty set when no section is AI-generated', () => {
+    const titles = extractAiSectionTitles('# Doc\n\n## Plain\n\ntext only');
+    expect(titles.size).toBe(0);
   });
 });

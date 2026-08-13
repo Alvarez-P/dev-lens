@@ -34,8 +34,11 @@ function nodeText(node: ReactNode): string {
 }
 
 /**
- * Scan the raw markdown for headings directly followed by the AI marker and
- * return the set of section titles that are AI-generated (views R6).
+ * Scan the raw markdown for headings followed by the AI marker and return the
+ * set of section titles that are AI-generated (views R6). The marker may sit
+ * directly under the heading line (backend renderer output) or be separated
+ * by blank lines (e.g. after pretty-printing), so whitespace-only lines are
+ * skipped between the heading and the marker.
  */
 export function extractAiSectionTitles(markdown: string): Set<string> {
   const titles = new Set<string>();
@@ -43,8 +46,12 @@ export function extractAiSectionTitles(markdown: string): Set<string> {
   for (let i = 0; i < lines.length - 1; i++) {
     const match = /^(#{1,6})\s+(.+?)\s*$/.exec(lines[i]);
     if (!match) continue;
-    if (lines[i + 1].includes(AI_SECTION_MARKER)) {
-      titles.add(match[2].trim());
+    for (let j = i + 1; j < lines.length && j <= i + 3; j++) {
+      if (lines[j].includes(AI_SECTION_MARKER)) {
+        titles.add(match[2].trim());
+        break;
+      }
+      if (lines[j].trim() !== '') break; // non-blank line without marker → not AI
     }
   }
   return titles;
