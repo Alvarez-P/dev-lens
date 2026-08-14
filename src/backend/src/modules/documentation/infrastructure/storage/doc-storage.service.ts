@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MinioService, DOCS_BUCKET } from './minio.service';
 import { DocType } from '../../domain/doc-type.enum';
 import type { RenderedArtifact } from '../renderers/renderer.interface';
+import type { Readable } from 'stream';
 
 /**
  * Minimal repository shape consumed for key derivation. Only the identity and
@@ -93,5 +94,19 @@ export class DocStorageService {
   /** Presigned GET URL for an artifact key, 1-hour default expiry (api R3). */
   presignDownload(minioKey: string, expires: number = 3600): Promise<string> {
     return this.minioService.presignGetObject(DOCS_BUCKET, minioKey, expires);
+  }
+
+  /** Stream an artifact object by key (storage R6, api R4 download). */
+  getObjectStream(minioKey: string): Promise<Readable> {
+    return this.minioService.getObject(DOCS_BUCKET, minioKey);
+  }
+
+  /**
+   * Remove an artifact object by key (api R5 delete). Called BEFORE the row
+   * is deleted so a MinIO failure leaves the metadata row intact (atomic
+   * delete per spec — if the object cannot be removed, the artifact remains).
+   */
+  deleteObject(minioKey: string): Promise<void> {
+    return this.minioService.removeObject(DOCS_BUCKET, minioKey);
   }
 }

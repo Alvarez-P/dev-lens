@@ -41,6 +41,14 @@ export interface GenerateOptions {
   force?: boolean;
   /** Storage org-chain ref; defaults to { id: repoId, ownerId: repoId }. */
   repository?: DocStorageRepositoryRef;
+  /**
+   * Per-stage progress callback (documentation-generation R5, design decision B).
+   * Fired alongside the DocumentationProgressEvent so the BullMQ job processor
+   * can mirror the stage percentage into `job.updateProgress()` for the
+   * `GET /docs/jobs/:jobId` poll endpoint. Optional — callers that only need
+   * the domain events can omit it.
+   */
+  onProgress?: (stage: string, progress: number) => void | Promise<void>;
 }
 
 export interface GenerationResult {
@@ -146,9 +154,14 @@ export class DocumentationService {
     const generated: DocType[] = [];
     const skipped: DocType[] = [];
 
+    const reportProgress = async (stage: string, progress: number): Promise<void> => {
+      await this.progress(repoId, jobId, stage, progress);
+      await options.onProgress?.(stage, progress);
+    };
+
     for (const docType of docTypes) {
       // 3. Template select.
-      await this.progress(repoId, jobId, 'template-select', 20);
+      await reportProgress('template-select', 20);
       const template = this.templateRegistry.get(docType);
       const templateVersion = String(template.version);
 
@@ -168,7 +181,7 @@ export class DocumentationService {
       }
 
       // 4. Content extract.
-      await this.progress(repoId, jobId, 'content-extract', 40);
+      await reportProgress('content-extract', 40);
       const generator = this.generatorsByDocType.get(docType);
       if (generator === undefined) {
         await this.fail(
@@ -191,12 +204,12 @@ export class DocumentationService {
 
       // 5. [AI enrich] — flag-gated, per-section, cache-checked (R6).
       if (this.enricher.enabled) {
-        await this.progress(repoId, jobId, 'ai-enrichment', 60);
+        await reportProgress('ai-enrichment', 60);
         doc = await this.enrichDocument(doc, template, graph.nodes, graph.edges, graph.version);
       }
 
       // 6. Render each configured format.
-      await this.progress(repoId, jobId, 'render', 80);
+      await reportProgress('render', 80);
       const formats = resolveFormats(docType);
       const aiModelVersion: string | null = null;
 
@@ -227,7 +240,7 @@ export class DocumentationService {
     }
 
     // 8. Dispatch documentation.completed.
-    await this.progress(repoId, jobId, 'store', 100);
+    await reportProgress('store', 100);
     await this.dispatch(
       new DocumentationGeneratedEvent(
         repoId,

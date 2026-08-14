@@ -149,4 +149,33 @@ describe('DocStorageService (4.2) — key scheme, latest pointer, presign', () =
       expect(url).toContain('devlens-docs');
     });
   });
+
+  describe('getObjectStream (api R4 streaming download)', () => {
+    it('should stream the artifact object from MinIO by key', async () => {
+      const { Readable } = jest.requireActual('stream') as typeof import('stream');
+      const stream = Readable.from(['# README']);
+      mockMinioService.getObject = jest.fn().mockResolvedValue(stream);
+
+      const result = await service.getObjectStream('org-1/repo-42/abc123/readme.md');
+
+      expect(mockMinioService.getObject).toHaveBeenCalledWith(
+        DOCS_BUCKET,
+        'org-1/repo-42/abc123/readme.md',
+      );
+      expect(result).toBe(stream);
+    });
+  });
+
+  describe('deleteObject (api R5)', () => {
+    it('should remove the artifact object from MinIO by key', async () => {
+      mockMinioService.removeObject = jest.fn().mockResolvedValue(undefined);
+
+      await service.deleteObject('org-1/repo-42/abc123/readme.md');
+
+      expect(mockMinioService.removeObject).toHaveBeenCalledWith(
+        DOCS_BUCKET,
+        'org-1/repo-42/abc123/readme.md',
+      );
+    });
+  });
 });
