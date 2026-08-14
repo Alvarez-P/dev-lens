@@ -14,6 +14,7 @@ import { createCapability, AICapabilityInput } from './domain/ai-capability';
 import { createContextStrategy } from './domain/context-strategy';
 import { createPromptTemplate } from './domain/prompt-template';
 import { createOutputFormat } from './domain/output/output-format';
+import { LifecycleEnrichmentDto } from './domain/output/lifecycle-enrichment.dto';
 import { ProviderSelectorService } from './application/provider-selector.service';
 import { CapabilityRegistryService } from './application/capability-registry.service';
 import { ProviderRouterService } from './application/provider-router.service';
@@ -227,5 +228,40 @@ export class AiModule implements OnModuleInit {
     };
 
     this.capabilityRegistry.register(createCapability(capabilityInput));
+
+    // Register the classify-lifecycle capability (spec R2, ai-lifecycle
+    // classification): versioned v1 templates under ai.capabilities/ and a
+    // JSON output format validated against LifecycleEnrichmentDto. The
+    // enrichment pipeline resolves sketches + KG context from the Analysis
+    // directly, so the context strategy here is registration metadata only.
+    const classifyLifecycleInput: AICapabilityInput = {
+      id: 'classify-lifecycle',
+      name: 'Classify Lifecycle',
+      version: 1,
+      enabled: true,
+      description:
+        'Classify framework/architecture, per-endpoint lifecycle stages, and DTO types over the structural IR',
+      contextStrategy: createContextStrategy({
+        targetNodeType: NodeType.MODULE,
+        relationshipDepth: 1,
+        includeDependents: false,
+        includeDependencies: false,
+        includeApiSurface: true,
+        includeEventSurface: false,
+        includeDomainContext: false,
+      }),
+      promptTemplate: createPromptTemplate({
+        systemInstruction:
+          'You are DevLens Architect, a senior software architect classifying the framework, architecture, lifecycle stages, and DTO types of a codebase from its structural intermediate representation.',
+        contextPlaceholder: '{{context}}',
+        userQueryWrapper: 'Classify {{targetName}}.',
+        capabilityInstructions:
+          'Classify framework, per-endpoint lifecycle stages, and DTO fields from the code sketches.',
+      }),
+      outputFormat: createOutputFormat({ type: 'json', dto: LifecycleEnrichmentDto }),
+      validationRules: [],
+    };
+
+    this.capabilityRegistry.register(createCapability(classifyLifecycleInput));
   }
 }
