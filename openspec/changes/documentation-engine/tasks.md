@@ -38,9 +38,9 @@ Slices: PR1→main/tracker, PR2→PR1, PR3→PR2, PR4→PR3, PR5→PR4, PR6→PR
 
 ## Phase 4: Storage
 
-- [ ] 4.1 [T] `storage/minio.service.ts`: idempotent `devlens-docs` bucket ensure (R1)
-- [ ] 4.2 [T] `storage/doc-storage.service.ts`: key `{org}/{repo}/{commitSha}/{docType}.{format}` + `latest/` copy + presign (R2, R3, api R3; org fallback per design)
-- [ ] 4.3 [T] `persistence/{repositories,typeorm}/doc-artifact.*`: entity + repo, index `(repositoryId, commitSha, docType, templateVersion)` (R4, R5)
+- [x] 4.1 [T] `storage/minio.service.ts`: idempotent `devlens-docs` bucket ensure (R1)
+- [x] 4.2 [T] `storage/doc-storage.service.ts`: key `{org}/{repo}/{commitSha}/{docType}.{format}` + `latest/` copy + presign (R2, R3, api R3; org fallback per design)
+- [x] 4.3 [T] `persistence/{repositories,typeorm}/doc-artifact.*`: entity + repo, index `(repositoryId, commitSha, docType, templateVersion)` (R4, R5)
 
 ## Phase 5: Generation Core
 
