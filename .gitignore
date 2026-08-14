@@ -40,3 +40,5 @@ docker-compose.override.yml
 
 # Misc
 *.tsbuildinfo
+# Local Pi runtime state
+.atl/
