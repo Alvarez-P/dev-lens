@@ -1,0 +1,71 @@
+{
+  "examples": [
+    {
+      "framework": "nestjs",
+      "description": "NestJS project: controller with @UseGuards + @Get, service, and a DTO.",
+      "output": {
+        "framework": "nestjs",
+        "architecture": "mvc",
+        "confidence": 0.95,
+        "classes": [
+          {
+            "fqn": "acme:core:src/users#UsersController",
+            "role": "controller",
+            "lifecycle": ["guard:JwtGuard", "handler"],
+            "dtoFields": [],
+            "confidence": 0.95,
+            "sourceFile": "src/users/users.controller.ts"
+          },
+          {
+            "fqn": "acme:core:src/users#UsersService",
+            "role": "service",
+            "lifecycle": [],
+            "dtoFields": [],
+            "confidence": 0.9,
+            "sourceFile": "src/users/users.service.ts"
+          },
+          {
+            "fqn": "acme:core:src/users#CreateUserDto",
+            "role": "dto",
+            "lifecycle": [],
+            "dtoFields": [
+              { "name": "name", "type": "string", "optional": false },
+              { "name": "age", "type": "number", "optional": true }
+            ],
+            "confidence": 0.9,
+            "sourceFile": "src/users/dto/create-user.dto.ts"
+          }
+        ]
+      }
+    },
+    {
+      "framework": "express",
+      "description": "Express project: middleware chain before a route handler.",
+      "output": {
+        "framework": "express",
+        "architecture": "middleware-chain",
+        "confidence": 0.8,
+        "classes": [
+          {
+            "fqn": "acme:core:src/users#UsersRouter",
+            "role": "middleware",
+            "lifecycle": ["middleware", "handler"],
+            "dtoFields": [],
+            "confidence": 0.75,
+            "sourceFile": "src/users/users.router.js"
+          }
+        ]
+      }
+    },
+    {
+      "framework": "unknown",
+      "description": "No manifest candidates detected — must not guess.",
+      "output": {
+        "framework": "unknown",
+        "architecture": "unknown",
+        "confidence": 0,
+        "classes": []
+      }
+    }
+  ]
+}
