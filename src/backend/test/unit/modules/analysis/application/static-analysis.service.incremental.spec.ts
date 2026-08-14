@@ -5,6 +5,7 @@ import { createHash } from 'crypto';
 
 import { StaticAnalysisService } from '@/modules/analysis/application/static-analysis.service';
 import { FileManifestService } from '@/modules/analysis/application/file-manifest.service';
+import { ManifestFrameworkDetector } from '@/modules/analysis/application/manifest-framework-detector';
 import { Analysis } from '@/modules/analysis/domain/analysis.entity';
 import { AnalysisId } from '@/modules/analysis/domain/analysis-id.vo';
 import { AnalysisStatus } from '@/modules/analysis/domain/analysis-status.enum';
@@ -129,6 +130,7 @@ describe('StaticAnalysisService (incremental)', () => {
       eventDispatcher as never,
       manifestService,
       configService as never,
+      new ManifestFrameworkDetector(),
     );
   });
 

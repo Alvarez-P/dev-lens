@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 
 import { StaticAnalysisService } from '@/modules/analysis/application/static-analysis.service';
 import { FileManifestService } from '@/modules/analysis/application/file-manifest.service';
+import { ManifestFrameworkDetector } from '@/modules/analysis/application/manifest-framework-detector';
 import { Analysis } from '@/modules/analysis/domain/analysis.entity';
 import { AnalysisId } from '@/modules/analysis/domain/analysis-id.vo';
 import { AnalysisStatus } from '@/modules/analysis/domain/analysis-status.enum';
@@ -31,6 +32,7 @@ describe('StaticAnalysisService', () => {
   };
   let eventDispatcher: { dispatchBatch: jest.Mock };
   let manifestService: FileManifestService;
+  let manifestFrameworkDetector: ManifestFrameworkDetector;
 
   let repoPath: string;
   let snapshot: Snapshot;
@@ -134,6 +136,7 @@ describe('StaticAnalysisService', () => {
     };
     eventDispatcher = { dispatchBatch: jest.fn().mockResolvedValue(undefined) };
     manifestService = new FileManifestService();
+    manifestFrameworkDetector = new ManifestFrameworkDetector();
 
     service = new StaticAnalysisService(
       snapshotRepository as never,
@@ -146,6 +149,7 @@ describe('StaticAnalysisService', () => {
       eventDispatcher as never,
       manifestService,
       { analysis: { staticAnalysisThreshold: 0.5 } } as never,
+      manifestFrameworkDetector,
     );
   });
 
@@ -198,6 +202,30 @@ describe('StaticAnalysisService', () => {
         expect.any(Array),
         expect.objectContaining({ projectName: snapshotId, rootPath: repoPath }),
       );
+    });
+  });
+
+  describe('framework candidate detection', () => {
+    it('should persist framework candidates detected from package.json', async () => {
+      writeFileSync(
+        join(repoPath, 'package.json'),
+        JSON.stringify({ dependencies: { '@nestjs/core': '^10.0.0' } }),
+      );
+
+      await service.analyze({ snapshotId, repositoryId });
+
+      const saved = analysisRepository.save.mock.calls[0][0] as Analysis;
+      expect(saved.frameworkCandidates).toHaveLength(1);
+      expect(saved.frameworkCandidates![0].framework).toBe('nestjs');
+      expect(saved.frameworkCandidates![0].file).toBe('package.json');
+      expect(saved.frameworkCandidates![0].markers).toEqual(['@nestjs/core']);
+    });
+
+    it('should persist empty candidates when no manifest exists', async () => {
+      await service.analyze({ snapshotId, repositoryId });
+
+      const saved = analysisRepository.save.mock.calls[0][0] as Analysis;
+      expect(saved.frameworkCandidates).toEqual([]);
     });
   });
 

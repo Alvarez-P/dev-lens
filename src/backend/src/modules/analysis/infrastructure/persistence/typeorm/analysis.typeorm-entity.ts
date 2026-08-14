@@ -8,6 +8,12 @@ import {
 } from 'typeorm';
 import { IrProjectJson } from '../../../domain/ir-nodes';
 
+export interface FrameworkCandidateJson {
+  framework: string;
+  file: string;
+  markers: string[];
+}
+
 @Entity('analysis')
 @Index(['repositoryId'])
 export class AnalysisTypeOrmEntity {
@@ -31,6 +37,9 @@ export class AnalysisTypeOrmEntity {
 
   @Column({ name: 'reuse_ratio', type: 'real', nullable: true })
   reuseRatio!: number | null;
+
+  @Column({ name: 'framework_candidates', type: 'jsonb', nullable: true })
+  frameworkCandidates!: FrameworkCandidateJson[] | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
