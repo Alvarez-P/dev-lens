@@ -4,9 +4,7 @@ import configuration from './configuration';
 import { ConfigService } from './config.service';
 
 @Module({
-  imports: [
-    NestConfigModule.forFeature(configuration),
-  ],
+  imports: [NestConfigModule.forFeature(configuration)],
   providers: [ConfigService],
   exports: [ConfigService],
 })

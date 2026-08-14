@@ -14,7 +14,7 @@
 
 This RFC defines the structural architecture of the AI layer: the capability framework, the provider abstraction, prompt templates, context strategies, and the capability registry.
 
-AI Architecture defines *what* AI can do and *how* it is organized. AI Orchestration (RFC-009) defines *how* it runs.
+AI Architecture defines _what_ AI can do and _how_ it is organized. AI Orchestration (RFC-009) defines _how_ it runs.
 
 Together, they ensure that AI in DevLens is structured, provider-independent, observable, and maintainable — not a collection of ad-hoc prompts scattered across the codebase.
 
@@ -28,7 +28,7 @@ Most AI-integrated products suffer from three architectural failures:
 2. **Provider coupling** — switching from OpenAI to Anthropic requires rewriting every AI call site.
 3. **Context inconsistency** — different features assemble context differently, producing inconsistent AI behavior.
 
-DevLens avoids these failures by organizing AI around *capabilities* — discrete, well-defined operations that own their prompt template, context strategy, output format, and validation rules.
+DevLens avoids these failures by organizing AI around _capabilities_ — discrete, well-defined operations that own their prompt template, context strategy, output format, and validation rules.
 
 ---
 
@@ -68,14 +68,14 @@ An AI Capability is a discrete operation that the AI can perform. Every capabili
 
 ```typescript
 interface AICapability {
-  id: string;                    // Unique identifier (e.g., "explain-module")
-  name: string;                  // Human-readable name
-  description: string;           // What it does
-  version: number;               // Capability version (for evolution)
-  tier: 'free' | 'professional' | 'enterprise';  // Access tier
-  contextStrategy: ContextStrategy;  // What context to fetch
-  promptTemplate: PromptTemplate;    // How to structure the prompt
-  outputFormat: OutputFormat;        // Expected response structure
+  id: string; // Unique identifier (e.g., "explain-module")
+  name: string; // Human-readable name
+  description: string; // What it does
+  version: number; // Capability version (for evolution)
+  tier: 'free' | 'professional' | 'enterprise'; // Access tier
+  contextStrategy: ContextStrategy; // What context to fetch
+  promptTemplate: PromptTemplate; // How to structure the prompt
+  outputFormat: OutputFormat; // Expected response structure
   validationRules: ValidationRule[]; // Post-generation validation
 }
 ```
@@ -86,14 +86,14 @@ Defines what Knowledge Graph context is assembled before prompt generation:
 
 ```typescript
 interface ContextStrategy {
-  targetNodeType: NodeType;       // What the capability explains
-  relationshipDepth: number;      // How many hops to traverse
-  includeDependents: boolean;     // Nodes that depend on the target
-  includeDependencies: boolean;   // Nodes the target depends on
-  includeApiSurface: boolean;     // Endpoints exposed
-  includeEventSurface: boolean;   // Events published/consumed
-  includeDomainContext: boolean;  // Bounded context and aggregate
-  maxContextTokens: number;       // Token budget for context
+  targetNodeType: NodeType; // What the capability explains
+  relationshipDepth: number; // How many hops to traverse
+  includeDependents: boolean; // Nodes that depend on the target
+  includeDependencies: boolean; // Nodes the target depends on
+  includeApiSurface: boolean; // Endpoints exposed
+  includeEventSurface: boolean; // Events published/consumed
+  includeDomainContext: boolean; // Bounded context and aggregate
+  maxContextTokens: number; // Token budget for context
 }
 ```
 
@@ -103,15 +103,16 @@ Separates prompt structure from execution logic:
 
 ```typescript
 interface PromptTemplate {
-  systemInstruction: string;      // System-level behavior instruction
-  contextPlaceholder: string;     // Where context is inserted
-  userQueryWrapper: string;       // How the user query is wrapped
+  systemInstruction: string; // System-level behavior instruction
+  contextPlaceholder: string; // Where context is inserted
+  userQueryWrapper: string; // How the user query is wrapped
   capabilityInstructions: string; // Specific instructions for this capability
-  examples?: PromptExample[];     // Few-shot examples (optional)
+  examples?: PromptExample[]; // Few-shot examples (optional)
 }
 ```
 
 Templates are stored as versioned artifacts — not hardcoded strings. This enables:
+
 - A/B testing of prompt variations.
 - Rollback to previous prompt versions.
 - Audit of prompt changes over time.
@@ -124,7 +125,7 @@ Defines the expected structure of AI responses:
 ```typescript
 interface OutputFormat {
   type: 'text' | 'markdown' | 'json' | 'mermaid';
-  schema?: JSONSchema;            // For structured JSON responses
+  schema?: JSONSchema; // For structured JSON responses
   validation: 'strict' | 'lenient' | 'none';
 }
 ```
@@ -149,9 +150,9 @@ Every AI provider implements a common interface:
 
 ```typescript
 interface AIProvider {
-  id: string;                     // Provider identifier
-  name: string;                   // Human-readable name
-  supportedModels: string[];      // Available models
+  id: string; // Provider identifier
+  name: string; // Human-readable name
+  supportedModels: string[]; // Available models
 
   complete(request: AIRequest): Promise<AIResponse>;
   streamComplete(request: AIRequest): AsyncIterable<AIChunk>;
@@ -163,12 +164,12 @@ interface AIProvider {
 
 ## 6.2 Provider Implementations
 
-| Provider | Models | Type |
-|---|---|---|
-| OpenAI | GPT-4o, GPT-4o-mini | Cloud |
-| Anthropic | Claude 3.5 Sonnet, Claude 3 Haiku | Cloud |
-| Ollama | Llama 3, Mistral, CodeLlama | Local |
-| OpenRouter | Multiple (routing) | Cloud |
+| Provider   | Models                            | Type  |
+| ---------- | --------------------------------- | ----- |
+| OpenAI     | GPT-4o, GPT-4o-mini               | Cloud |
+| Anthropic  | Claude 3.5 Sonnet, Claude 3 Haiku | Cloud |
+| Ollama     | Llama 3, Mistral, CodeLlama       | Local |
+| OpenRouter | Multiple (routing)                | Cloud |
 
 ## 6.3 Provider Configuration
 
@@ -195,6 +196,7 @@ ai:
 ## 6.4 Provider Selection
 
 The orchestrator (RFC-009) selects a provider based on:
+
 1. **Capability requirements**: some capabilities may require specific model capabilities (e.g., JSON mode).
 2. **User tier**: Free tier may use cheaper/faster models.
 3. **Provider availability**: fallback if primary provider is unavailable.
@@ -207,19 +209,19 @@ The orchestrator (RFC-009) selects a provider based on:
 
 ## 7.1 MVP Capabilities
 
-| ID | Name | Tier | Description |
-|---|---|---|---|
-| `explain-module` | Explain Module | Free | Summarize what a module does, its dependencies, and its role |
-| `explain-service` | Explain Service | Free | Explain a service's responsibility, inputs, and outputs |
-| `explain-endpoint` | Explain Endpoint | Free | Describe an API endpoint, its parameters, and its behavior |
-| `explain-architecture` | Explain Architecture | Free | High-level architecture overview of the repository |
-| `explain-dependency` | Explain Dependency | Free | Explain why two modules depend on each other |
-| `explain-event` | Explain Event | Free | Describe a domain event, its producers, and consumers |
-| `suggest-documentation` | Suggest Documentation | Professional | Generate documentation for an undocumented module |
-| `analyze-impact` | Impact Analysis | Professional | Estimate the impact of changing a specific module |
-| `review-architecture` | Architecture Review | Professional | Identify architectural risks and suggest improvements |
-| `onboard-developer` | Onboarding Guide | Professional | Generate a personalized onboarding path for a repository |
-| `summarize-changes` | Summarize Changes | Enterprise | Summarize architectural changes between two commits |
+| ID                      | Name                  | Tier         | Description                                                  |
+| ----------------------- | --------------------- | ------------ | ------------------------------------------------------------ |
+| `explain-module`        | Explain Module        | Free         | Summarize what a module does, its dependencies, and its role |
+| `explain-service`       | Explain Service       | Free         | Explain a service's responsibility, inputs, and outputs      |
+| `explain-endpoint`      | Explain Endpoint      | Free         | Describe an API endpoint, its parameters, and its behavior   |
+| `explain-architecture`  | Explain Architecture  | Free         | High-level architecture overview of the repository           |
+| `explain-dependency`    | Explain Dependency    | Free         | Explain why two modules depend on each other                 |
+| `explain-event`         | Explain Event         | Free         | Describe a domain event, its producers, and consumers        |
+| `suggest-documentation` | Suggest Documentation | Professional | Generate documentation for an undocumented module            |
+| `analyze-impact`        | Impact Analysis       | Professional | Estimate the impact of changing a specific module            |
+| `review-architecture`   | Architecture Review   | Professional | Identify architectural risks and suggest improvements        |
+| `onboard-developer`     | Onboarding Guide      | Professional | Generate a personalized onboarding path for a repository     |
+| `summarize-changes`     | Summarize Changes     | Enterprise   | Summarize architectural changes between two commits          |
 
 ## 7.2 Capability Registry
 
@@ -262,6 +264,7 @@ ai/
 ```
 
 This structure enables:
+
 - Code review of prompt changes.
 - Git-based version history.
 - Rollback to any previous version.
@@ -285,6 +288,7 @@ Variables are populated from the Knowledge Graph context — never from raw code
 ## 8.3 Prompt Evolution
 
 When a prompt template is updated:
+
 1. The new version is added alongside the old version.
 2. Capabilities reference a specific version.
 3. Migrating to a new version requires explicit capability version bump.

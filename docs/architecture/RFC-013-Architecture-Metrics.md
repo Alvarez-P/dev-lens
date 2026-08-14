@@ -23,6 +23,7 @@ No AI is used in metric computation.
 # 2. Motivation
 
 Software architecture decays gradually. Without measurement, this decay is invisible until it causes problems:
+
 - A dependency cycle that seemed harmless grows to encompass 20 modules.
 - A module that started with 200 lines grows to 5000 lines, becoming a bottleneck.
 - Layer violations accumulate as shortcuts are taken during tight deadlines.
@@ -66,68 +67,68 @@ Architecture Metrics focuses exclusively on structural properties derived from t
 
 Measure the scale of the codebase:
 
-| Metric | Description |
-|---|---|
-| **Modules** | Total number of modules/packages |
-| **Services** | Total number of service classes |
-| **Controllers** | Total number of controllers/handlers |
-| **Endpoints** | Total number of API endpoints |
-| **Entities** | Total number of domain entities |
-| **Events** | Total number of domain/integration events |
-| **Files** | Total number of source files |
-| **LOC** | Total lines of code (from IR metadata) |
+| Metric          | Description                               |
+| --------------- | ----------------------------------------- |
+| **Modules**     | Total number of modules/packages          |
+| **Services**    | Total number of service classes           |
+| **Controllers** | Total number of controllers/handlers      |
+| **Endpoints**   | Total number of API endpoints             |
+| **Entities**    | Total number of domain entities           |
+| **Events**      | Total number of domain/integration events |
+| **Files**       | Total number of source files              |
+| **LOC**         | Total lines of code (from IR metadata)    |
 
 ## 5.2 Complexity Metrics
 
 Measure structural complexity:
 
-| Metric | Description |
-|---|---|
-| **Cyclomatic Complexity** | Average and max complexity per function/method (from IR) |
-| **Cognitive Complexity** | Nesting depth, branching complexity (from IR) |
-| **Depth of Inheritance** | Maximum inheritance chain depth |
-| **Afferent Couplings (Ca)** | Number of modules that depend on this module |
-| **Efferent Couplings (Ce)** | Number of modules this module depends on |
-| **Instability (I)** | Ce / (Ca + Ce) — 0 = maximally stable, 1 = maximally unstable |
-| **Abstractness (A)** | Ratio of abstract classes/interfaces to total classes |
-| **Distance from Main Sequence (D)** | |A + I - 1| — ideal is near 0 |
+| Metric                              | Description                                                   |
+| ----------------------------------- | ------------------------------------------------------------- |
+| **Cyclomatic Complexity**           | Average and max complexity per function/method (from IR)      |
+| **Cognitive Complexity**            | Nesting depth, branching complexity (from IR)                 |
+| **Depth of Inheritance**            | Maximum inheritance chain depth                               |
+| **Afferent Couplings (Ca)**         | Number of modules that depend on this module                  |
+| **Efferent Couplings (Ce)**         | Number of modules this module depends on                      |
+| **Instability (I)**                 | Ce / (Ca + Ce) — 0 = maximally stable, 1 = maximally unstable |
+| **Abstractness (A)**                | Ratio of abstract classes/interfaces to total classes         |
+| **Distance from Main Sequence (D)** |                                                               | A + I - 1 | — ideal is near 0 |
 
 ## 5.3 Dependency Metrics
 
 Measure inter-module relationships:
 
-| Metric | Description |
-|---|---|
-| **Dependency Count** | Total directed dependencies |
-| **Circular Dependencies** | Number and size of dependency cycles |
-| **Maximum Dependency Depth** | Longest transitive dependency chain |
-| **Highly Coupled Modules** | Modules with > N dependencies (configurable threshold) |
-| **God Modules** | Modules depended on by > N other modules (hub nodes) |
-| **Orphan Modules** | Modules with zero dependencies and zero dependents |
+| Metric                       | Description                                            |
+| ---------------------------- | ------------------------------------------------------ |
+| **Dependency Count**         | Total directed dependencies                            |
+| **Circular Dependencies**    | Number and size of dependency cycles                   |
+| **Maximum Dependency Depth** | Longest transitive dependency chain                    |
+| **Highly Coupled Modules**   | Modules with > N dependencies (configurable threshold) |
+| **God Modules**              | Modules depended on by > N other modules (hub nodes)   |
+| **Orphan Modules**           | Modules with zero dependencies and zero dependents     |
 
 ## 5.4 Architecture Compliance
 
 Measure adherence to defined architectural rules:
 
-| Metric | Description |
-|---|---|
-| **Layer Violations** | Dependencies that cross architectural layer boundaries in the wrong direction |
-| **Domain Boundary Violations** | Dependencies between bounded contexts that should be isolated |
-| **Cyclic Domain Dependencies** | Cycles between bounded contexts |
-| **Convention Violations** | Naming convention violations, file structure violations |
-| **Undocumented Endpoints** | Endpoints without associated documentation |
-| **Undocumented Events** | Events without associated documentation |
+| Metric                         | Description                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| **Layer Violations**           | Dependencies that cross architectural layer boundaries in the wrong direction |
+| **Domain Boundary Violations** | Dependencies between bounded contexts that should be isolated                 |
+| **Cyclic Domain Dependencies** | Cycles between bounded contexts                                               |
+| **Convention Violations**      | Naming convention violations, file structure violations                       |
+| **Undocumented Endpoints**     | Endpoints without associated documentation                                    |
+| **Undocumented Events**        | Events without associated documentation                                       |
 
 ## 5.5 Documentation Coverage
 
 Measure documentation completeness:
 
-| Metric | Description |
-|---|---|
+| Metric                            | Description                                        |
+| --------------------------------- | -------------------------------------------------- |
 | **Module Documentation Coverage** | Percentage of modules with generated documentation |
-| **API Documentation Coverage** | Percentage of endpoints documented |
-| **Event Documentation Coverage** | Percentage of events documented |
-| **README Completeness** | Whether the project has a generated README |
+| **API Documentation Coverage**    | Percentage of endpoints documented                 |
+| **Event Documentation Coverage**  | Percentage of events documented                    |
+| **README Completeness**           | Whether the project has a generated README         |
 
 ---
 
@@ -139,13 +140,13 @@ The Architecture Score is a composite indicator of overall architecture health.
 
 The score is a weighted average of normalized sub-scores:
 
-| Dimension | Weight | Metrics |
-|---|---|---|
-| **Modularity** | 25% | Instability distribution, god modules, orphan modules |
-| **Coupling** | 25% | Circular dependencies, afferent/efferent coupling averages |
-| **Complexity** | 20% | Cyclomatic complexity, cognitive complexity distribution |
-| **Compliance** | 15% | Layer violations, domain boundary violations |
-| **Documentation** | 15% | Documentation coverage |
+| Dimension         | Weight | Metrics                                                    |
+| ----------------- | ------ | ---------------------------------------------------------- |
+| **Modularity**    | 25%    | Instability distribution, god modules, orphan modules      |
+| **Coupling**      | 25%    | Circular dependencies, afferent/efferent coupling averages |
+| **Complexity**    | 20%    | Cyclomatic complexity, cognitive complexity distribution   |
+| **Compliance**    | 15%    | Layer violations, domain boundary violations               |
+| **Documentation** | 15%    | Documentation coverage                                     |
 
 ## 6.2 Score Range
 
@@ -173,18 +174,18 @@ rules:
     description: Bounded contexts must not have circular dependencies
     severity: error
     check: graph.cycles(contexts)
-    
+
   - id: no-infrastructure-from-domain
     description: Domain layer must not depend on infrastructure
     severity: error
     check: graph.dependencies(from: "domain", to: "infrastructure")
-    
+
   - id: max-module-dependencies
     description: Modules should not depend on more than 15 other modules
     severity: warning
     threshold: 15
     check: graph.dependency_count(module) > threshold
-    
+
   - id: max-module-size
     description: Modules should not exceed 1000 lines
     severity: warning
@@ -195,6 +196,7 @@ rules:
 ## 7.2 Built-in Rules
 
 The engine ships with a set of default rules based on common architecture patterns:
+
 - Clean Architecture layer dependency direction.
 - Hexagonal Architecture port/adapter separation.
 - DDD bounded context isolation.
@@ -203,6 +205,7 @@ The engine ships with a set of default rules based on common architecture patter
 ## 7.3 Custom Rules
 
 Organizations can define custom rules:
+
 - Rule files stored per organization/workspace.
 - Rules can reference any Knowledge Graph query.
 - Custom severity levels and thresholds.
@@ -214,12 +217,14 @@ Organizations can define custom rules:
 ## 8.1 Metric Snapshots
 
 Each time the Knowledge Graph is updated, metrics are recomputed and stored as a snapshot:
+
 - `/{organization_id}/{repository_id}/{commit_sha}/metrics.json`
 - Snapshot includes all computed metrics and the Architecture Score.
 
 ## 8.2 Trend Analysis
 
 Historical snapshots enable:
+
 - **Trend charts**: metric values over time (line charts showing score evolution).
 - **Anomaly detection**: sudden metric changes (e.g., dependency count spikes after a large merge).
 - **Release comparisons**: "How did the architecture change between v1.5 and v2.0?"
@@ -260,16 +265,18 @@ Snapshots are retained indefinitely by default. Configurable retention for organ
 # 10. Performance
 
 Metric computation is a background operation:
+
 - Triggered by `KnowledgeGraphBuilt` or `KnowledgeGraphUpdated` events.
 - Executed via BullMQ jobs.
 - Incremental computation where possible (only recompute metrics for changed subgraphs).
 
 Target computation times:
-| Repository Size | Target |
-|---|---|
-| Small (< 100 modules) | < 5 seconds |
+
+| Repository Size          | Target       |
+| ------------------------ | ------------ |
+| Small (< 100 modules)    | < 5 seconds  |
 | Medium (100-500 modules) | < 30 seconds |
-| Large (500+ modules) | < 2 minutes |
+| Large (500+ modules)     | < 2 minutes  |
 
 ---
 
@@ -277,15 +284,16 @@ Target computation times:
 
 Configurable alerts notify teams of architectural degradation:
 
-| Alert | Trigger |
-|---|---|
-| Score Drop | Architecture Score decreases by > 5 points |
-| New Cycle | A new circular dependency is detected |
-| Layer Violation | A new layer violation is introduced |
-| God Module | A module exceeds the dependency threshold |
+| Alert               | Trigger                                      |
+| ------------------- | -------------------------------------------- |
+| Score Drop          | Architecture Score decreases by > 5 points   |
+| New Cycle           | A new circular dependency is detected        |
+| Layer Violation     | A new layer violation is introduced          |
+| God Module          | A module exceeds the dependency threshold    |
 | Undocumented Growth | Documentation coverage drops below threshold |
 
 Alerts can be delivered via:
+
 - In-app notifications.
 - Email.
 - Webhook (for integration with Slack, Teams, etc.).

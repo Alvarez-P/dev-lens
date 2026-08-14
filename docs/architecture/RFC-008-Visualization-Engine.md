@@ -186,6 +186,7 @@ For graphs with fewer than 200 nodes, SVG rendering via a library like `react-fl
 ## 7.3 Hybrid Mode
 
 The engine selects the rendering backend at runtime based on:
+
 - Number of visible nodes.
 - Device GPU capability (detected via WebGL support).
 - User preference (performance vs. accessibility).
@@ -206,6 +207,7 @@ Large repositories may contain thousands of nodes. Rendering all nodes simultane
 ## 8.2 Transitions
 
 When loading additional detail:
+
 - New nodes animate into position (fade + scale).
 - Existing nodes shift smoothly to accommodate new layout.
 - A skeleton indicator shows loading regions.
@@ -216,17 +218,17 @@ When loading additional detail:
 
 ## 9.1 Navigation
 
-| Action | Gesture |
-|---|---|
-| Pan | Click + drag on empty space |
-| Zoom | Scroll wheel / pinch |
-| Select node | Click |
+| Action          | Gesture                            |
+| --------------- | ---------------------------------- |
+| Pan             | Click + drag on empty space        |
+| Zoom            | Scroll wheel / pinch               |
+| Select node     | Click                              |
 | Select multiple | Shift + click / drag selection box |
-| Open detail | Double-click / Enter |
-| Context menu | Right-click |
-| Fit to screen | F key |
-| Search | Ctrl+K / Cmd+K |
-| Reset view | Escape |
+| Open detail     | Double-click / Enter               |
+| Context menu    | Right-click                        |
+| Fit to screen   | F key                              |
+| Search          | Ctrl+K / Cmd+K                     |
+| Reset view      | Escape                             |
 
 ## 9.2 Node Interaction
 
@@ -238,6 +240,7 @@ When loading additional detail:
 ## 9.3 Keyboard Navigation
 
 Full keyboard accessibility:
+
 - Tab: move between nodes.
 - Arrow keys: navigate relationships.
 - Enter: select/open.
@@ -249,13 +252,13 @@ Full keyboard accessibility:
 
 The engine selects layout algorithms based on graph characteristics:
 
-| Graph Shape | Algorithm | Use Case |
-|---|---|---|
-| Tree-like (modules → classes) | Layered (Sugiyama) | Module hierarchy |
-| Mesh (service dependencies) | Force-directed (d3-force) | Service mesh |
-| Sequential (event chains) | Layered left-to-right | Event flows |
-| Matrix | Grid (row/column) | Dependency matrix |
-| Clustered | Force-directed with clustering | Large graphs |
+| Graph Shape                   | Algorithm                      | Use Case          |
+| ----------------------------- | ------------------------------ | ----------------- |
+| Tree-like (modules → classes) | Layered (Sugiyama)             | Module hierarchy  |
+| Mesh (service dependencies)   | Force-directed (d3-force)      | Service mesh      |
+| Sequential (event chains)     | Layered left-to-right          | Event flows       |
+| Matrix                        | Grid (row/column)              | Dependency matrix |
+| Clustered                     | Force-directed with clustering | Large graphs      |
 
 Users can switch algorithms manually. The engine defaults to the best-fit algorithm for the current graph shape.
 
@@ -302,15 +305,15 @@ Colors are semantic (Module = blue), not decorative. Color is never the sole dif
 
 # 13. Performance Targets
 
-| Metric | Target |
-|---|---|
-| Initial render (100 nodes) | < 500ms |
+| Metric                                   | Target                         |
+| ---------------------------------------- | ------------------------------ |
+| Initial render (100 nodes)               | < 500ms                        |
 | Initial render (1000 nodes, progressive) | < 2s to first meaningful paint |
-| Frame rate (pan/zoom) | 60 FPS |
-| Frame rate (500+ nodes animating) | ≥ 30 FPS |
-| Memory (5000 nodes loaded) | < 200MB |
-| Node selection response | < 16ms |
-| Mode switch (graph → matrix) | < 300ms |
+| Frame rate (pan/zoom)                    | 60 FPS                         |
+| Frame rate (500+ nodes animating)        | ≥ 30 FPS                       |
+| Memory (5000 nodes loaded)               | < 200MB                        |
+| Node selection response                  | < 16ms                         |
+| Mode switch (graph → matrix)             | < 300ms                        |
 
 Virtual rendering ensures only visible nodes consume GPU resources. Off-screen nodes are culled.
 
