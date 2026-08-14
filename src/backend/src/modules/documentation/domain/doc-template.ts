@@ -48,6 +48,31 @@ export class DocTemplateParseError extends Error {
   }
 }
 
+/** Raised when template resolution misses the requested (type, version) (R5). */
+export class DocTemplateNotFoundError extends Error {
+  constructor(
+    public readonly docType: string,
+    version?: number,
+  ) {
+    super(
+      `Doc template not found for type '${docType}'` +
+        (version !== undefined ? ` version ${version}` : ''),
+    );
+    this.name = 'DocTemplateNotFoundError';
+  }
+}
+
+/** Raised when two templates register under the same (type, version) key (R5). */
+export class DuplicateDocTemplateError extends Error {
+  constructor(
+    public readonly docType: string,
+    public readonly version: number,
+  ) {
+    super(`Doc template already registered for type '${docType}' version ${version}`);
+    this.name = 'DuplicateDocTemplateError';
+  }
+}
+
 const REQUIRED_TEMPLATE_FIELDS = ['id', 'name', 'version', 'sections'] as const;
 const REQUIRED_SECTION_FIELDS = ['id', 'title', 'source', 'format'] as const;
 

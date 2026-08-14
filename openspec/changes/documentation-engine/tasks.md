@@ -32,9 +32,9 @@ Slices: PR1→main/tracker, PR2→PR1, PR3→PR2, PR4→PR3, PR5→PR4, PR6→PR
 
 ## Phase 3: Template System
 
-- [ ] 3.1 [T] `doc-template-loader.service.ts`: scan `templates/{type}/v{n}/template.yml`, corrupt-file fail-fast (R1, R6)
-- [ ] 3.2 [T] `doc-template-registry.service.ts`: keyed (type,version), built-in fallback, controller merge (R5)
-- [ ] 3.3 Create 5 built-in `templates/{type}/v1/template.yml` — readme, architecture-guide, api-reference, module-docs, onboarding-guide (R7, R2, R4)
+- [x] 3.1 [T] `doc-template-loader.service.ts`: scan `templates/{type}/v{n}/template.yml`, corrupt-file fail-fast (R1, R6)
+- [x] 3.2 [T] `doc-template-registry.service.ts`: keyed (type,version), built-in fallback, controller merge (R5)
+- [x] 3.3 Create 5 built-in `templates/{type}/v1/template.yml` — readme, architecture-guide, api-reference, module-docs, onboarding-guide (R7, R2, R4)
 
 ## Phase 4: Storage
 
