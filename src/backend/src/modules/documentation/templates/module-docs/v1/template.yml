@@ -1,0 +1,30 @@
+id: module-docs
+name: Module Documentation
+version: 1
+sections:
+  - id: module-purpose
+    title: Module Purpose
+    source: 'ai.enrich("module-purpose")'
+    format: markdown
+  - id: public-api
+    title: Public API
+    source: 'graph.exports("my-module")'
+    format: table
+  - id: dependencies
+    title: Dependencies
+    source: 'graph.dependencies("my-module", depth: 1)'
+    format: list
+    condition: has_dependencies
+  - id: domain-model
+    title: Domain Model
+    source: 'graph.entities("my-module")'
+    format: mermaid-class-diagram
+  - id: events
+    title: Events
+    source: 'graph.events("my-module")'
+    format: table
+    condition: has_events
+  - id: db-tables
+    title: Database Tables
+    source: 'ai.enrich("db-tables")'
+    format: table

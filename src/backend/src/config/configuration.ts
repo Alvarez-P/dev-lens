@@ -80,6 +80,13 @@ export interface AiConfig {
   };
 }
 
+export interface DocumentationConfig {
+  /** Master kill-switch for the documentation module (gates event handler). */
+  enabled: boolean;
+  /** Per-section AI enrichment gate (design decision B; generation R6). */
+  aiEnabled: boolean;
+}
+
 export interface AppConfiguration {
   nodeEnv: string;
   port: number;
@@ -93,6 +100,7 @@ export interface AppConfiguration {
   oauth: OAuthConfig;
   analysis: AnalysisConfig;
   ai: AiConfig;
+  documentation: DocumentationConfig;
   logLevel: string;
 }
 
@@ -178,4 +186,8 @@ export default (): AppConfiguration => ({
     },
   },
   logLevel: process.env.LOG_LEVEL || 'debug',
+  documentation: {
+    enabled: process.env.DOCUMENTATION_ENABLED !== 'false',
+    aiEnabled: process.env.DOCUMENTATION_AI_ENABLED === 'true',
+  },
 });

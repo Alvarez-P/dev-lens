@@ -1,0 +1,24 @@
+id: readme
+name: README
+version: 1
+sections:
+  - id: project-overview
+    title: Project Overview
+    source: 'ai.enrich("project-overview")'
+    format: markdown
+  - id: architecture-diagram
+    title: Architecture Diagram
+    source: 'graph.entities()'
+    format: mermaid-class-diagram
+  - id: module-index
+    title: Module Index
+    source: 'graph.exports()'
+    format: table
+  - id: tech-stack
+    title: Technology Stack
+    source: 'graph.dependencies()'
+    format: list
+  - id: getting-started
+    title: Getting Started
+    source: 'ai.enrich("getting-started")'
+    format: markdown

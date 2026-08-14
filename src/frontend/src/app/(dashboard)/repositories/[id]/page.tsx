@@ -24,6 +24,7 @@ import {
   HardDrive,
   FileText,
   Globe,
+  BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -164,6 +165,13 @@ export default function RepositoryDetailPage(): React.ReactNode {
             >
               <Globe className="mr-2 h-4 w-4" />
               API Endpoints
+            </Link>
+            <Link
+              href={`/repositories/${id}/docs`}
+              className="inline-flex items-center justify-center rounded-lg border border-white/[0.08] px-4 py-2 text-sm font-medium text-surface-200 transition-colors hover:bg-white/[0.04]"
+            >
+              <BookOpen className="mr-2 h-4 w-4" />
+              Documentation
             </Link>
             <Button
               onClick={() => syncMutation.mutate()}

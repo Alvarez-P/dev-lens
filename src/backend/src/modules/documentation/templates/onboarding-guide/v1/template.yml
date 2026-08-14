@@ -1,0 +1,28 @@
+id: onboarding-guide
+name: Onboarding Guide
+version: 1
+sections:
+  - id: repo-structure
+    title: Repository Structure
+    source: 'graph.exports()'
+    format: list
+  - id: key-modules
+    title: Key Modules
+    source: 'graph.exports()'
+    format: table
+  - id: architecture-overview
+    title: Architecture Overview
+    source: 'graph.entities()'
+    format: mermaid-class-diagram
+  - id: dev-setup
+    title: Development Setup
+    source: 'ai.enrich("dev-setup")'
+    format: markdown
+  - id: common-workflows
+    title: Common Workflows
+    source: 'ai.enrich("common-workflows")'
+    format: list
+  - id: glossary
+    title: Glossary
+    source: 'ai.enrich("glossary")'
+    format: table

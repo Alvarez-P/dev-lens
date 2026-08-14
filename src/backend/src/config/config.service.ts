@@ -10,6 +10,7 @@ import {
   AuthConfig,
   RepoConfig,
   OAuthConfig,
+  DocumentationConfig,
 } from './configuration';
 
 @Injectable()
@@ -62,6 +63,10 @@ export class ConfigService {
 
   get ai(): AiConfig {
     return this.configService.getOrThrow<AiConfig>('ai');
+  }
+
+  get documentation(): DocumentationConfig {
+    return this.configService.getOrThrow<DocumentationConfig>('documentation');
   }
 
   get logLevel(): string {
