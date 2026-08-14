@@ -18,3 +18,11 @@ export const FORMAT_RENDERER = 'FORMAT_RENDERER';
  * (documentation-template-system R5/R6).
  */
 export const DOC_TEMPLATE_REGISTRY = 'DOC_TEMPLATE_REGISTRY';
+
+/**
+ * Token-injected array of IDocContentGenerator adapters, keyed by docType.
+ * Assembled by a factory provider (mirroring FORMAT_RENDERER — NestJS has no
+ * `multi: true`), so a new content generator requires zero changes to the
+ * pipeline (documentation-generation R3).
+ */
+export const DOC_CONTENT_GENERATOR = 'DOC_CONTENT_GENERATOR';
