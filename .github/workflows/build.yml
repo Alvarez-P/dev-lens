@@ -37,5 +37,5 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t devlens-backend:test ./src/backend
-          docker build -t devlens-frontend:test ./src/frontend
+          docker build -f src/backend/Dockerfile -t devlens-backend:test .
+          docker build -f src/frontend/Dockerfile -t devlens-frontend:test .
