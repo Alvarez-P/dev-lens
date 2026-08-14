@@ -23,6 +23,7 @@ docker compose up
 ```
 
 The platform will be available at:
+
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
 - **API Documentation (Swagger)**: http://localhost:3001/api/docs
@@ -44,17 +45,17 @@ Each bounded context owns its business logic, persistence, and public interfaces
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS |
-| Backend | NestJS 10, TypeScript |
-| Database | PostgreSQL 16 |
-| Cache | Redis 7 |
-| Object Storage | MinIO (S3-compatible) |
-| Background Jobs | BullMQ |
-| Message Broker | Kafka (optional, disabled by default) |
-| Containerization | Docker / Docker Compose |
-| CI/CD | GitHub Actions |
+| Layer            | Technology                                     |
+| ---------------- | ---------------------------------------------- |
+| Frontend         | Next.js 14, React 18, TypeScript, Tailwind CSS |
+| Backend          | NestJS 10, TypeScript                          |
+| Database         | PostgreSQL 16                                  |
+| Cache            | Redis 7                                        |
+| Object Storage   | MinIO (S3-compatible)                          |
+| Background Jobs  | BullMQ                                         |
+| Message Broker   | Kafka (optional, disabled by default)          |
+| Containerization | Docker / Docker Compose                        |
+| CI/CD            | GitHub Actions                                 |
 
 ---
 

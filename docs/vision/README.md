@@ -27,12 +27,12 @@ Modern software systems have become too complex.
 
 Every month they gain:
 
-* more services
-* more APIs
-* more dependencies
-* more events
-* more developers
-* more technical debt
+- more services
+- more APIs
+- more dependencies
+- more events
+- more developers
+- more technical debt
 
 Yet the tools used to understand these systems have barely changed.
 
@@ -54,22 +54,22 @@ Software is growing faster than human understanding.
 
 Developers constantly ask questions like:
 
-* Where does authentication happen?
-* Which services consume this Kafka event?
-* What happens when an order is created?
-* What modules depend on Inventory?
-* What breaks if I modify this service?
-* Which APIs are undocumented?
-* Where is this database table used?
-* What changed architecturally in the last release?
+- Where does authentication happen?
+- Which services consume this Kafka event?
+- What happens when an order is created?
+- What modules depend on Inventory?
+- What breaks if I modify this service?
+- Which APIs are undocumented?
+- Where is this database table used?
+- What changed architecturally in the last release?
 
 Finding those answers usually requires:
 
-* searching dozens of files
-* reading documentation
-* asking teammates
-* exploring Git history
-* drawing diagrams manually
+- searching dozens of files
+- reading documentation
+- asking teammates
+- exploring Git history
+- drawing diagrams manually
 
 DevLens should answer those questions instantly.
 
@@ -87,18 +87,18 @@ Instead of sending raw code directly to an LLM, DevLens first understands the pr
 
 The platform continuously builds a model of the software, including:
 
-* Modules
-* Services
-* Controllers
-* Entities
-* Repositories
-* APIs
-* Events
-* Dependencies
-* Databases
-* External Services
-* Domain Boundaries
-* Architecture Relationships
+- Modules
+- Services
+- Controllers
+- Entities
+- Repositories
+- APIs
+- Events
+- Dependencies
+- Databases
+- External Services
+- Domain Boundaries
+- Architecture Relationships
 
 AI uses this structured model to provide precise answers with significantly lower hallucination risk.
 
@@ -120,13 +120,13 @@ Visualize the complete software system as an interactive graph.
 
 Explore relationships between:
 
-* Modules
-* Services
-* Events
-* APIs
-* Databases
-* Repositories
-* External Integrations
+- Modules
+- Services
+- Events
+- APIs
+- Databases
+- Repositories
+- External Integrations
 
 ---
 
@@ -136,15 +136,15 @@ Generate documentation automatically.
 
 Including:
 
-* README
-* Architecture Guides
-* OpenAPI
-* AsyncAPI
-* Mermaid
-* PlantUML
-* C4 Diagrams
-* ADRs
-* Onboarding Guides
+- README
+- Architecture Guides
+- OpenAPI
+- AsyncAPI
+- Mermaid
+- PlantUML
+- C4 Diagrams
+- ADRs
+- Onboarding Guides
 
 Documentation is generated directly from source code.
 
@@ -156,11 +156,11 @@ Navigate your system visually.
 
 Understand:
 
-* dependencies
-* coupling
-* boundaries
-* event flows
-* module relationships
+- dependencies
+- coupling
+- boundaries
+- event flows
+- module relationships
 
 without reading hundreds of files.
 
@@ -172,12 +172,12 @@ Understand asynchronous systems.
 
 Visualize:
 
-* Kafka Events
-* Producers
-* Consumers
-* Event Chains
-* Dead Letter Queues
-* Processing Flow
+- Kafka Events
+- Producers
+- Consumers
+- Event Chains
+- Dead Letter Queues
+- Processing Flow
 
 ---
 
@@ -187,10 +187,10 @@ Explore every endpoint in context.
 
 Instead of only seeing an endpoint, understand:
 
-* which use case it executes
-* which services it depends on
-* which events it publishes
-* which database tables it modifies
+- which use case it executes
+- which services it depends on
+- which events it publishes
+- which database tables it modifies
 
 ---
 
@@ -200,12 +200,12 @@ Continuously evaluate software quality.
 
 Track metrics such as:
 
-* coupling
-* cohesion
-* documentation coverage
-* architectural violations
-* dependency cycles
-* complexity trends
+- coupling
+- cohesion
+- documentation coverage
+- architectural violations
+- dependency cycles
+- complexity trends
 
 ---
 
@@ -217,10 +217,10 @@ Example:
 
 > Changing `PaymentService` affects:
 >
-> * 12 API endpoints
-> * 4 Kafka events
-> * 7 services
-> * 31 automated tests
+> - 12 API endpoints
+> - 4 Kafka events
+> - 7 services
+> - 31 automated tests
 
 ---
 
@@ -230,11 +230,11 @@ See how the architecture evolves over time.
 
 Move through Git history and visualize:
 
-* new modules
-* removed services
-* changing dependencies
-* architectural drift
-* event evolution
+- new modules
+- removed services
+- changing dependencies
+- architectural drift
+- event evolution
 
 ---
 
@@ -244,11 +244,11 @@ Ask questions about your software.
 
 Examples:
 
-* Explain the authentication flow.
-* Why does Inventory depend on Orders?
-* Which APIs publish OrderCreated?
-* Summarize this Pull Request.
-* Suggest architectural improvements.
+- Explain the authentication flow.
+- Why does Inventory depend on Orders?
+- Which APIs publish OrderCreated?
+- Summarize this Pull Request.
+- Suggest architectural improvements.
 
 AI always answers using the Knowledge Graph and repository context.
 
@@ -306,29 +306,29 @@ Architecture should enable developers, not impress them.
 
 ### Frontend
 
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
-* React Flow
-* ELKJS
-* Framer Motion
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- React Flow
+- ELKJS
+- Framer Motion
 
 ### Backend
 
-* NestJS
-* PostgreSQL
-* Redis
-* BullMQ
-* Kafka
-* pgvector
+- NestJS
+- PostgreSQL
+- Redis
+- BullMQ
+- Kafka
+- pgvector
 
 ### AI
 
-* OpenAI
-* Anthropic
-* Ollama
-* OpenRouter
+- OpenAI
+- Anthropic
+- Ollama
+- OpenRouter
 
 ---
 
@@ -336,24 +336,24 @@ Architecture should enable developers, not impress them.
 
 ### Phase 1
 
-* Repository Analysis
-* Knowledge Graph
-* Architecture Explorer
-* Documentation Generation
+- Repository Analysis
+- Knowledge Graph
+- Architecture Explorer
+- Documentation Generation
 
 ### Phase 2
 
-* AI Assistant
-* Pull Request Intelligence
-* API Explorer
-* Impact Analysis
+- AI Assistant
+- Pull Request Intelligence
+- API Explorer
+- Impact Analysis
 
 ### Phase 3
 
-* Multi-project Architecture
-* Team Collaboration
-* Enterprise Integrations
-* Historical Architecture Timeline
+- Multi-project Architecture
+- Team Collaboration
+- Enterprise Integrations
+- Historical Architecture Timeline
 
 ---
 

@@ -65,13 +65,13 @@ Our mission is:
 
 We believe software systems should provide:
 
-* continuously updated architecture
-* automatically generated documentation
-* instant onboarding
-* visual understanding
-* impact analysis
-* historical architecture evolution
-* shared technical knowledge
+- continuously updated architecture
+- automatically generated documentation
+- instant onboarding
+- visual understanding
+- impact analysis
+- historical architecture evolution
+- shared technical knowledge
 
 without requiring manual effort from developers.
 
@@ -83,14 +83,14 @@ without requiring manual effort from developers.
 
 The larger a system becomes, the harder it becomes to answer seemingly simple questions:
 
-* Where does authentication happen?
-* What services depend on Inventory?
-* Which endpoints trigger this event?
-* What breaks if I change this module?
-* Which services consume this Kafka event?
-* Why does this service exist?
-* Is this code still used?
-* What changed architecturally during the last six months?
+- Where does authentication happen?
+- What services depend on Inventory?
+- Which endpoints trigger this event?
+- What breaks if I change this module?
+- Which services consume this Kafka event?
+- Why does this service exist?
+- Is this code still used?
+- What changed architecturally during the last six months?
 
 Developers spend an enormous amount of time understanding systems instead of building them.
 
@@ -106,10 +106,10 @@ Manual maintenance eventually fails.
 
 The larger the organization:
 
-* the faster documentation becomes obsolete
-* the more diagrams become inaccurate
-* the harder onboarding becomes
-* the more tribal knowledge appears
+- the faster documentation becomes obsolete
+- the more diagrams become inaccurate
+- the harder onboarding becomes
+- the more tribal knowledge appears
 
 The problem is not documentation quality.
 
@@ -121,9 +121,9 @@ The problem is that documentation is disconnected from the code.
 
 In many companies:
 
-* senior engineers understand the architecture
-* new engineers understand individual files
-* nobody understands the entire system
+- senior engineers understand the architecture
+- new engineers understand individual files
+- nobody understands the entire system
 
 When key engineers leave:
 
@@ -131,11 +131,11 @@ knowledge leaves with them.
 
 This creates:
 
-* onboarding costs
-* maintenance costs
-* slower development
-* increased technical debt
-* increased architectural drift
+- onboarding costs
+- maintenance costs
+- slower development
+- increased technical debt
+- increased architectural drift
 
 ---
 
@@ -143,35 +143,35 @@ This creates:
 
 Today developers use:
 
-* GitHub
-* Swagger
-* AsyncAPI
-* SonarQube
-* Structurizr
-* Mermaid
-* Backstage
-* Compodoc
-* ADRs
-* Notion
-* Confluence
-* Cursor
-* Claude Code
-* Copilot
+- GitHub
+- Swagger
+- AsyncAPI
+- SonarQube
+- Structurizr
+- Mermaid
+- Backstage
+- Compodoc
+- ADRs
+- Notion
+- Confluence
+- Cursor
+- Claude Code
+- Copilot
 
 Each tool solves one problem.
 
 No tool unifies:
 
-* architecture
-* documentation
-* dependencies
-* events
-* APIs
-* domain models
-* historical evolution
-* onboarding
-* impact analysis
-* AI explanations
+- architecture
+- documentation
+- dependencies
+- events
+- APIs
+- domain models
+- historical evolution
+- onboarding
+- impact analysis
+- AI explanations
 
 Software knowledge remains fragmented.
 
@@ -249,13 +249,13 @@ They become outdated the moment code changes.
 
 DevLens is not:
 
-* an AI coding assistant
-* a documentation platform
-* a static analysis tool
-* a diagramming tool
-* a code review tool
-* a wiki
-* a repository browser
+- an AI coding assistant
+- a documentation platform
+- a static analysis tool
+- a diagramming tool
+- a code review tool
+- a wiki
+- a repository browser
 
 DevLens is:
 
@@ -265,14 +265,14 @@ DevLens continuously transforms source code into living organizational knowledge
 
 Its purpose is to answer:
 
-* How does the system work?
-* Why does it work this way?
-* What changed?
-* What depends on this?
-* What will break?
-* What should be documented?
-* What should be improved?
-* How do I understand this system quickly?
+- How does the system work?
+- Why does it work this way?
+- What changed?
+- What depends on this?
+- What will break?
+- What should be documented?
+- What should be improved?
+- How do I understand this system quickly?
 
 ---
 
@@ -390,12 +390,12 @@ Knowledge remains the product.
 
 Software systems deserve:
 
-* living architecture
-* living documentation
-* persistent knowledge
-* instant onboarding
-* visual understanding
-* continuously updated system intelligence
+- living architecture
+- living documentation
+- persistent knowledge
+- instant onboarding
+- visual understanding
+- continuously updated system intelligence
 
 DevLens exists to make that possible.
 

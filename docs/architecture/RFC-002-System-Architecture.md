@@ -34,16 +34,16 @@ This RFC defines the structural organization of the system before discussing the
 
 The architecture must:
 
-* Be domain-driven.
-* Be modular.
-* Support independent evolution of bounded contexts.
-* Minimize coupling.
-* Encourage high cohesion.
-* Remain cloud agnostic.
-* Support asynchronous communication.
-* Allow provider replacement.
-* Scale horizontally where appropriate.
-* Keep business logic independent of frameworks.
+- Be domain-driven.
+- Be modular.
+- Support independent evolution of bounded contexts.
+- Minimize coupling.
+- Encourage high cohesion.
+- Remain cloud agnostic.
+- Support asynchronous communication.
+- Allow provider replacement.
+- Scale horizontally where appropriate.
+- Keep business logic independent of frameworks.
 
 ---
 
@@ -51,14 +51,14 @@ The architecture must:
 
 This RFC does not define:
 
-* Programming languages.
-* Frameworks.
-* Infrastructure providers.
-* Databases.
-* Message brokers.
-* AI providers.
-* Deployment topology.
-* CI/CD pipelines.
+- Programming languages.
+- Frameworks.
+- Infrastructure providers.
+- Databases.
+- Message brokers.
+- AI providers.
+- Deployment topology.
+- CI/CD pipelines.
 
 These concerns are addressed by dedicated RFCs or ADRs.
 
@@ -70,12 +70,12 @@ DevLens adopts a combination of architectural styles rather than relying on a si
 
 The architecture combines:
 
-* Domain-Driven Design (DDD)
-* Hexagonal Architecture
-* Layered Architecture
-* Event-Driven Architecture
-* Modular Monolith (initially)
-* Evolution toward distributed services when justified
+- Domain-Driven Design (DDD)
+- Hexagonal Architecture
+- Layered Architecture
+- Event-Driven Architecture
+- Modular Monolith (initially)
+- Evolution toward distributed services when justified
 
 No architectural decision should compromise the independence of the domain model.
 
@@ -123,12 +123,12 @@ The platform is organized into the following primary bounded contexts.
 
 Responsible for:
 
-* Authentication
-* Authorization
-* Organizations
-* Users
-* Roles
-* Permissions
+- Authentication
+- Authorization
+- Organizations
+- Users
+- Roles
+- Permissions
 
 ---
 
@@ -136,10 +136,10 @@ Responsible for:
 
 Responsible for:
 
-* Git providers
-* Repository lifecycle
-* Synchronization
-* Repository metadata
+- Git providers
+- Repository lifecycle
+- Synchronization
+- Repository metadata
 
 ---
 
@@ -147,9 +147,9 @@ Responsible for:
 
 Responsible for:
 
-* Source code parsing
-* Metadata extraction
-* Intermediate Representation (IR)
+- Source code parsing
+- Metadata extraction
+- Intermediate Representation (IR)
 
 ---
 
@@ -157,10 +157,10 @@ Responsible for:
 
 Responsible for:
 
-* Software graph construction
-* Relationship management
-* Graph queries
-* Incremental graph updates
+- Software graph construction
+- Relationship management
+- Graph queries
+- Incremental graph updates
 
 ---
 
@@ -168,10 +168,10 @@ Responsible for:
 
 Responsible for:
 
-* Interactive architecture views
-* Graph rendering
-* Navigation
-* User exploration
+- Interactive architecture views
+- Graph rendering
+- Navigation
+- User exploration
 
 ---
 
@@ -179,10 +179,10 @@ Responsible for:
 
 Responsible for:
 
-* AI orchestration
-* Capability execution
-* Context retrieval
-* Provider abstraction
+- AI orchestration
+- Capability execution
+- Context retrieval
+- Provider abstraction
 
 ---
 
@@ -190,9 +190,9 @@ Responsible for:
 
 Responsible for:
 
-* Documentation generation
-* Export formats
-* Template management
+- Documentation generation
+- Export formats
+- Template management
 
 ---
 
@@ -200,9 +200,9 @@ Responsible for:
 
 Responsible for:
 
-* Search indexing
-* Discovery
-* Navigation
+- Search indexing
+- Discovery
+- Navigation
 
 ---
 
@@ -210,9 +210,9 @@ Responsible for:
 
 Responsible for:
 
-* Architecture metrics
-* Repository health
-* Trend analysis
+- Architecture metrics
+- Repository health
+- Trend analysis
 
 ---
 
@@ -220,9 +220,9 @@ Responsible for:
 
 Responsible for:
 
-* Licensing
-* Subscription management
-* Feature access
+- Licensing
+- Subscription management
+- Feature access
 
 ---
 
@@ -274,12 +274,12 @@ Implements external integrations.
 
 Examples include:
 
-* Persistence
-* External APIs
-* File systems
-* Queues
-* AI providers
-* Storage
+- Persistence
+- External APIs
+- File systems
+- Queues
+- AI providers
+- Storage
 
 ---
 
@@ -287,10 +287,10 @@ Examples include:
 
 Communication follows these principles:
 
-* Synchronous communication for immediate consistency.
-* Asynchronous communication for cross-context collaboration.
-* Explicit contracts between bounded contexts.
-* No direct access to another context's persistence.
+- Synchronous communication for immediate consistency.
+- Asynchronous communication for cross-context collaboration.
+- Explicit contracts between bounded contexts.
+- No direct access to another context's persistence.
 
 Every dependency should point inward toward the domain.
 
@@ -300,12 +300,12 @@ Every dependency should point inward toward the domain.
 
 The following rules are mandatory:
 
-* Outer layers may depend on inner layers.
-* Inner layers must never depend on outer layers.
-* Domains never depend on infrastructure.
-* Business rules never depend on frameworks.
-* Bounded contexts communicate only through published contracts.
-* Shared code belongs exclusively in the Shared Kernel.
+- Outer layers may depend on inner layers.
+- Inner layers must never depend on outer layers.
+- Domains never depend on infrastructure.
+- Business rules never depend on frameworks.
+- Bounded contexts communicate only through published contracts.
+- Shared code belongs exclusively in the Shared Kernel.
 
 ---
 
@@ -335,13 +335,13 @@ The architecture should support future decomposition without requiring fundament
 
 This architecture provides:
 
-* Strong separation of concerns.
-* Independent evolution of modules.
-* High maintainability.
-* Reduced coupling.
-* Improved testability.
-* Provider independence.
-* Long-term scalability.
+- Strong separation of concerns.
+- Independent evolution of modules.
+- High maintainability.
+- Reduced coupling.
+- Improved testability.
+- Provider independence.
+- Long-term scalability.
 
 The trade-off is additional architectural discipline and a greater emphasis on explicit boundaries.
 
@@ -351,19 +351,19 @@ The trade-off is additional architectural discipline and a greater emphasis on e
 
 Future RFCs will expand on specific architectural areas, including:
 
-* Shared Kernel
-* Event-Driven Architecture
-* Repository Lifecycle
-* Static Analysis Engine
-* Knowledge Graph
-* Visualization Engine
-* AI Orchestration
-* AI Capability Architecture
-* Documentation Engine
-* Search & Discovery
-* Architecture Metrics
-* Licensing Architecture
-* Enterprise Architecture
+- Shared Kernel
+- Event-Driven Architecture
+- Repository Lifecycle
+- Static Analysis Engine
+- Knowledge Graph
+- Visualization Engine
+- AI Orchestration
+- AI Capability Architecture
+- Documentation Engine
+- Search & Discovery
+- Architecture Metrics
+- Licensing Architecture
+- Enterprise Architecture
 
 This RFC intentionally remains technology-agnostic and should remain stable as the platform evolves.
 
@@ -371,7 +371,7 @@ This RFC intentionally remains technology-agnostic and should remain stable as t
 
 # 14. References
 
-* RFC-001 — Architecture Principles
-* PRODUCT_CONTEXT.md
-* MANIFESTO.md
-* VISION.md
+- RFC-001 — Architecture Principles
+- PRODUCT_CONTEXT.md
+- MANIFESTO.md
+- VISION.md

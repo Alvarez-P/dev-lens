@@ -36,14 +36,14 @@ This RFC defines what belongs—and equally important, what does **not** belong�
 
 The Shared Kernel must:
 
-* Provide common architectural abstractions.
-* Promote consistency across bounded contexts.
-* Avoid business knowledge.
-* Minimize coupling.
-* Be highly stable.
-* Be framework independent.
-* Be reusable by every module.
-* Remain easy to understand.
+- Provide common architectural abstractions.
+- Promote consistency across bounded contexts.
+- Avoid business knowledge.
+- Minimize coupling.
+- Be highly stable.
+- Be framework independent.
+- Be reusable by every module.
+- Remain easy to understand.
 
 ---
 
@@ -51,16 +51,16 @@ The Shared Kernel must:
 
 The Shared Kernel must **not** contain:
 
-* Business logic.
-* Domain services.
-* Use cases.
-* Infrastructure implementations.
-* Feature-specific utilities.
-* Repository implementations.
-* Controllers.
-* AI logic.
-* Framework-specific code.
-* Generic helper functions without architectural value.
+- Business logic.
+- Domain services.
+- Use cases.
+- Infrastructure implementations.
+- Feature-specific utilities.
+- Repository implementations.
+- Controllers.
+- AI logic.
+- Framework-specific code.
+- Generic helper functions without architectural value.
 
 If a component belongs to a single bounded context, it does not belong in the Shared Kernel.
 
@@ -70,12 +70,12 @@ If a component belongs to a single bounded context, it does not belong in the Sh
 
 The Shared Kernel follows these principles:
 
-* Small over comprehensive.
-* Stable over flexible.
-* Explicit over implicit.
-* Reusable over convenient.
-* Framework agnostic.
-* Domain independent.
+- Small over comprehensive.
+- Stable over flexible.
+- Explicit over implicit.
+- Reusable over convenient.
+- Framework agnostic.
+- Domain independent.
 
 Every addition should be justified by reuse across multiple bounded contexts.
 
@@ -91,15 +91,15 @@ Common foundational abstractions.
 
 Examples include:
 
-* Unique Identifier abstraction.
-* Base Entity.
-* Aggregate Root.
-* Value Object.
-* Domain Event.
-* Domain Exception.
-* Domain Error.
-* Result pattern.
-* Either pattern.
+- Unique Identifier abstraction.
+- Base Entity.
+- Aggregate Root.
+- Value Object.
+- Domain Event.
+- Domain Exception.
+- Domain Error.
+- Result pattern.
+- Either pattern.
 
 These abstractions establish a consistent domain model throughout the platform.
 
@@ -111,13 +111,13 @@ Common interfaces shared across multiple contexts.
 
 Examples include:
 
-* Clock abstraction.
-* Identifier generator.
-* Event publisher.
-* Logger.
-* Configuration provider.
-* Current user provider.
-* Correlation ID provider.
+- Clock abstraction.
+- Identifier generator.
+- Event publisher.
+- Logger.
+- Configuration provider.
+- Current user provider.
+- Correlation ID provider.
 
 Contracts define behavior without prescribing implementations.
 
@@ -129,10 +129,10 @@ Shared validation primitives.
 
 Examples include:
 
-* Validation Result.
-* Validation Error.
-* Validation Pipeline.
-* Validation Exception.
+- Validation Result.
+- Validation Error.
+- Validation Pipeline.
+- Validation Exception.
 
 Business-specific validation remains inside each bounded context.
 
@@ -144,10 +144,10 @@ Provide a unified error model.
 
 Errors should be:
 
-* Explicit.
-* Typed.
-* Predictable.
-* Serializable.
+- Explicit.
+- Typed.
+- Predictable.
+- Serializable.
 
 Unexpected exceptions should never become part of normal business flow.
 
@@ -159,11 +159,11 @@ Shared abstractions for messaging.
 
 Examples include:
 
-* Domain Event.
-* Integration Event.
-* Event Metadata.
-* Event Envelope.
-* Event Serializer.
+- Domain Event.
+- Integration Event.
+- Event Metadata.
+- Event Envelope.
+- Event Serializer.
 
 Concrete messaging technologies are intentionally excluded.
 
@@ -175,12 +175,12 @@ Provide a consistent execution context across the platform.
 
 The request context may include:
 
-* Correlation ID.
-* Request ID.
-* User ID.
-* Organization ID.
-* Workspace ID.
-* Timestamp.
+- Correlation ID.
+- Request ID.
+- User ID.
+- Organization ID.
+- Workspace ID.
+- Timestamp.
 
 Business modules should obtain contextual information through this abstraction.
 
@@ -190,10 +190,10 @@ Business modules should obtain contextual information through this abstraction.
 
 Common abstractions for:
 
-* Structured logging.
-* Metrics.
-* Tracing.
-* Audit events.
+- Structured logging.
+- Metrics.
+- Tracing.
+- Audit events.
 
 Observability providers belong to Infrastructure.
 
@@ -225,10 +225,10 @@ Every bounded context may depend on the Shared Kernel.
 
 The Shared Kernel must never depend on:
 
-* Any bounded context.
-* Infrastructure.
-* Frameworks.
-* External providers.
+- Any bounded context.
+- Infrastructure.
+- Frameworks.
+- External providers.
 
 The dependency graph must always point toward the Shared Kernel.
 
@@ -276,18 +276,18 @@ The package structure should remain stable as the platform evolves.
 
 The following examples should never be added to the Shared Kernel:
 
-* Repository implementations.
-* HTTP clients.
-* ORM models.
-* Database helpers.
-* Framework decorators.
-* Authentication providers.
-* Queue implementations.
-* Git integrations.
-* AI providers.
-* Cache implementations.
-* File storage implementations.
-* Business utilities.
+- Repository implementations.
+- HTTP clients.
+- ORM models.
+- Database helpers.
+- Framework decorators.
+- Authentication providers.
+- Queue implementations.
+- Git integrations.
+- AI providers.
+- Cache implementations.
+- File storage implementations.
+- Business utilities.
 
 These belong to specific bounded contexts or infrastructure layers.
 
@@ -299,11 +299,11 @@ The Shared Kernel should evolve slowly.
 
 Every proposed addition must satisfy all of the following:
 
-* Used by multiple bounded contexts.
-* Independent of business rules.
-* Independent of infrastructure.
-* Stable over time.
-* Architecturally meaningful.
+- Used by multiple bounded contexts.
+- Independent of business rules.
+- Independent of infrastructure.
+- Stable over time.
+- Architecturally meaningful.
 
 If any condition is not satisfied, the component should remain within its owning bounded context.
 
@@ -313,12 +313,12 @@ If any condition is not satisfied, the component should remain within its owning
 
 Adopting a disciplined Shared Kernel provides:
 
-* Consistent architectural patterns.
-* Reduced duplication.
-* Lower coupling.
-* Easier onboarding.
-* Predictable domain modeling.
-* Improved maintainability.
+- Consistent architectural patterns.
+- Reduced duplication.
+- Lower coupling.
+- Easier onboarding.
+- Predictable domain modeling.
+- Improved maintainability.
 
 The primary trade-off is resisting the temptation to place convenience utilities into the Shared Kernel.
 
@@ -334,6 +334,6 @@ Any significant expansion should be reviewed carefully to prevent the Shared Ker
 
 # 13. References
 
-* RFC-001 — Architecture Principles
-* RFC-002 — System Architecture
-* Future ADRs
+- RFC-001 — Architecture Principles
+- RFC-002 — System Architecture
+- Future ADRs

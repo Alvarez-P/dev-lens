@@ -27,6 +27,7 @@ The Knowledge Graph is the single source of truth for DevLens. Every capability 
 The IR defined in RFC-006 captures software concepts (modules, classes, endpoints, dependencies) as structured metadata. However, metadata alone does not constitute understanding.
 
 Understanding emerges from relationships:
+
 - Which services depend on this module?
 - Which endpoints publish which events?
 - Which domain owns which aggregate?
@@ -112,19 +113,19 @@ The Semantic Model Builder normalizes these concepts into a language-independent
 
 The builder applies the following transformations:
 
-| IR Concept | Semantic Model Concept |
-|---|---|
-| TypeScript `class` annotated with `@Controller()` | `Controller` |
-| TypeScript `class` annotated with `@Injectable()` | `Service` |
-| Python `class` with FastAPI route decorators | `Controller` |
-| Java `class` annotated with `@RestController` | `Controller` |
-| Any exported function matching HTTP method signatures | `Endpoint` |
-| DTO/Entity classes with decorators | `Entity` or `DTO` |
-| Interface definitions | `Interface` |
-| Module/package declarations | `Module` |
-| Import statements | `Dependency` |
-| Event emitter calls (Kafka, RabbitMQ, EventEmitter) | `EventProducer` |
-| Event handler/listener registrations | `EventConsumer` |
+| IR Concept                                            | Semantic Model Concept |
+| ----------------------------------------------------- | ---------------------- |
+| TypeScript `class` annotated with `@Controller()`     | `Controller`           |
+| TypeScript `class` annotated with `@Injectable()`     | `Service`              |
+| Python `class` with FastAPI route decorators          | `Controller`           |
+| Java `class` annotated with `@RestController`         | `Controller`           |
+| Any exported function matching HTTP method signatures | `Endpoint`             |
+| DTO/Entity classes with decorators                    | `Entity` or `DTO`      |
+| Interface definitions                                 | `Interface`            |
+| Module/package declarations                           | `Module`               |
+| Import statements                                     | `Dependency`           |
+| Event emitter calls (Kafka, RabbitMQ, EventEmitter)   | `EventProducer`        |
+| Event handler/listener registrations                  | `EventConsumer`        |
 
 ## 6.3 Semantic Model Structure
 
@@ -177,36 +178,36 @@ Every node in the Knowledge Graph has:
 
 ### Taxonomy
 
-| Category | Node Types |
-|---|---|
-| **Structure** | `Project`, `Package`, `Module`, `Directory` |
-| **Domain** | `BoundedContext`, `Aggregate`, `Entity`, `ValueObject` |
-| **Application** | `Service`, `Controller`, `Endpoint`, `Command`, `Query` |
-| **Data** | `Repository`, `DTO`, `Entity`, `DatabaseTable` |
+| Category          | Node Types                                                |
+| ----------------- | --------------------------------------------------------- |
+| **Structure**     | `Project`, `Package`, `Module`, `Directory`               |
+| **Domain**        | `BoundedContext`, `Aggregate`, `Entity`, `ValueObject`    |
+| **Application**   | `Service`, `Controller`, `Endpoint`, `Command`, `Query`   |
+| **Data**          | `Repository`, `DTO`, `Entity`, `DatabaseTable`            |
 | **Communication** | `Event`, `EventProducer`, `EventConsumer`, `MessageQueue` |
-| **External** | `ExternalService`, `ExternalAPI`, `SDK` |
-| **Contracts** | `Interface`, `AbstractClass`, `TypeAlias` |
-| **Organization** | `Organization`, `Workspace`, `Repository` |
+| **External**      | `ExternalService`, `ExternalAPI`, `SDK`                   |
+| **Contracts**     | `Interface`, `AbstractClass`, `TypeAlias`                 |
+| **Organization**  | `Organization`, `Workspace`, `Repository`                 |
 
 ## 7.3 Relationship Types
 
 Relationships are directed edges with semantic meaning:
 
-| Relationship | Source → Target | Meaning |
-|---|---|---|
-| `BELONGS_TO` | Any concept → `Module` | Code organization |
-| `OWNS` | `BoundedContext` → `Aggregate` | Domain ownership |
-| `DEPENDS_ON` | Any concept → Any concept | Import/usage dependency |
-| `IMPLEMENTS` | `Service` → `Interface` | Contract fulfillment |
-| `EXTENDS` | `Entity` → `Entity` | Inheritance |
-| `EXPOSES` | `Controller` → `Endpoint` | API surface |
-| `PUBLISHES` | `Service` → `Event` | Event production |
-| `SUBSCRIBES_TO` | `Service` → `Event` | Event consumption |
-| `CALLS` | Any concept → `ExternalService` | External integration |
-| `PERSISTS_TO` | `Repository` → `DatabaseTable` | Data access |
-| `RETURNS` | `Endpoint` → `DTO` | API response |
-| `ACCEPTS` | `Endpoint` → `DTO` | API request |
-| `CONTAINS` | `Aggregate` → `Entity` | Aggregate composition |
+| Relationship    | Source → Target                 | Meaning                 |
+| --------------- | ------------------------------- | ----------------------- |
+| `BELONGS_TO`    | Any concept → `Module`          | Code organization       |
+| `OWNS`          | `BoundedContext` → `Aggregate`  | Domain ownership        |
+| `DEPENDS_ON`    | Any concept → Any concept       | Import/usage dependency |
+| `IMPLEMENTS`    | `Service` → `Interface`         | Contract fulfillment    |
+| `EXTENDS`       | `Entity` → `Entity`             | Inheritance             |
+| `EXPOSES`       | `Controller` → `Endpoint`       | API surface             |
+| `PUBLISHES`     | `Service` → `Event`             | Event production        |
+| `SUBSCRIBES_TO` | `Service` → `Event`             | Event consumption       |
+| `CALLS`         | Any concept → `ExternalService` | External integration    |
+| `PERSISTS_TO`   | `Repository` → `DatabaseTable`  | Data access             |
+| `RETURNS`       | `Endpoint` → `DTO`              | API response            |
+| `ACCEPTS`       | `Endpoint` → `DTO`              | API request             |
+| `CONTAINS`      | `Aggregate` → `Entity`          | Aggregate composition   |
 
 ## 7.4 Graph Consistency Rules
 
@@ -243,6 +244,7 @@ When a new `StaticAnalysisCompleted` event arrives:
 Each graph state is versioned with the corresponding repository commit.
 
 This enables:
+
 - Architecture timeline visualization.
 - "What changed?" queries between commits.
 - Trend analysis for architectural metrics.
@@ -255,17 +257,17 @@ The Knowledge Graph exposes a stable API for downstream consumers.
 
 ## 9.1 Query Patterns
 
-| Pattern | Description |
-|---|---|
-| **Node lookup** | Find a node by ID, type, or property. |
-| **Relationship traversal** | Follow edges from a node. |
-| **Path finding** | Find paths between two nodes. |
-| **Subgraph extraction** | Extract a neighborhood around a node. |
-| **Dependency analysis** | Find all direct and transitive dependencies. |
-| **Impact analysis** | Find all nodes that depend on a given node. |
-| **Domain boundaries** | Extract bounded context boundaries. |
-| **Event flows** | Trace event publication and consumption chains. |
-| **Full-text search** | Search nodes by label and properties (delegates to RFC-012). |
+| Pattern                    | Description                                                  |
+| -------------------------- | ------------------------------------------------------------ |
+| **Node lookup**            | Find a node by ID, type, or property.                        |
+| **Relationship traversal** | Follow edges from a node.                                    |
+| **Path finding**           | Find paths between two nodes.                                |
+| **Subgraph extraction**    | Extract a neighborhood around a node.                        |
+| **Dependency analysis**    | Find all direct and transitive dependencies.                 |
+| **Impact analysis**        | Find all nodes that depend on a given node.                  |
+| **Domain boundaries**      | Extract bounded context boundaries.                          |
+| **Event flows**            | Trace event publication and consumption chains.              |
+| **Full-text search**       | Search nodes by label and properties (delegates to RFC-012). |
 
 ## 9.2 API Principles
 
@@ -284,6 +286,7 @@ The Knowledge Graph is stored in a graph-compatible representation.
 ## 10.1 Primary Store
 
 PostgreSQL with:
+
 - Nodes table with JSONB properties.
 - Relationships table with type, source, target, and metadata.
 - Indexes on node type, node label (GIN for full-text), and relationship type.
@@ -292,6 +295,7 @@ PostgreSQL with:
 ## 10.2 Graph Serialization
 
 The complete graph can be serialized to:
+
 - JSON for export and backup.
 - GraphML for external tooling.
 - DOT for diagram generation.
@@ -299,6 +303,7 @@ The complete graph can be serialized to:
 ## 10.3 Caching
 
 Frequently accessed subgraphs are cached in Redis:
+
 - Bounded context boundaries.
 - Module dependency graphs.
 - Top-level architecture overview.
@@ -311,12 +316,12 @@ Cache invalidation is triggered by incremental updates.
 
 The Knowledge Extraction Platform publishes:
 
-| Event | Trigger | Consumers |
-|---|---|---|
-| `SemanticModelBuilt` | Semantic Model construction complete | Internal only |
-| `KnowledgeGraphBuilt` | Graph construction complete | All downstream contexts |
-| `KnowledgeGraphUpdated` | Incremental update applied | All downstream contexts |
-| `KnowledgeGraphValidationFailed` | Integrity check failure | Operations, alerting |
+| Event                            | Trigger                              | Consumers               |
+| -------------------------------- | ------------------------------------ | ----------------------- |
+| `SemanticModelBuilt`             | Semantic Model construction complete | Internal only           |
+| `KnowledgeGraphBuilt`            | Graph construction complete          | All downstream contexts |
+| `KnowledgeGraphUpdated`          | Incremental update applied           | All downstream contexts |
+| `KnowledgeGraphValidationFailed` | Integrity check failure              | Operations, alerting    |
 
 ---
 
@@ -325,6 +330,7 @@ The Knowledge Extraction Platform publishes:
 ## 12.1 IR Ingestion Failures
 
 If the IR is malformed or incomplete:
+
 - The pipeline rejects the snapshot.
 - A `KnowledgeGraphBuildFailed` event is published with error details.
 - The previous valid graph state is preserved.
@@ -332,6 +338,7 @@ If the IR is malformed or incomplete:
 ## 12.2 Graph Inconsistencies
 
 If relationship integrity is violated:
+
 - The inconsistency is logged with full context.
 - The graph is built with the inconsistency flagged (not blocked).
 - A `KnowledgeGraphValidationWarning` event is published.
@@ -346,14 +353,14 @@ Failed builds are retried with exponential backoff via BullMQ. After 3 failures,
 
 Target metrics for the Knowledge Extraction Platform:
 
-| Operation | Target |
-|---|---|
-| Semantic Model construction (10K node IR) | < 5 seconds |
-| Knowledge Graph construction (10K nodes) | < 10 seconds |
-| Incremental update (1K delta) | < 2 seconds |
-| Subgraph query (100 nodes) | < 100ms |
-| Full dependency traversal | < 500ms |
-| Graph serialization (100K nodes) | < 30 seconds |
+| Operation                                 | Target       |
+| ----------------------------------------- | ------------ |
+| Semantic Model construction (10K node IR) | < 5 seconds  |
+| Knowledge Graph construction (10K nodes)  | < 10 seconds |
+| Incremental update (1K delta)             | < 2 seconds  |
+| Subgraph query (100 nodes)                | < 100ms      |
+| Full dependency traversal                 | < 500ms      |
+| Graph serialization (100K nodes)          | < 30 seconds |
 
 Heavy graph construction runs asynchronously via BullMQ. The API remains responsive during builds by serving the previous valid graph state.
 

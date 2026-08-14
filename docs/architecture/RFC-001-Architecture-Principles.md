@@ -34,17 +34,17 @@ Establishing clear architectural principles from the beginning reduces unnecessa
 
 This RFC establishes principles that ensure DevLens is:
 
-* Modular.
-* Easy to understand.
-* Easy to extend.
-* Deterministic whenever possible.
-* Cloud agnostic.
-* AI provider agnostic.
-* Technology agnostic where practical.
-* Observable.
-* Secure by default.
-* Performance oriented.
-* Suitable for long-term evolution.
+- Modular.
+- Easy to understand.
+- Easy to extend.
+- Deterministic whenever possible.
+- Cloud agnostic.
+- AI provider agnostic.
+- Technology agnostic where practical.
+- Observable.
+- Secure by default.
+- Performance oriented.
+- Suitable for long-term evolution.
 
 ---
 
@@ -52,14 +52,14 @@ This RFC establishes principles that ensure DevLens is:
 
 This RFC does **not** define:
 
-* Specific programming languages.
-* Framework selections.
-* Infrastructure providers.
-* Database technologies.
-* Message brokers.
-* AI providers.
-* Deployment strategies.
-* Implementation details.
+- Specific programming languages.
+- Framework selections.
+- Infrastructure providers.
+- Database technologies.
+- Message brokers.
+- AI providers.
+- Deployment strategies.
+- Implementation details.
 
 Those decisions belong in dedicated RFCs or ADRs.
 
@@ -93,13 +93,13 @@ External providers must remain replaceable.
 
 This includes, but is not limited to:
 
-* AI providers.
-* Authentication providers.
-* Payment providers.
-* Git providers.
-* Cloud providers.
-* Storage providers.
-* Queue providers.
+- AI providers.
+- Authentication providers.
+- Payment providers.
+- Git providers.
+- Cloud providers.
+- Storage providers.
+- Queue providers.
 
 Business logic must never depend directly on third-party implementations.
 
@@ -153,12 +153,12 @@ Performance is a product feature.
 
 Architectural decisions should consider:
 
-* Latency.
-* Resource consumption.
-* Scalability.
-* Incremental processing.
-* Efficient data structures.
-* Lazy computation where appropriate.
+- Latency.
+- Resource consumption.
+- Scalability.
+- Incremental processing.
+- Efficient data structures.
+- Lazy computation where appropriate.
 
 Premature optimization should be avoided, but unnecessary inefficiencies should not be accepted.
 
@@ -182,10 +182,10 @@ Every significant operation should be observable.
 
 The system should provide sufficient information to understand:
 
-* What happened.
-* Why it happened.
-* When it happened.
-* Which components were involved.
+- What happened.
+- Why it happened.
+- When it happened.
+- Which components were involved.
 
 Observability includes logs, metrics, traces, and domain events.
 
@@ -258,13 +258,13 @@ If two alternatives provide equivalent value, the simpler solution should be sel
 
 Following these principles leads to:
 
-* A maintainable architecture.
-* Lower coupling between modules.
-* Easier technology replacement.
-* Reduced vendor lock-in.
-* Better scalability.
-* Improved developer onboarding.
-* Greater long-term flexibility.
+- A maintainable architecture.
+- Lower coupling between modules.
+- Easier technology replacement.
+- Reduced vendor lock-in.
+- Better scalability.
+- Improved developer onboarding.
+- Greater long-term flexibility.
 
 These principles may occasionally require additional initial effort, but they significantly reduce architectural debt over time.
 
@@ -282,7 +282,7 @@ Any exception should be documented through an ADR.
 
 # 9. References
 
-* PRODUCT_CONTEXT.md
-* MANIFESTO.md
-* VISION.md
-* Future RFCs
+- PRODUCT_CONTEXT.md
+- MANIFESTO.md
+- VISION.md
+- Future RFCs

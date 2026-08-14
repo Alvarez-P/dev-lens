@@ -23,12 +23,13 @@ The Search Engine provides the entry point for discovery: a developer arrives at
 # 2. Motivation
 
 Developers spend a significant portion of their time searching:
+
 - "Where is authentication implemented?"
 - "Which services call the Payment API?"
 - "Show me all endpoints related to orders."
 - "Find modules that depend on the legacy billing system."
 
-Traditional search tools (grep, GitHub search, IDE search) operate on text. They return files, not concepts. A developer searching for "PaymentService" wants to understand the payment *domain*, not find a file named `payment.service.ts`.
+Traditional search tools (grep, GitHub search, IDE search) operate on text. They return files, not concepts. A developer searching for "PaymentService" wants to understand the payment _domain_, not find a file named `payment.service.ts`.
 
 Structured search over the Knowledge Graph returns concepts with their relationships, enabling discovery rather than file hunting.
 
@@ -120,28 +121,29 @@ Search Response
 
 Every Knowledge Graph node is indexed:
 
-| Field | Index Type | Use Case |
-|---|---|---|
-| `label` | GIN trigram | Fuzzy name matching |
-| `type` | B-tree | Type filtering |
-| `properties.language` | B-tree | Language filtering |
-| `properties.file_path` | GIN trigram | Path search |
+| Field                    | Index Type   | Use Case                |
+| ------------------------ | ------------ | ----------------------- |
+| `label`                  | GIN trigram  | Fuzzy name matching     |
+| `type`                   | B-tree       | Type filtering          |
+| `properties.language`    | B-tree       | Language filtering      |
+| `properties.file_path`   | GIN trigram  | Path search             |
 | `properties.description` | GIN tsvector | Natural language search |
-| `metadata.tags` | GIN array | Tag-based filtering |
+| `metadata.tags`          | GIN array    | Tag-based filtering     |
 
 ## 6.2 Query Types
 
-| Query | Example | Behavior |
-|---|---|---|
-| Exact match | `PaymentService` | Case-insensitive exact node label match |
-| Prefix match | `Pay` | Matches nodes starting with "Pay" |
-| Fuzzy match | `Paymnet` | Typo-tolerant via trigram similarity |
-| Natural language | `payment processing module` | tsvector full-text search across all indexed fields |
-| Filtered | `type:Service language:TypeScript payment` | Combined text search with type/language filters |
+| Query            | Example                                    | Behavior                                            |
+| ---------------- | ------------------------------------------ | --------------------------------------------------- |
+| Exact match      | `PaymentService`                           | Case-insensitive exact node label match             |
+| Prefix match     | `Pay`                                      | Matches nodes starting with "Pay"                   |
+| Fuzzy match      | `Paymnet`                                  | Typo-tolerant via trigram similarity                |
+| Natural language | `payment processing module`                | tsvector full-text search across all indexed fields |
+| Filtered         | `type:Service language:TypeScript payment` | Combined text search with type/language filters     |
 
 ## 6.3 Ranking
 
 Results are ranked by:
+
 1. Exact label match (highest priority).
 2. Prefix match.
 3. Trigram similarity score.
@@ -164,6 +166,7 @@ Each Knowledge Graph node is vectorized for semantic similarity:
 ## 7.2 When Semantic Search Activates
 
 Semantic search is used when:
+
 - The query is a natural language question ("show me how authentication works").
 - The query contains no exact or prefix matches.
 - The user explicitly requests semantic search.
@@ -172,6 +175,7 @@ Semantic search is used when:
 ## 7.3 Embedding Generation
 
 Embeddings are generated:
+
 - **Batch**: when the Knowledge Graph is first built, all nodes are embedded.
 - **Incremental**: when nodes are added or modified, only affected nodes are re-embedded.
 - **On-demand**: when a new embedding model is configured, existing nodes are re-embedded in the background.
@@ -196,13 +200,13 @@ Hybrid search provides the best of both worlds: exact matches when the user know
 
 Search results support faceted refinement:
 
-| Facet | Values |
-|---|---|
-| Type | Module, Service, Controller, Endpoint, Entity, Event, Interface, DTO |
-| Language | TypeScript, Python, Java, Go, Rust, etc. |
-| Domain | Bounded context names detected in the repository |
-| Module | Parent module names |
-| Relationship count | Low (0-5), Medium (6-20), High (20+) |
+| Facet              | Values                                                               |
+| ------------------ | -------------------------------------------------------------------- |
+| Type               | Module, Service, Controller, Endpoint, Entity, Event, Interface, DTO |
+| Language           | TypeScript, Python, Java, Go, Rust, etc.                             |
+| Domain             | Bounded context names detected in the repository                     |
+| Module             | Parent module names                                                  |
+| Relationship count | Low (0-5), Medium (6-20), High (20+)                                 |
 
 Facet counts update dynamically as filters are applied.
 
@@ -272,6 +276,7 @@ Results provide immediate context (what it is, where it belongs, how connected i
 ## 13.1 Initial Build
 
 When a repository is first analyzed:
+
 1. Knowledge Graph is built (RFC-007).
 2. Full-text index is created for all nodes.
 3. Embeddings are generated for all nodes (batch process).
@@ -281,6 +286,7 @@ When a repository is first analyzed:
 ## 13.2 Incremental Updates
 
 When the Knowledge Graph is updated:
+
 1. Added/modified nodes are re-indexed in the full-text index.
 2. Added/modified nodes are re-embedded.
 3. Removed nodes are deleted from both indexes.
@@ -289,6 +295,7 @@ When the Knowledge Graph is updated:
 ## 13.3 Reindexing
 
 Full reindexing is supported for:
+
 - Embedding model changes.
 - Index configuration changes.
 - Recovery from corruption.
@@ -299,14 +306,14 @@ Reindexing runs as a background job without blocking search (the previous index 
 
 # 14. Performance Targets
 
-| Operation | Target |
-|---|---|
-| Text search (exact match) | < 50ms |
-| Text search (fuzzy, 10K nodes) | < 200ms |
-| Semantic search (10K nodes) | < 500ms |
-| Autocomplete | < 50ms |
-| Facet computation | < 100ms |
-| Index build (10K nodes, full-text) | < 5 seconds |
+| Operation                               | Target                     |
+| --------------------------------------- | -------------------------- |
+| Text search (exact match)               | < 50ms                     |
+| Text search (fuzzy, 10K nodes)          | < 200ms                    |
+| Semantic search (10K nodes)             | < 500ms                    |
+| Autocomplete                            | < 50ms                     |
+| Facet computation                       | < 100ms                    |
+| Index build (10K nodes, full-text)      | < 5 seconds                |
 | Embedding generation (10K nodes, batch) | < 5 minutes (parallelized) |
 
 ---
@@ -314,6 +321,7 @@ Reindexing runs as a background job without blocking search (the previous index 
 # 15. Access Control
 
 Search results are scoped to the user's accessible repositories and organizations:
+
 - Public repositories: searchable by all users.
 - Private repositories: searchable only by authorized users.
 - Organization-internal: searchable only by organization members.

@@ -329,11 +329,11 @@ The vision maps cleanly onto the existing graph contract:
 
 1. **Framework + architecture detection** (1 call): manifests + entry points →
    `{ framework: 'nestjs'|'express'|'django'|'flask'|'spring'|'unknown',
-   architecture: 'mvc'|'ddd'|'hexagonal'|'layered'|'unknown',
-   confidence }`. Stored on the Project node properties.
+architecture: 'mvc'|'ddd'|'hexagonal'|'layered'|'unknown',
+confidence }`. Stored on the Project node properties.
 2. **Per-endpoint lifecycle mapping** (1 call per controller module):
    `{ endpointFqn, steps: [{ type: 'guard'|'pipe'|'interceptor'|'middleware'|'handler'|'service'|'repository',
-   name, order, approximate? }], params: [{ name, type, decorator }], returns: { type } }`.
+name, order, approximate? }], params: [{ name, type, decorator }], returns: { type } }`.
    Feeds the request-flow graph nodes/edges (PROTECTS/TRANSFORMS/INVOKES/INJECTS)
    that the `request-flow-visualization` design already defines.
 3. **DTO/type extraction**: `{ dtoName, fields: [{ name, type, optional }], usedByEndpoints: [] }`

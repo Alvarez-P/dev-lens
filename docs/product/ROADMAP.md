@@ -134,19 +134,19 @@ The pipeline epics (004 → 005 → 006) are sequential — each feeds the next.
 
 ## Phase 1 Epics & RFCs
 
-| Epic | RFC(s) | Deliverable |
-|---|---|---|
-| EPIC-001 — Foundation | — | Monorepo, Docker, CI/CD, tooling |
-| EPIC-002 — Core Platform | RFC-001, RFC-002, RFC-003 | Shared kernel, DDD foundation, base abstractions |
-| EPIC-003 — Identity | — | Auth, RBAC, organizations, workspaces |
-| EPIC-004 — Repository Intelligence | RFC-004, RFC-005 | Git provider abstraction, cloning, snapshots |
-| EPIC-005 — Static Analysis | RFC-006 | Language parsers, IR generation |
-| EPIC-006 — Knowledge Graph | RFC-007 | Semantic Model, Knowledge Graph builder |
-| EPIC-007 — Visualization | RFC-008 | Interactive graph, architecture explorer |
-| EPIC-008 — AI Orchestration | RFC-009, RFC-010 | RAG pipeline, streaming, AI capabilities |
-| EPIC-009 — Documentation Engine | RFC-011 | Auto-generated docs, multi-format export |
-| EPIC-010 — Search & Discovery | RFC-012 | Full-text + semantic search |
-| EPIC-011 — Architecture Metrics | RFC-013 | Metrics engine, Architecture Score |
+| Epic                               | RFC(s)                    | Deliverable                                      |
+| ---------------------------------- | ------------------------- | ------------------------------------------------ |
+| EPIC-001 — Foundation              | —                         | Monorepo, Docker, CI/CD, tooling                 |
+| EPIC-002 — Core Platform           | RFC-001, RFC-002, RFC-003 | Shared kernel, DDD foundation, base abstractions |
+| EPIC-003 — Identity                | —                         | Auth, RBAC, organizations, workspaces            |
+| EPIC-004 — Repository Intelligence | RFC-004, RFC-005          | Git provider abstraction, cloning, snapshots     |
+| EPIC-005 — Static Analysis         | RFC-006                   | Language parsers, IR generation                  |
+| EPIC-006 — Knowledge Graph         | RFC-007                   | Semantic Model, Knowledge Graph builder          |
+| EPIC-007 — Visualization           | RFC-008                   | Interactive graph, architecture explorer         |
+| EPIC-008 — AI Orchestration        | RFC-009, RFC-010          | RAG pipeline, streaming, AI capabilities         |
+| EPIC-009 — Documentation Engine    | RFC-011                   | Auto-generated docs, multi-format export         |
+| EPIC-010 — Search & Discovery      | RFC-012                   | Full-text + semantic search                      |
+| EPIC-011 — Architecture Metrics    | RFC-013                   | Metrics engine, Architecture Score               |
 
 ## Phase 1 Exit Criteria
 
@@ -185,15 +185,15 @@ Phase 2 Features (new epics)
 
 ## Phase 2 Epics & RFCs
 
-| Epic | RFC(s) | Deliverable |
-|---|---|---|
-| EPIC-012 — Billing & Licensing | — | Subscriptions, Stripe integration, feature gating |
-| Shared Workspaces | RFC-002 (extension) | Multi-user workspaces, shared repositories |
-| Comments & Discussions | — | Threaded discussions on graph nodes, modules, endpoints |
-| Saved Views & Bookmarks | — | Persistent graph views, bookmark collections |
-| Team Documentation | RFC-011 (extension) | Team-authored doc sections merged with generated docs |
-| Repository Comparison | RFC-007 (extension) | Side-by-side graph comparison |
-| Historical Architecture Timeline | RFC-007, RFC-013 | Visual timeline of architecture evolution across commits |
+| Epic                             | RFC(s)              | Deliverable                                              |
+| -------------------------------- | ------------------- | -------------------------------------------------------- |
+| EPIC-012 — Billing & Licensing   | —                   | Subscriptions, Stripe integration, feature gating        |
+| Shared Workspaces                | RFC-002 (extension) | Multi-user workspaces, shared repositories               |
+| Comments & Discussions           | —                   | Threaded discussions on graph nodes, modules, endpoints  |
+| Saved Views & Bookmarks          | —                   | Persistent graph views, bookmark collections             |
+| Team Documentation               | RFC-011 (extension) | Team-authored doc sections merged with generated docs    |
+| Repository Comparison            | RFC-007 (extension) | Side-by-side graph comparison                            |
+| Historical Architecture Timeline | RFC-007, RFC-013    | Visual timeline of architecture evolution across commits |
 
 ## Phase 2 Exit Criteria
 
@@ -229,12 +229,12 @@ EPIC-013 Enterprise
 
 ## Phase 3 Epics & RFCs
 
-| Epic | RFC(s) | Deliverable |
-|---|---|---|
-| EPIC-013 — Enterprise | — | SSO, RBAC, audit, governance, multi-repo, BYOAI |
+| Epic                    | RFC(s)              | Deliverable                                           |
+| ----------------------- | ------------------- | ----------------------------------------------------- |
+| EPIC-013 — Enterprise   | —                   | SSO, RBAC, audit, governance, multi-repo, BYOAI       |
 | Multi-Repository Graphs | RFC-007 (extension) | Cross-repo dependency edges, org-wide Knowledge Graph |
-| Audit & Compliance | — | Audit logs, compliance reports, exportable records |
-| Private Deployments | — | Self-hosted option, air-gapped support |
+| Audit & Compliance      | —                   | Audit logs, compliance reports, exportable records    |
+| Private Deployments     | —                   | Self-hosted option, air-gapped support                |
 
 ## Phase 3 Exit Criteria
 
@@ -256,15 +256,15 @@ EPIC-013 Enterprise
 
 ## Long-Term Vision
 
-| Capability | Description |
-|---|---|
-| **Cross-Organization Knowledge** | Anonymized benchmarks, industry architecture patterns |
-| **AI Capabilities Marketplace** | Shareable AI capabilities across organizations |
-| **Architecture Governance** | Policy-as-code for architecture rules, CI/CD integration |
-| **Automated Architecture Reviews** | AI-driven PR reviews focused on architectural impact |
-| **Predictive Impact Analysis** | Forecast the impact of proposed changes before implementation |
-| **Security Architecture Analysis** | Detect security-relevant architectural patterns |
-| **Ecosystem Visualization** | Visualize relationships across organizations, services, and teams |
+| Capability                         | Description                                                       |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| **Cross-Organization Knowledge**   | Anonymized benchmarks, industry architecture patterns             |
+| **AI Capabilities Marketplace**    | Shareable AI capabilities across organizations                    |
+| **Architecture Governance**        | Policy-as-code for architecture rules, CI/CD integration          |
+| **Automated Architecture Reviews** | AI-driven PR reviews focused on architectural impact              |
+| **Predictive Impact Analysis**     | Forecast the impact of proposed changes before implementation     |
+| **Security Architecture Analysis** | Detect security-relevant architectural patterns                   |
+| **Ecosystem Visualization**        | Visualize relationships across organizations, services, and teams |
 
 Phase 4 capabilities are defined as RFCs when they enter active development.
 
@@ -272,39 +272,39 @@ Phase 4 capabilities are defined as RFCs when they enter active development.
 
 # RFC ↔ Epic Mapping (Complete)
 
-| RFC | Title | Primary Epic | Phase |
-|---|---|---|---|
-| RFC-000 | Product Vision | — | Pre-phase |
-| RFC-001 | Architecture Principles | EPIC-002 | 1 |
-| RFC-002 | System Architecture | EPIC-002 | 1 |
-| RFC-003 | Shared Kernel | EPIC-002 | 1 |
-| RFC-004 | Event-Driven Architecture | EPIC-004 | 1 |
-| RFC-005 | Repository Intelligence Pipeline | EPIC-004 | 1 |
-| RFC-006 | Static Analysis & IR | EPIC-005 | 1 |
-| RFC-007 | Knowledge Extraction Platform | EPIC-006 | 1 |
-| RFC-008 | Visualization Engine | EPIC-007 | 1 |
-| RFC-009 | AI Orchestration | EPIC-008 | 1 |
-| RFC-010 | AI Architecture | EPIC-008 | 1 |
-| RFC-011 | Documentation Engine | EPIC-009 | 1 |
-| RFC-012 | Search & Discovery | EPIC-010 | 1 |
-| RFC-013 | Architecture Metrics | EPIC-011 | 1 |
+| RFC     | Title                            | Primary Epic | Phase     |
+| ------- | -------------------------------- | ------------ | --------- |
+| RFC-000 | Product Vision                   | —            | Pre-phase |
+| RFC-001 | Architecture Principles          | EPIC-002     | 1         |
+| RFC-002 | System Architecture              | EPIC-002     | 1         |
+| RFC-003 | Shared Kernel                    | EPIC-002     | 1         |
+| RFC-004 | Event-Driven Architecture        | EPIC-004     | 1         |
+| RFC-005 | Repository Intelligence Pipeline | EPIC-004     | 1         |
+| RFC-006 | Static Analysis & IR             | EPIC-005     | 1         |
+| RFC-007 | Knowledge Extraction Platform    | EPIC-006     | 1         |
+| RFC-008 | Visualization Engine             | EPIC-007     | 1         |
+| RFC-009 | AI Orchestration                 | EPIC-008     | 1         |
+| RFC-010 | AI Architecture                  | EPIC-008     | 1         |
+| RFC-011 | Documentation Engine             | EPIC-009     | 1         |
+| RFC-012 | Search & Discovery               | EPIC-010     | 1         |
+| RFC-013 | Architecture Metrics             | EPIC-011     | 1         |
 
 ---
 
 # Milestones Summary
 
-| Milestone | Phase | Key Outcome |
-|---|---|---|
-| M1 — Platform Foundation | 1 | Repo runs with one command, CI green |
-| M2 — First Analysis | 1 | TypeScript repo analyzed, IR generated |
-| M3 — Knowledge Graph Alive | 1 | Graph built, API stable, queried by downstream |
-| M4 — Visual Understanding | 1 | Architecture Explorer renders real graphs |
-| M5 — AI Explains | 1 | First AI capability live (Explain Module) |
-| M6 — Docs Ship | 1 | Auto-generated docs for TS projects |
-| M7 — MVP Complete | 1 | All Phase 1 features operational |
-| M8 — Team Ready | 2 | Collaboration features live, billing operational |
-| M9 — Enterprise Ready | 3 | SSO, audit, multi-repo, private deploys |
-| M10 — Platform | 4 | Ecosystem-scale intelligence |
+| Milestone                  | Phase | Key Outcome                                      |
+| -------------------------- | ----- | ------------------------------------------------ |
+| M1 — Platform Foundation   | 1     | Repo runs with one command, CI green             |
+| M2 — First Analysis        | 1     | TypeScript repo analyzed, IR generated           |
+| M3 — Knowledge Graph Alive | 1     | Graph built, API stable, queried by downstream   |
+| M4 — Visual Understanding  | 1     | Architecture Explorer renders real graphs        |
+| M5 — AI Explains           | 1     | First AI capability live (Explain Module)        |
+| M6 — Docs Ship             | 1     | Auto-generated docs for TS projects              |
+| M7 — MVP Complete          | 1     | All Phase 1 features operational                 |
+| M8 — Team Ready            | 2     | Collaboration features live, billing operational |
+| M9 — Enterprise Ready      | 3     | SSO, audit, multi-repo, private deploys          |
+| M10 — Platform             | 4     | Ecosystem-scale intelligence                     |
 
 ---
 
