@@ -1,0 +1,29 @@
+id: architecture-guide
+name: Architecture Guide
+version: 1
+sections:
+  - id: system-overview
+    title: System Overview
+    source: 'ai.enrich("system-overview")'
+    format: markdown
+  - id: container-diagram
+    title: Container Diagram
+    source: 'graph.dependencies()'
+    format: mermaid-flowchart
+  - id: component-diagram
+    title: Component Diagram
+    source: 'graph.entities()'
+    format: mermaid-class-diagram
+  - id: bounded-context-map
+    title: Bounded Context Map
+    source: 'graph.exports()'
+    format: table
+  - id: event-catalog
+    title: Event Catalog
+    source: 'graph.events()'
+    format: table
+    condition: has_events
+  - id: dependency-map
+    title: Dependency Map
+    source: 'graph.dependencies()'
+    format: mermaid-flowchart

@@ -32,38 +32,38 @@ Slices: PR1→main/tracker, PR2→PR1, PR3→PR2, PR4→PR3, PR5→PR4, PR6→PR
 
 ## Phase 3: Template System
 
-- [ ] 3.1 [T] `doc-template-loader.service.ts`: scan `templates/{type}/v{n}/template.yml`, corrupt-file fail-fast (R1, R6)
-- [ ] 3.2 [T] `doc-template-registry.service.ts`: keyed (type,version), built-in fallback, controller merge (R5)
-- [ ] 3.3 Create 5 built-in `templates/{type}/v1/template.yml` — readme, architecture-guide, api-reference, module-docs, onboarding-guide (R7, R2, R4)
+- [x] 3.1 [T] `doc-template-loader.service.ts`: scan `templates/{type}/v{n}/template.yml`, corrupt-file fail-fast (R1, R6)
+- [x] 3.2 [T] `doc-template-registry.service.ts`: keyed (type,version), built-in fallback, controller merge (R5)
+- [x] 3.3 Create 5 built-in `templates/{type}/v1/template.yml` — readme, architecture-guide, api-reference, module-docs, onboarding-guide (R7, R2, R4)
 
 ## Phase 4: Storage
 
-- [ ] 4.1 [T] `storage/minio.service.ts`: idempotent `devlens-docs` bucket ensure (R1)
-- [ ] 4.2 [T] `storage/doc-storage.service.ts`: key `{org}/{repo}/{commitSha}/{docType}.{format}` + `latest/` copy + presign (R2, R3, api R3; org fallback per design)
-- [ ] 4.3 [T] `persistence/{repositories,typeorm}/doc-artifact.*`: entity + repo, index `(repositoryId, commitSha, docType, templateVersion)` (R4, R5)
+- [x] 4.1 [T] `storage/minio.service.ts`: idempotent `devlens-docs` bucket ensure (R1)
+- [x] 4.2 [T] `storage/doc-storage.service.ts`: key `{org}/{repo}/{commitSha}/{docType}.{format}` + `latest/` copy + presign (R2, R3, api R3; org fallback per design)
+- [x] 4.3 [T] `persistence/{repositories,typeorm}/doc-artifact.*`: entity + repo, index `(repositoryId, commitSha, docType, templateVersion)` (R4, R5)
 
 ## Phase 5: Generation Core
 
-- [ ] 5.1 [T] `content-generators/content-generator.interface.ts` + `GeneratedDocument` (R3)
-- [ ] 5.2 [T] 5 `content-generators/*.ts` over `GraphQueryService` (template R2, R4)
-- [ ] 5.3 [T] `doc-enricher.service.ts`: `ProviderSelectorService` + Redis 90d cache `(filePath, contentHash)` (R6)
-- [ ] 5.4 [T] `documentation.service.ts`: 5-stage pipeline, idempotent skip, `force`, progress events (R3, R4, R5)
+- [x] 5.1 [T] `content-generators/content-generator.interface.ts` + `GeneratedDocument` (R3)
+- [x] 5.2 [T] 5 `content-generators/*.ts` over `GraphQueryService` (template R2, R4)
+- [x] 5.3 [T] `doc-enricher.service.ts`: `ProviderSelectorService` + Redis 90d cache `(filePath, contentHash)` (R6)
+- [x] 5.4 [T] `documentation.service.ts`: 5-stage pipeline, idempotent skip, `force`, progress events (R3, R4, R5)
 
 ## Phase 6: Jobs & API
 
-- [ ] 6.1 [T] `events/documentation-event-handler.ts`: built/updated → enqueue, flag-gated (gen R1)
-- [ ] 6.2 [T] `jobs/documentation.job-processor.ts`: DLQ final attempt, `job.updateProgress` (gen R5)
-- [ ] 6.3 [T] `controllers/documentation.controller.ts`: generate/list/get/download/delete/regenerate + `jobs/:jobId`, owner-only delete, guards (api R1–R7)
-- [ ] 6.4 `documentation.module.ts`: wire, `onModuleInit` handler + bucket ensure (storage R1)
-- [ ] 6.5 `app.module.ts`: register `DocumentationModule`
+- [x] 6.1 [T] `events/documentation-event-handler.ts`: built/updated → enqueue, flag-gated (gen R1)
+- [x] 6.2 [T] `jobs/documentation.job-processor.ts`: DLQ final attempt, `job.updateProgress` (gen R5)
+- [x] 6.3 [T] `controllers/documentation.controller.ts`: generate/list/get/download/delete/regenerate + `jobs/:jobId`, owner-only delete, guards (api R1–R7)
+- [x] 6.4 `documentation.module.ts`: wire, `onModuleInit` handler + bucket ensure (storage R1)
+- [x] 6.5 `app.module.ts`: register `DocumentationModule`
 
 ## Phase 7: Frontend Views
 
-- [ ] 7.1 Frontend deps: `react-markdown`, `remark-gfm`, `mermaid`, `rehype-highlight`
-- [ ] 7.2 [T] `docs/page.tsx` + list components: grouped cards, empty state (R1, R2, R7)
-- [ ] 7.3 [T] `docs/[artifact]/page.tsx` + viewer: markdown, mermaid, highlight, AI badge (R3, R6)
-- [ ] 7.4 [T] generate button + progress polling + download buttons (R4, R5)
-- [ ] 7.5 `page.tsx`: "Documentation" nav link (R8)
+- [x] 7.1 Frontend deps: `react-markdown`, `remark-gfm`, `mermaid`, `rehype-highlight`
+- [x] 7.2 [T] `docs/page.tsx` + list components: grouped cards, empty state (R1, R2, R7)
+- [x] 7.3 [T] `docs/[artifact]/page.tsx` + viewer: markdown, mermaid, highlight, AI badge (R3, R6)
+- [x] 7.4 [T] generate button + progress polling + download buttons (R4, R5)
+- [x] 7.5 `page.tsx`: "Documentation" nav link (R8)
 
 ## Phase 8: Verification
 

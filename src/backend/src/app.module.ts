@@ -13,6 +13,7 @@ import { RepositoriesModule } from './modules/repositories/repositories.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
 import { KnowledgeGraphModule } from './modules/knowledge-graph/knowledge-graph.module';
 import { AiModule } from './modules/ai/ai.module';
+import { DocumentationModule } from './modules/documentation/documentation.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { AiModule } from './modules/ai/ai.module';
     AnalysisModule,
     KnowledgeGraphModule,
     AiModule,
+    DocumentationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
