@@ -1,5 +1,8 @@
 export { Language } from './language.vo';
 
+export { FrameworkCandidate } from './framework-candidate.vo';
+export type { FrameworkCandidateProps } from './framework-candidate.vo';
+
 export { ParsedFile } from './parsed-file.vo';
 export { Diagnostic, DiagnosticSeverity, ParseResult } from './parse-result.vo';
 
