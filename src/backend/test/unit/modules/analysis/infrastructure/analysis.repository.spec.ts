@@ -6,6 +6,7 @@ import { AnalysisTypeOrmEntity } from '@/modules/analysis/infrastructure/persist
 import { Analysis } from '@/modules/analysis/domain/analysis.entity';
 import { AnalysisStatus } from '@/modules/analysis/domain/analysis-status.enum';
 import { AnalysisId } from '@/modules/analysis/domain/analysis-id.vo';
+import { FrameworkCandidate } from '@/modules/analysis/domain/framework-candidate.vo';
 import { IrProject } from '@/modules/analysis/domain/ir-nodes';
 import { Language } from '@/modules/analysis/domain/language.vo';
 import { SnapshotId, RepositoryId } from '@/modules/repositories/domain';
@@ -28,6 +29,8 @@ function sampleIr(): IrProject {
 
 const sampleManifest = { '/repo/src/app.ts': 'abc123' };
 
+const sampleCandidates = [{ framework: 'nestjs', file: 'package.json', markers: ['@nestjs/core'] }];
+
 const mockDate = new Date('2024-01-15T10:00:00Z');
 
 const mockEntity: AnalysisTypeOrmEntity = {
@@ -48,6 +51,7 @@ const mockEntity: AnalysisTypeOrmEntity = {
   },
   fileManifest: sampleManifest,
   reuseRatio: 0.8,
+  frameworkCandidates: sampleCandidates,
   createdAt: mockDate,
   updatedAt: mockDate,
 };
@@ -92,6 +96,34 @@ describe('AnalysisRepository', () => {
       expect(saved.createdAt).toBeInstanceOf(Date);
       expect(saved.updatedAt).toBeInstanceOf(Date);
     });
+
+    it('should persist framework candidates as plain JSON', async () => {
+      const analysis = Analysis.create(SnapshotId.from('snap-1'), RepositoryId.from('repo-1'));
+      analysis.startProcessing('ws-1', 'corr-1');
+      analysis.completeProcessing(sampleIr(), sampleManifest, 'ws-1', 'corr-1', 0.8, [
+        FrameworkCandidate.create({
+          framework: 'nestjs',
+          file: 'package.json',
+          markers: ['@nestjs/core'],
+        }),
+      ]);
+
+      await repository.save(analysis);
+
+      const saved = ormRepo.save.mock.calls[0][0] as AnalysisTypeOrmEntity;
+      expect(saved.frameworkCandidates).toEqual(sampleCandidates);
+    });
+
+    it('should persist null framework candidates when analysis has none', async () => {
+      const analysis = Analysis.create(SnapshotId.from('snap-1'), RepositoryId.from('repo-1'));
+      analysis.startProcessing('ws-1', 'corr-1');
+      analysis.completeProcessing(sampleIr(), sampleManifest, 'ws-1', 'corr-1');
+
+      await repository.save(analysis);
+
+      const saved = ormRepo.save.mock.calls[0][0] as AnalysisTypeOrmEntity;
+      expect(saved.frameworkCandidates).toBeNull();
+    });
   });
 
   describe('findById', () => {
@@ -108,6 +140,11 @@ describe('AnalysisRepository', () => {
       expect(result!.repositoryId.toString()).toBe('repo-1');
       expect(result!.fileManifest).toEqual(sampleManifest);
       expect(result!.reuseRatio).toBe(0.8);
+      expect(result!.frameworkCandidates).toHaveLength(1);
+      expect(result!.frameworkCandidates![0].framework).toBe('nestjs');
+      expect(result!.frameworkCandidates![0].file).toBe('package.json');
+      expect(result!.frameworkCandidates![0].markers).toEqual(['@nestjs/core']);
+      expect(result!.frameworkCandidates![0]).toBeInstanceOf(FrameworkCandidate);
       expect(result!.ir).not.toBeNull();
       expect(result!.ir!.fqn).toBe('acme');
       expect(result!.ir!.packages[0].modules[0].fqn).toBe('acme:core:src/app');
@@ -120,6 +157,15 @@ describe('AnalysisRepository', () => {
       const result = await repository.findById(AnalysisId.from('missing'));
 
       expect(result).toBeNull();
+    });
+
+    it('should return null framework candidates when the entity has none', async () => {
+      ormRepo.findOne.mockResolvedValue({ ...mockEntity, frameworkCandidates: null });
+
+      const result = await repository.findById(AnalysisId.from(mockEntity.id));
+
+      expect(result).not.toBeNull();
+      expect(result!.frameworkCandidates).toBeNull();
     });
   });
 

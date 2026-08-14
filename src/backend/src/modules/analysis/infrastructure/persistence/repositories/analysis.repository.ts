@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository as TypeOrmRepository } from 'typeorm';
-import { AnalysisTypeOrmEntity } from '../typeorm/analysis.typeorm-entity';
+import { AnalysisTypeOrmEntity, FrameworkCandidateJson } from '../typeorm/analysis.typeorm-entity';
 import {
   Analysis,
   AnalysisId,
   AnalysisStatus,
+  FrameworkCandidate,
   IrProject,
   IrProjectJson,
   Language,
@@ -55,7 +56,14 @@ export class AnalysisRepository {
       entity.reuseRatio,
       entity.createdAt,
       entity.updatedAt,
+      entity.frameworkCandidates
+        ? entity.frameworkCandidates.map((candidate) => this.deserializeCandidate(candidate))
+        : null,
     );
+  }
+
+  private deserializeCandidate(candidate: FrameworkCandidateJson): FrameworkCandidate {
+    return FrameworkCandidate.create(candidate);
   }
 
   private deserializeIr(json: IrProjectJson): IrProject {
@@ -78,6 +86,9 @@ export class AnalysisRepository {
     entity.ir = analysis.ir ? analysis.ir.toJSON() : null;
     entity.fileManifest = analysis.fileManifest;
     entity.reuseRatio = analysis.reuseRatio;
+    entity.frameworkCandidates = analysis.frameworkCandidates
+      ? analysis.frameworkCandidates.map((candidate) => candidate.toJSON())
+      : null;
     entity.createdAt = analysis.createdAt;
     entity.updatedAt = analysis.updatedAt;
 
