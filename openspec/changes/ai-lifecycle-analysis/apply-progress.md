@@ -120,3 +120,27 @@ None material. `detectFramework(ir)` (IR decorator/import scan) is retained as a
 - Phase 2 adds no new suite files — all tests were added to existing spec files (enrichment.service, prompt-builder, real-template-files, ai.module, enrichment-pipeline.integration).
 - Golden fixtures + eval harness are Phase 3/4 — the integration spec exercises the guard/flow paths with the Mock provider only (0 live API calls).
 - Openspec artifacts (`openspec/changes/ai-lifecycle-analysis/*`) are committed separately from source code: `tasks.md` + `apply-progress.md` land as one docs work-unit commit after verification.
+
+---
+
+# Apply Progress — PR 2: JD Round-2 Closure (confidence removal + loader hardening)
+
+**Context**: Judgment-day round 2 flagged two non-blocking warnings: (1) dead deterministic `confidence` field on `FrameworkCandidateResult` — spec drift vs. the `{ candidates, primary }` contract; (2) `loadExamples()` hardened defensive branches with no covering tests. Both closed here; production behavior unchanged.
+
+## TDD Cycle Evidence
+
+| Task | Test File                                                                     | Layer | Safety Net                      | RED                                                  | GREEN                           | TRIANGULATE                                                                                    | REFACTOR                            |
+| ---- | ----------------------------------------------------------------------------- | ----- | ------------------------------- | ---------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------- |
+| W2   | `src/backend/test/unit/modules/ai/application/prompt-template-loader.spec.ts` | Unit  | ✅ modules/ai 41 suites 401/401 | — (branch already implemented; coverage-gap closure) | ✅ Passed 14/14 in file (3 new) | ✅ 3 cases: literal `null` / primitive value / non-array `examples` — each exercises one guard | ➖ None (production code untouched) |
+
+## Commits (work units)
+
+| Commit               | Message                                                                | Files                                                                                                                |
+| -------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `31b5fac`            | `fix(ai): drop dead detection confidence and harden example loading`   | enrichment.service.ts, prompt-template-loader.service.ts, enrichment.service.spec.ts, prompt-template-loader.spec.ts |
+| `(this docs commit)` | `docs(sdd): reconcile detection contract wording in spec/tasks/design` | specs/ai-lifecycle-classification/spec.md, tasks.md, design.md, apply-progress.md                                    |
+
+## Verification (JD round-2 closure boundary)
+
+- ✅ `npx tsc --noEmit -p tsconfig.json` exit 0
+- ✅ `npx jest --config jest.config.js --testPathPattern "modules/ai" --runInBand`: 41 suites, **404/404** passing (+3 new loader tests)
