@@ -1,6 +1,7 @@
 # Static Analysis Pipeline Specification
 
 > **Archived from**: `epic-005-static-analysis` (2026-08-04)
+> **Updated by**: `ai-lifecycle-analysis` (2026-08-14) — deterministic pipeline designated structural skeleton; AI enrichment runs as additive stage on `analysis.completed`, never inside `StaticAnalysisService`
 
 ## Purpose
 
@@ -97,6 +98,24 @@ Each event SHALL include: `snapshotId`, `repositoryId`, `workspaceId`, `correlat
 - WHEN the pipeline executes
 - THEN `analysis.started` is emitted first, followed by `analysis.completed`
 - AND both events share the same `correlationId`
+
+### Requirement: Deterministic Pipeline as Structural Skeleton
+
+The deterministic analysis pipeline (`StaticAnalysisService`) SHALL remain the structural skeleton: language detection, parsing, IR build, validation, and persistence. AI enrichment SHALL run as an additive, separate stage triggered by `analysis.completed` — never inside `StaticAnalysisService`. When `ai.enabled=false`, pipeline behavior SHALL be unchanged.
+
+#### Scenario: AI enrichment is downstream of analysis
+
+- GIVEN `analysis.completed` is emitted with a valid IR
+- WHEN the `ai-enrichment` stage is registered as a handler for `analysis.completed`
+- THEN enrichment runs after analysis completes
+- AND the deterministic IR is produced independently of AI
+
+#### Scenario: AI disabled leaves pipeline behavior unchanged
+
+- GIVEN `ai.enabled=false`
+- WHEN a `repository.synchronized` event triggers the pipeline
+- THEN the pipeline stages execute exactly as before
+- AND no AI stage runs
 
 ## References
 
