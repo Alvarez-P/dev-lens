@@ -15,7 +15,9 @@ const enrichmentRequest: AIEnrichmentRequest = {
   messages: [{ role: 'system', content: 'classify' }],
   capability: 'classify-lifecycle',
   framework: 'nestjs',
-  manifestSha256: 'abc123',
+  // Real committed golden for the mini-nestjs corpus (the former `abc123`
+  // placeholder was removed — lookups now resolve against a real corpus sha).
+  manifestSha256: '8788beb7d759f246da365f985b4a0378581c7e37b317fd451e9bcef2340fde34',
 };
 
 describe('MockProvider', () => {
@@ -50,9 +52,9 @@ describe('MockProvider', () => {
       expect(response.framework).toBe('nestjs');
       expect(response.architecture).toBe('mvc');
       expect(response.confidence).toBe(0.9);
-      expect(response.classes).toHaveLength(1);
+      expect(response.classes).toHaveLength(6);
       expect(response.classes[0].role).toBe('controller');
-      expect(response.classes[0].sourceFile).toBe('src/users/users.controller.ts');
+      expect(response.classes[0].sourceFile).toBe('src/app.controller.ts');
     });
 
     it('should throw ProviderUnavailableError when no fixture exists for the sha256', async () => {
