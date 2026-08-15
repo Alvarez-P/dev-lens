@@ -1,0 +1,34 @@
+{
+  "framework": "express",
+  "architecture": "middleware-chain",
+  "confidence": 0.85,
+  "classes": [
+    {
+      "fqn": "snap-express-golden:default:src/controllers/users.controller#UsersController",
+      "role": "controller",
+      "lifecycle": ["middleware:express.json", "handler"],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/controllers/users.controller.ts"
+    },
+    {
+      "fqn": "snap-express-golden:default:src/services/users.service#UsersService",
+      "role": "service",
+      "lifecycle": ["handler"],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/services/users.service.ts"
+    },
+    {
+      "fqn": "snap-express-golden:default:src/dto/create-user.dto#CreateUserDto",
+      "role": "dto",
+      "lifecycle": [],
+      "dtoFields": [
+        { "name": "name", "type": "string", "optional": false },
+        { "name": "age", "type": "number", "optional": true }
+      ],
+      "confidence": 0.85,
+      "sourceFile": "src/dto/create-user.dto.ts"
+    }
+  ]
+}
