@@ -45,13 +45,13 @@ Chain strategy: pending
 
 ## Phase 3: Golden + Tripwire Fixtures
 
-- [ ] 3.1 GREEN: Create `test/fixtures/mini-express/**` — express golden source (controller, DTOs, entry points)
-- [ ] 3.2 GREEN: Create `ai/ai.fixtures/classify-lifecycle/{manifestSha}.response.json` — golden expected classifications (express; re-verify nestjs `abc123`)
-- [ ] 3.3 GREEN: Create injection-tripwire fixtures — comment injection + `.env` deny-list
+- [x] 3.1 GREEN: Create `test/fixtures/mini-express/**` — express golden source (controller, DTOs, entry points)
+- [x] 3.2 GREEN: Create `ai/ai.fixtures/classify-lifecycle/{manifestSha}.response.json` — golden expected classifications (express; re-verify nestjs `abc123`)
+- [x] 3.3 GREEN: Create injection-tripwire fixtures — comment injection + `.env` deny-list
 
 ## Phase 4: Evaluation Harness
 
-- [ ] 4.1 GREEN: Create `test/ai-lifecycle.e2e-spec.ts` (under `test/jest-e2e.json`) — golden nestjs/express classification equality, Mock provider only
-- [ ] 4.2 GREEN: Determinism e2e — `ai.enabled=false` → pipeline stages unchanged, no AI stage runs
-- [ ] 4.3 GREEN: Tripwire e2e — injected instructions have no effect; `.env` excluded from prompt
-- [ ] 4.4 REFACTOR: `pnpm -r test` + `pnpm -r build` green; confirm CI makes 0 live API calls
+- [x] 4.1 GREEN: Create `test/ai-lifecycle.e2e-spec.ts` (under `test/jest-e2e.json`) — golden nestjs/express classification equality, Mock provider only
+- [x] 4.2 GREEN: Determinism e2e — `ai.enabled=false` → pipeline stages unchanged, no AI stage runs
+- [x] 4.3 GREEN: Tripwire e2e — injected instructions have no effect; `.env` excluded from prompt
+- [x] 4.4 REFACTOR: `pnpm -r test` + `pnpm -r build` green; confirm CI makes 0 live API calls
