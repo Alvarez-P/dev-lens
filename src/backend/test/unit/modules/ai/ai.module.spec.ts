@@ -200,6 +200,18 @@ describe('AiModule', () => {
     expect(capability.outputFormat.dto).toBe(LifecycleEnrichmentDto);
   });
 
+  it('should keep classify-lifecycle out of the orchestration-visible capability list', async () => {
+    await moduleRef.get(AiModule).onModuleInit();
+
+    const registry = moduleRef.get<CapabilityRegistryService>(CAPABILITY_REGISTRY);
+
+    // Registered (the enrichment pipeline resolves it directly) but excluded
+    // from orchestration discovery/routing — it has no SSE-servable templates.
+    expect(registry.get('classify-lifecycle').id).toBe('classify-lifecycle');
+    expect(registry.list().map((capability) => capability.id)).not.toContain('classify-lifecycle');
+    expect(registry.isAvailable('classify-lifecycle')).toBe(false);
+  });
+
   it('should register an analysis.completed handler that enqueues an enrichment job', async () => {
     const aiModule = moduleRef.get(AiModule);
     await aiModule.onModuleInit();

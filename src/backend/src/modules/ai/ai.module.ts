@@ -239,6 +239,10 @@ export class AiModule implements OnModuleInit {
       name: 'Classify Lifecycle',
       version: 1,
       enabled: true,
+      // Enrichment-only: templates live under `ai.capabilities/` (dot path,
+      // instructions.md, no output-format.md) so the orchestration SSE path
+      // cannot serve it — excluded from orchestration discovery/routing.
+      enrichmentOnly: true,
       description:
         'Classify framework/architecture, per-endpoint lifecycle stages, and DTO types over the structural IR',
       contextStrategy: createContextStrategy({

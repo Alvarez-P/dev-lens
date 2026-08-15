@@ -13,8 +13,9 @@ export type { AICapability } from './ai-capability';
  * in-memory `CapabilityRegistryService` (PR8):
  * - `register` rejects duplicate ids (`DuplicateCapabilityError`)
  * - `get` throws `CapabilityNotFoundError` for unknown ids
- * - `list(enabledOnly?)` filters to enabled capabilities by default
- * - `isAvailable` returns false for disabled capabilities
+ * - `list(enabledOnly?)` filters to enabled capabilities by default and never
+ *   returns enrichment-only capabilities (not orchestration-visible)
+ * - `isAvailable` returns false for disabled or enrichment-only capabilities
  */
 export interface CapabilityRegistry {
   register(capability: AICapability): void;
