@@ -168,7 +168,6 @@ describe('AI Lifecycle Evaluation Harness', () => {
   let snapshotRepository: { findById: jest.Mock };
   let gitService: { getRepoPath: jest.Mock };
   let enrichmentQueue: { add: jest.Mock };
-  let currentAnalysis: Analysis;
 
   const aiConfig = { enabled: true };
 
@@ -222,6 +221,12 @@ describe('AI Lifecycle Evaluation Harness', () => {
     await moduleRef.close();
   });
 
+  afterEach(() => {
+    // Restore AI gating so the determinism test (which flips `ai.enabled`)
+    // cannot leak disabled state into subsequent tests.
+    aiConfig.enabled = true;
+  });
+
   async function analyzeFixture(
     repoPath: string,
     snapshotId: string,
@@ -254,9 +259,16 @@ describe('AI Lifecycle Evaluation Harness', () => {
   }
 
   function buildPipeline(analysis: Analysis, provider: MockProvider): PipelineHandle {
-    currentAnalysis = analysis;
+    // Resolve `findById` from a keyed map so the mock honors its argument
+    // instead of a shared module-level `currentAnalysis` that can leak between
+    // pipelines/tests.
+    const analyses = new Map<string, Analysis>([[analysis.id.toString(), analysis]]);
     const analysisRepositoryMock = {
-      findById: jest.fn().mockImplementation(() => Promise.resolve(currentAnalysis)),
+      findById: jest
+        .fn()
+        .mockImplementation((id: AnalysisId) =>
+          Promise.resolve(analyses.get(id.toString()) ?? null),
+        ),
     } as unknown as AnalysisRepository;
 
     const enrichmentRepository = new InMemoryEnrichmentRepository();
@@ -489,36 +501,54 @@ describe('AI Lifecycle Evaluation Harness', () => {
     });
 
     it('.env deny-list: secrets never reach the manifest, sketches, or prompt', async () => {
-      const envPath = join(TRIPWIRE_FIXTURE, '.env.example');
-      const envContent = readFileSync(envPath, 'utf8');
-      expect(envContent).toContain(TRIPWIRE_SECRET);
+      const envExamplePath = join(TRIPWIRE_FIXTURE, '.env.example');
+      expect(readFileSync(envExamplePath, 'utf8')).toContain(TRIPWIRE_SECRET);
+      // Source-eligible (.ts) AND .env*-named: only the deny-list keeps it out.
+      const envLocalPath = join(TRIPWIRE_FIXTURE, '.env.local.ts');
+      expect(readFileSync(envLocalPath, 'utf8')).toContain(TRIPWIRE_SECRET);
 
-      // Defense 1 — allow/deny-list classifies every .env variant as denied.
+      // Defense 1 — the allow/deny-list classifies every .env* variant as
+      // denied, including the source-eligible one the extension filter passes.
       expect(new SourceFileFilter().classify('.env.example')).toEqual({
         include: false,
         rule: '.env*',
       });
+      expect(new SourceFileFilter().classify('.env.local.ts')).toEqual({
+        include: false,
+        rule: '.env*',
+      });
 
-      // Defense 2 — the file manifest only indexes source extensions.
+      // Defense 2 — the extension filter keeps the non-source `.env.example`
+      // out of the manifest, but the source-eligible `.env.local.ts` passes
+      // through: the deny-list — not the extension filter — is what must
+      // exclude it from AI context.
       const manifest = new FileManifestService().computeManifest(TRIPWIRE_FIXTURE);
-      expect(Object.keys(manifest).some((file) => file.startsWith('.env'))).toBe(false);
+      expect(manifest['.env.example']).toBeUndefined();
+      expect(manifest['.env.local.ts']).toBeDefined();
 
-      // Defense 3 — the real pipeline analysis excludes it from manifest and IR.
+      // Defense 3 — the real pipeline analysis parses `.env.local.ts` into the
+      // IR (its signatures would otherwise reach the prompt).
       const analysis = await analyzeFixture(
         TRIPWIRE_FIXTURE,
         TRIPWIRE_SNAPSHOT_2,
         'repo-tripwire-2',
       );
       const analysisManifest = analysis.fileManifest ?? {};
-      expect(Object.keys(analysisManifest).some((file) => file.startsWith('.env'))).toBe(false);
+      expect(analysisManifest['.env.example']).toBeUndefined();
+      expect(analysisManifest['.env.local.ts']).toBeDefined();
       const irModules = analysis.ir!.packages.flatMap((pkg) => pkg.modules);
-      expect(irModules.some((mod) => mod.name.includes('.env'))).toBe(false);
+      expect(irModules.some((mod) => mod.name.includes('.env'))).toBe(true);
 
-      // Defense 4 — the rendered prompt never carries the secret value.
+      // Defense 4 — the deny-list excludes `.env.local.ts` from the sketch
+      // set, so neither the secret value nor its class signature reaches the
+      // rendered prompt. The prompt DOES carry the non-denied sibling signature
+      // (proving sketches are present), so the `.env` absence is not vacuous.
       const { prompt, buildSpy } = await runEnrichment(analysis);
       expect(buildSpy).toHaveBeenCalled();
       expect(prompt.length).toBeGreaterThan(0);
+      expect(prompt).toContain('InjectedController');
       expect(prompt).not.toContain(TRIPWIRE_SECRET);
+      expect(prompt).not.toContain('LocalEnvConfig');
       expect(prompt).not.toContain(INJECTION_MARKER);
       buildSpy.mockRestore();
     });
