@@ -6,6 +6,7 @@ import { FrameworkConfigLoader, FrameworkConfig } from './framework-config-loade
 import { KgContext } from './context-assembler.service';
 import { serializeSketch } from './code-sketch.builder';
 import { priorityRank } from './context-assembler.service';
+import { FrameworkCandidate } from '../../analysis/domain';
 
 /** Hard prompt budget: ≤6000 tokens (REQ-PM-005). Not configurable per call. */
 export const PROMPT_BUDGET_TOKENS = 6000;
@@ -18,6 +19,8 @@ export interface PromptBuildInput {
   /** Optional template version; defaults to the latest available. */
   version?: number;
   framework: string;
+  /** Manifest-detected framework candidates for the LLM to confirm (ADR-2/3). */
+  frameworkCandidates?: FrameworkCandidate[];
   kgContext: KgContext;
   sketches: CodeSketch[];
   /** Override variables before the default substitution map is applied. */

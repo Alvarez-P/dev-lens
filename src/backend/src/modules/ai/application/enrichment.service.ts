@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { AnalysisId } from '../../analysis/domain';
+import { Analysis, AnalysisId, FrameworkCandidate } from '../../analysis/domain';
 import { IrProject } from '../../analysis/domain/ir-nodes';
 import { AnalysisRepository } from '../../analysis/infrastructure/persistence/repositories/analysis.repository';
 import { FileManifestService } from '../../analysis/application/file-manifest.service';
@@ -119,11 +119,15 @@ export class EnrichmentService {
         return;
       }
 
-      // Stage 4: build the prompt with framework semantics.
-      const framework = detectFramework(analysis.ir);
+      // Stage 4: build the prompt with framework semantics. Candidates are
+      // captured deterministically at analysis time (manifest markers) and
+      // confirmed by the LLM (ADR-2/3); the top candidate drives the format
+      // config, generic on ambiguity or when no manifest exists.
+      const { candidates, primary } = detectFrameworkCandidates(analysis);
       const prompt = this.promptBuilder.build({
         capabilityId: CLASSIFY_LIFECYCLE_CAPABILITY,
-        framework,
+        framework: primary,
+        frameworkCandidates: candidates,
         kgContext,
         sketches,
       });
@@ -133,7 +137,7 @@ export class EnrichmentService {
       const request = {
         messages: [{ role: 'system' as const, content: prompt }],
         capability: CLASSIFY_LIFECYCLE_CAPABILITY,
-        framework,
+        framework: primary,
         manifestSha256,
       };
       const response = await provider.enrich(request);
@@ -221,9 +225,43 @@ export class EnrichmentService {
 }
 
 /**
+ * Manifest-based framework detection (ADR-2/3, spec "Manifest-Based Framework
+ * Detection"): returns the candidates captured at analysis time together with
+ * the primary framework that selects the format config.
+ *
+ * - No manifest candidates → `primary: 'unknown'`, confidence 0 (never
+ *   guessed); the prompt instructs the LLM accordingly.
+ * - Multiple distinct candidate frameworks → `primary: 'unknown'` so the
+ *   generic format config is used on ambiguity (ADR-3) and the LLM decides.
+ * - A single distinct framework → that framework drives the config.
+ *
+ * The LLM output remains authoritative: the prompt asks it to confirm/refine
+ * `{ framework, architecture, confidence }` from the candidates + entry-point
+ * sketches.
+ */
+export interface FrameworkCandidateResult {
+  candidates: FrameworkCandidate[];
+  primary: string;
+}
+
+export function detectFrameworkCandidates(
+  analysis: Pick<Analysis, 'frameworkCandidates'>,
+): FrameworkCandidateResult {
+  const candidates = [...(analysis.frameworkCandidates ?? [])];
+  const distinctFrameworks = new Set(candidates.map((candidate) => candidate.framework));
+  const primary = distinctFrameworks.size === 1 ? candidates[0].framework : 'unknown';
+
+  return { candidates, primary };
+}
+
+/**
  * Lightweight framework detection from the IR (REQ-PM-006): scans decorators
  * and resolved imports for NestJS/Express markers. Unknown frameworks fall
  * back to the generic format config.
+ *
+ * Kept as the deterministic fallback (ADR-3) for the per-unit fallback path
+ * when the LLM cannot run; the pipeline itself uses manifest candidates via
+ * `detectFrameworkCandidates`.
  */
 export function detectFramework(ir: IrProject): string {
   let nestjs = false;

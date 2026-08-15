@@ -1,6 +1,11 @@
 import { Language } from '@/modules/analysis/domain/language.vo';
 import { IrProject } from '@/modules/analysis/domain/ir-nodes';
-import { Analysis, AnalysisId, AnalysisStatus } from '@/modules/analysis/domain';
+import {
+  Analysis,
+  AnalysisId,
+  AnalysisStatus,
+  FrameworkCandidate,
+} from '@/modules/analysis/domain';
 import { SnapshotId, RepositoryId } from '@/modules/repositories/domain';
 import { AnalysisRepository } from '@/modules/analysis/infrastructure/persistence/repositories/analysis.repository';
 import { EnrichmentRepository } from '@/modules/ai/infrastructure/persistence/repositories/enrichment.repository';
@@ -8,7 +13,10 @@ import { ContextAssembler } from '@/modules/ai/application/context-assembler.ser
 import { PromptBuilder } from '@/modules/ai/application/prompt-builder.service';
 import { ProviderSelectorService } from '@/modules/ai/application/provider-selector.service';
 import { ThreeGatesValidator } from '@/modules/ai/application/three-gates-validator.service';
-import { EnrichmentService } from '@/modules/ai/application/enrichment.service';
+import {
+  EnrichmentService,
+  detectFrameworkCandidates,
+} from '@/modules/ai/application/enrichment.service';
 import { AIProvider } from '@/modules/ai/domain/ai-provider.interface';
 import {
   EnrichmentStartedEvent,
@@ -61,6 +69,21 @@ function buildAnalysis(): Analysis {
     null,
     new Date(),
     new Date(),
+  );
+}
+
+function buildAnalysisWithCandidates(candidates: FrameworkCandidate[]): Analysis {
+  return Analysis.reconstitute(
+    AnalysisId.from('analysis-1'),
+    SnapshotId.from('snap-1'),
+    RepositoryId.from('repo-1'),
+    AnalysisStatus.COMPLETED,
+    buildIr(),
+    MANIFEST,
+    null,
+    new Date(),
+    new Date(),
+    candidates,
   );
 }
 
@@ -309,6 +332,33 @@ describe('EnrichmentService 7-stage pipeline (REQ-EP-003/006/008)', () => {
     await expect(service.run(job, { finalAttempt: true })).rejects.toThrow(/no intermediate/i);
   });
 
+  it('should pass manifest candidates and the primary framework into the prompt builder', async () => {
+    analysisRepository.findById.mockResolvedValue(
+      buildAnalysisWithCandidates([
+        FrameworkCandidate.create({
+          framework: 'nestjs',
+          file: 'package.json',
+          markers: ['@nestjs/core'],
+        }),
+      ]),
+    );
+
+    await service.run(job);
+
+    expect(promptBuilder.build).toHaveBeenCalledWith(
+      expect.objectContaining({
+        capabilityId: 'classify-lifecycle',
+        framework: 'nestjs',
+        frameworkCandidates: [
+          expect.objectContaining({ framework: 'nestjs', file: 'package.json' }),
+        ],
+      }),
+    );
+
+    const request = (provider.enrich as jest.Mock).mock.calls[0][0];
+    expect(request.framework).toBe('nestjs');
+  });
+
   function buildAnalysisWithNullIr(): Analysis {
     return Analysis.reconstitute(
       AnalysisId.from('analysis-1'),
@@ -322,4 +372,58 @@ describe('EnrichmentService 7-stage pipeline (REQ-EP-003/006/008)', () => {
       new Date(),
     );
   }
+});
+
+describe('detectFrameworkCandidates (ADR-3)', () => {
+  const nestjsCandidate = FrameworkCandidate.create({
+    framework: 'nestjs',
+    file: 'package.json',
+    markers: ['@nestjs/core'],
+  });
+  const expressCandidate = FrameworkCandidate.create({
+    framework: 'express',
+    file: 'package.json',
+    markers: ['express'],
+  });
+
+  function analysisWith(candidates: FrameworkCandidate[] | null): Analysis {
+    return Analysis.reconstitute(
+      AnalysisId.from('analysis-1'),
+      SnapshotId.from('snap-1'),
+      RepositoryId.from('repo-1'),
+      AnalysisStatus.COMPLETED,
+      null,
+      MANIFEST,
+      null,
+      new Date(),
+      new Date(),
+      candidates,
+    );
+  }
+
+  it('should return manifest candidates with the single framework as primary', () => {
+    const result = detectFrameworkCandidates(analysisWith([nestjsCandidate]));
+
+    expect(result.candidates).toEqual([nestjsCandidate]);
+    expect(result.primary).toBe('nestjs');
+  });
+
+  it('should return unknown when no manifest candidates exist (never guessed)', () => {
+    expect(detectFrameworkCandidates(analysisWith(null))).toEqual({
+      candidates: [],
+      primary: 'unknown',
+    });
+
+    expect(detectFrameworkCandidates(analysisWith([]))).toEqual({
+      candidates: [],
+      primary: 'unknown',
+    });
+  });
+
+  it('should fall back to the generic config when candidates are ambiguous', () => {
+    const result = detectFrameworkCandidates(analysisWith([nestjsCandidate, expressCandidate]));
+
+    expect(result.candidates).toHaveLength(2);
+    expect(result.primary).toBe('unknown');
+  });
 });
