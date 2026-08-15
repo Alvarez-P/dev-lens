@@ -45,6 +45,28 @@ function estimateTokens(text: string): number {
 }
 
 /**
+ * Renders the manifest-detected framework candidates for the
+ * `{{framework_candidates}}` template variable (ADR-2/3). Empty candidates
+ * instruct the LLM to never guess: classify as `unknown` with confidence 0
+ * unless the sketches provide strong evidence.
+ */
+export function renderFrameworkCandidates(candidates: FrameworkCandidate[]): string {
+  if (candidates.length === 0) {
+    return (
+      'No manifest candidates detected — do NOT guess. Classify as "unknown" with ' +
+      'confidence 0 unless strong evidence appears in the code sketches.'
+    );
+  }
+
+  return candidates
+    .map(
+      (candidate) =>
+        `- ${candidate.framework} (from ${candidate.file}: ${candidate.markers.join(', ')})`,
+    )
+    .join('\n');
+}
+
+/**
  * Builds versioned, injection-hardened LLM prompts (REQ-PM-001/002/003/005).
  *
  * Exactly four sections in fixed order: system instruction, KG context, code
@@ -171,6 +193,7 @@ export class PromptBuilder {
       language: input.kgContext.language,
       module_count: String(input.kgContext.moduleCount),
       file_count: String(input.kgContext.fileCount),
+      framework_candidates: renderFrameworkCandidates(input.frameworkCandidates ?? []),
       ...input.substitutions,
     };
   }

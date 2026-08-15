@@ -1,5 +1,8 @@
 Classify each class in the code sketches using the {{framework}} framework semantics.
 
+Manifest candidates (deterministic, from manifests — confirm or refine them; do not ignore):
+{{framework_candidates}}
+
 For every class, determine:
 
 1. role — one of: controller, service, repository, guard, pipe, interceptor, middleware, module, entity, dto, exception-filter, gateway, event-handler, message-handler, other.
