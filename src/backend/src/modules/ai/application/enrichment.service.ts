@@ -301,12 +301,16 @@ export function detectFramework(ir: IrProject): string {
 
   for (const pkg of ir.packages) {
     for (const mod of pkg.modules) {
-      if (mod.imports.some((specifier) => specifier.includes('@nestjs'))) {
+      if (
+        mod.imports.some(
+          (specifier) => specifier === '@nestjs/core' || specifier.startsWith('@nestjs/'),
+        )
+      ) {
         nestjs = true;
       }
 
       if (
-        mod.imports.some((specifier) => specifier === 'express' || specifier.includes('express'))
+        mod.imports.some((specifier) => specifier === 'express' || specifier.startsWith('express/'))
       ) {
         express = true;
       }

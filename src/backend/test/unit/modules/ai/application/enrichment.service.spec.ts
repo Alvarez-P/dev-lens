@@ -15,6 +15,7 @@ import { ProviderSelectorService } from '@/modules/ai/application/provider-selec
 import { ThreeGatesValidator } from '@/modules/ai/application/three-gates-validator.service';
 import {
   EnrichmentService,
+  detectFramework,
   detectFrameworkCandidates,
 } from '@/modules/ai/application/enrichment.service';
 import { AIProvider } from '@/modules/ai/domain/ai-provider.interface';
@@ -494,5 +495,91 @@ describe('detectFrameworkCandidates (ADR-3)', () => {
       candidates: [],
       primary: 'unknown',
     });
+  });
+});
+
+describe('detectFramework (REQ-PM-006 express marker)', () => {
+  function irWithImports(imports: string[]): IrProject {
+    return IrProject.create({
+      name: 'acme',
+      rootPath: '/repo',
+      language: LANGUAGE,
+      packages: [
+        {
+          name: 'core',
+          modules: [
+            {
+              name: 'src/index',
+              path: '/repo/src/index.ts',
+              classes: [{ name: 'App' }],
+              imports,
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  it('should detect a real express import', () => {
+    expect(detectFramework(irWithImports(['express']))).toBe('express');
+  });
+
+  it('should detect express subpath imports', () => {
+    expect(detectFramework(irWithImports(['express/lib/application']))).toBe('express');
+  });
+
+  it('should resolve @nestjs/platform-express as nestjs, never express', () => {
+    // @nestjs/platform-express is NestJS's HTTP adapter, not the express
+    // framework. This is a nestjs-side regression guard ONLY — the nestjs
+    // branch wins regardless of the express flag, so `not.toBe('express')`
+    // would be tautological here and does not guard the express-marker fix.
+    expect(detectFramework(irWithImports(['@nestjs/platform-express']))).toBe('nestjs');
+  });
+
+  it('should NOT treat express-like non-framework packages as the express framework', () => {
+    // Contains 'express' but is neither `express` nor an `express/` subpath.
+    // These flip old→new: under `specifier.includes('express')` they resolve
+    // as 'express', so they are the real regression guards for the fix.
+    expect(detectFramework(irWithImports(['express-session']))).toBe('unknown');
+    expect(detectFramework(irWithImports(['express-handlebars']))).toBe('unknown');
+    expect(detectFramework(irWithImports(['express-validator']))).toBe('unknown');
+    expect(detectFramework(irWithImports(['@types/express']))).toBe('unknown');
+  });
+});
+
+describe('detectFramework (REQ-PM-006 nestjs marker)', () => {
+  function irWithImports(imports: string[]): IrProject {
+    return IrProject.create({
+      name: 'acme',
+      rootPath: '/repo',
+      language: LANGUAGE,
+      packages: [
+        {
+          name: 'core',
+          modules: [
+            {
+              name: 'src/index',
+              path: '/repo/src/index.ts',
+              classes: [{ name: 'App' }],
+              imports,
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  it('should set the nestjs marker for @nestjs/core', () => {
+    expect(detectFramework(irWithImports(['@nestjs/core']))).toBe('nestjs');
+  });
+
+  it('should set the nestjs marker for @nestjs/ scoped packages', () => {
+    expect(detectFramework(irWithImports(['@nestjs/common']))).toBe('nestjs');
+  });
+
+  it('should NOT set the nestjs marker for @nestjs- prefixed non-core packages', () => {
+    // Contains '@nestjs' but is neither @nestjs/core nor an @nestjs/ subpath —
+    // e.g. the third-party @nestjs-common/filters scoped package.
+    expect(detectFramework(irWithImports(['@nestjs-common/filters']))).toBe('unknown');
   });
 });
