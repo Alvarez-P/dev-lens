@@ -17,7 +17,9 @@ export class FrameworkCandidate {
   }
 
   static create(props: FrameworkCandidateProps): FrameworkCandidate {
-    const framework = props.framework.trim();
+    // Normalize casing so 'NestJS' and 'nestjs' are never treated as distinct
+    // frameworks (spurious ambiguity in the detector's distinct-Set).
+    const framework = props.framework.trim().toLowerCase();
 
     if (framework.length === 0) {
       throw new Error('Framework name must not be blank');

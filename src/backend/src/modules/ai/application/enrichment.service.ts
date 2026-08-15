@@ -227,10 +227,18 @@ export class EnrichmentService {
 /**
  * Manifest-based framework detection (ADR-2/3, spec "Manifest-Based Framework
  * Detection"): returns the candidates captured at analysis time together with
- * the primary framework that selects the format config.
+ * the primary framework that selects the format config, plus a deterministic
+ * `confidence` for the detection itself (NOT the LLM-authored confidence).
  *
- * - No manifest candidates → `primary: 'unknown'`, confidence 0 (never
- *   guessed); the prompt instructs the LLM accordingly.
+ * - No manifest candidates → decorator/import fallback over the IR (ADR-3,
+ *   design.md L72 "manifest + decorator fallback"): a monorepo/workspace whose
+ *   root package.json lacks a framework marker still has a full IR. When
+ *   `detectFramework(ir)` resolves to a known framework a candidate is
+ *   synthesized so the primary config + prompt stay framework-aware; the LLM
+ *   still confirms.
+ * - Still no candidates (manifest empty AND IR has no framework markers) →
+ *   `primary: 'unknown'`, `confidence: 0` (never guessed); the prompt
+ *   instructs the LLM accordingly.
  * - Multiple distinct candidate frameworks → `primary: 'unknown'` so the
  *   generic format config is used on ambiguity (ADR-3) and the LLM decides.
  * - A single distinct framework → that framework drives the config.
@@ -242,16 +250,45 @@ export class EnrichmentService {
 export interface FrameworkCandidateResult {
   candidates: FrameworkCandidate[];
   primary: string;
+  /** Deterministic detection confidence (0 when nothing resolved). */
+  confidence: number;
 }
 
 export function detectFrameworkCandidates(
-  analysis: Pick<Analysis, 'frameworkCandidates'>,
+  analysis: Pick<Analysis, 'frameworkCandidates' | 'ir'>,
 ): FrameworkCandidateResult {
   const candidates = [...(analysis.frameworkCandidates ?? [])];
-  const distinctFrameworks = new Set(candidates.map((candidate) => candidate.framework));
-  const primary = distinctFrameworks.size === 1 ? candidates[0].framework : 'unknown';
 
-  return { candidates, primary };
+  // Deterministic decorator/import fallback (ADR-3): when the manifest yields
+  // no candidate but the IR carries framework markers, synthesize a candidate
+  // so the primary config and prompt reflect the real framework (the LLM
+  // remains authoritative).
+  if (candidates.length === 0 && analysis.ir !== null) {
+    const detected = detectFramework(analysis.ir);
+
+    if (detected !== 'unknown') {
+      const synthesized = FrameworkCandidate.create({
+        framework: detected,
+        file: 'intermediate-representation',
+        markers: ['decorator/import fallback'],
+      });
+
+      return { candidates: [synthesized], primary: detected, confidence: 1 };
+    }
+  }
+
+  // No candidates at all → deterministic result is unknown with confidence 0.
+  if (candidates.length === 0) {
+    return { candidates: [], primary: 'unknown', confidence: 0 };
+  }
+
+  const distinctFrameworks = new Set(
+    candidates.map((candidate) => candidate.framework.toLowerCase()),
+  );
+  const primary = distinctFrameworks.size === 1 ? candidates[0].framework : 'unknown';
+  const confidence = distinctFrameworks.size === 1 ? 1 : 0;
+
+  return { candidates, primary, confidence };
 }
 
 /**

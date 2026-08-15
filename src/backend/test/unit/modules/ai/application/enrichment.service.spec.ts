@@ -401,6 +401,21 @@ describe('detectFrameworkCandidates (ADR-3)', () => {
     );
   }
 
+  function analysisWithIr(ir: IrProject, candidates: FrameworkCandidate[] | null): Analysis {
+    return Analysis.reconstitute(
+      AnalysisId.from('analysis-1'),
+      SnapshotId.from('snap-1'),
+      RepositoryId.from('repo-1'),
+      AnalysisStatus.COMPLETED,
+      ir,
+      MANIFEST,
+      null,
+      new Date(),
+      new Date(),
+      candidates,
+    );
+  }
+
   it('should return manifest candidates with the single framework as primary', () => {
     const result = detectFrameworkCandidates(analysisWith([nestjsCandidate]));
 
@@ -408,15 +423,17 @@ describe('detectFrameworkCandidates (ADR-3)', () => {
     expect(result.primary).toBe('nestjs');
   });
 
-  it('should return unknown when no manifest candidates exist (never guessed)', () => {
+  it('should return unknown with confidence 0 when no manifest candidates exist (never guessed)', () => {
     expect(detectFrameworkCandidates(analysisWith(null))).toEqual({
       candidates: [],
       primary: 'unknown',
+      confidence: 0,
     });
 
     expect(detectFrameworkCandidates(analysisWith([]))).toEqual({
       candidates: [],
       primary: 'unknown',
+      confidence: 0,
     });
   });
 
@@ -425,5 +442,62 @@ describe('detectFrameworkCandidates (ADR-3)', () => {
 
     expect(result.candidates).toHaveLength(2);
     expect(result.primary).toBe('unknown');
+    expect(result.confidence).toBe(0);
+  });
+
+  it('should synthesize a candidate from IR decorators when the manifest has none (ADR-3 fallback)', () => {
+    const ir = IrProject.create({
+      name: 'acme',
+      rootPath: '/repo',
+      language: LANGUAGE,
+      packages: [
+        {
+          name: 'core',
+          modules: [
+            {
+              name: 'src/users',
+              path: '/repo/src/users/users.controller.ts',
+              classes: [
+                { name: 'UsersController', decorators: ["@Controller('users')"] },
+                { name: 'UsersService', decorators: ['@Injectable()'] },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = detectFrameworkCandidates(analysisWithIr(ir, []));
+
+    expect(result.primary).toBe('nestjs');
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].framework).toBe('nestjs');
+    expect(result.confidence).toBe(1);
+  });
+
+  it('should still resolve unknown with confidence 0 when the IR has no framework markers', () => {
+    const ir = IrProject.create({
+      name: 'acme',
+      rootPath: '/repo',
+      language: LANGUAGE,
+      packages: [
+        {
+          name: 'core',
+          modules: [
+            {
+              name: 'src/users',
+              path: '/repo/src/users/users.controller.ts',
+              classes: [{ name: 'UsersController' }],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(detectFrameworkCandidates(analysisWithIr(ir, []))).toEqual({
+      candidates: [],
+      primary: 'unknown',
+      confidence: 0,
+    });
   });
 });

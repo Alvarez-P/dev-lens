@@ -166,11 +166,13 @@ describe('Enrichment pipeline integration (REQ-EP-003/009)', () => {
   let service: EnrichmentService;
   let enrichmentRepository: InMemoryEnrichmentRepository;
   let promptBuilder: PromptBuilder;
+  let currentAnalysis: Analysis;
   const dispatched: unknown[] = [];
 
   function buildPipeline(): void {
+    currentAnalysis = buildAnalysis();
     const analysisRepository = {
-      findById: jest.fn().mockResolvedValue(buildAnalysis()),
+      findById: jest.fn().mockImplementation(() => Promise.resolve(currentAnalysis)),
     } as unknown as AnalysisRepository;
 
     enrichmentRepository = new InMemoryEnrichmentRepository();
@@ -360,10 +362,9 @@ describe('Enrichment pipeline integration (REQ-EP-003/009)', () => {
   });
 
   function analysisRepositoryFor(analysis: Analysis): void {
-    // The pipeline is built once per suite in buildPipeline(); swap the
-    // resolved analysis on the shared repository mock for this test.
-    (service as unknown as { analysisRepository: { findById: jest.Mock } }).analysisRepository = {
-      findById: jest.fn().mockResolvedValue(analysis),
-    };
+    // Both EnrichmentService and ContextAssembler share the same repository
+    // mock, which resolves the settable analysis — no private-field mutation,
+    // so the two collaborators can never read divergent analyses.
+    currentAnalysis = analysis;
   }
 });
