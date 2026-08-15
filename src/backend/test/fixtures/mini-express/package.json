@@ -1,0 +1,9 @@
+{
+  "name": "mini-express",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Golden express source corpus for the classify-lifecycle evaluation harness (Phase 3, task 3.1).",
+  "dependencies": {
+    "express": "^4.19.0"
+  }
+}

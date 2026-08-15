@@ -4,8 +4,21 @@ import { MockProvider } from '@/modules/ai/infrastructure/mock.provider';
 import { AIChunk, AIEnrichmentRequest, AIRequest } from '@/modules/ai/domain/ai-request.vo';
 import { ProviderUnavailableError } from '@/modules/ai/domain/ai-errors';
 import { AIProviderConfig } from '@/config/configuration';
+import { FileManifestService } from '@/modules/analysis/application/file-manifest.service';
 
 const FIXTURES_DIR = path.resolve(__dirname, '../../../../../src/modules/ai/ai.fixtures');
+
+/** Mini-nestjs source corpus — its manifest sha keys the committed golden. */
+const MINI_NESTJS_FIXTURE = path.resolve(__dirname, '../../../../fixtures/mini-nestjs');
+
+/**
+ * Golden key derived from the corpus the pipeline actually hashes — do NOT
+ * hardcode the sha: a corpus edit would otherwise silently break the lookup
+ * with an opaque ProviderUnavailableError instead of pointing at the fixture.
+ */
+const NESTJS_MANIFEST_SHA256 = FileManifestService.computeManifestSha256(
+  new FileManifestService().computeManifest(MINI_NESTJS_FIXTURE),
+);
 
 const providerConfig: AIProviderConfig = {
   enabled: true,
@@ -15,7 +28,7 @@ const enrichmentRequest: AIEnrichmentRequest = {
   messages: [{ role: 'system', content: 'classify' }],
   capability: 'classify-lifecycle',
   framework: 'nestjs',
-  manifestSha256: 'abc123',
+  manifestSha256: NESTJS_MANIFEST_SHA256,
 };
 
 describe('MockProvider', () => {
@@ -50,9 +63,9 @@ describe('MockProvider', () => {
       expect(response.framework).toBe('nestjs');
       expect(response.architecture).toBe('mvc');
       expect(response.confidence).toBe(0.9);
-      expect(response.classes).toHaveLength(1);
+      expect(response.classes).toHaveLength(6);
       expect(response.classes[0].role).toBe('controller');
-      expect(response.classes[0].sourceFile).toBe('src/users/users.controller.ts');
+      expect(response.classes[0].sourceFile).toBe('src/app.controller.ts');
     });
 
     it('should throw ProviderUnavailableError when no fixture exists for the sha256', async () => {

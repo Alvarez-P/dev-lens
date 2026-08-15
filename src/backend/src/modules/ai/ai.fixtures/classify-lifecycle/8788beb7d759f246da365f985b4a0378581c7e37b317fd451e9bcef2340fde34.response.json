@@ -1,0 +1,55 @@
+{
+  "framework": "nestjs",
+  "architecture": "mvc",
+  "confidence": 0.9,
+  "classes": [
+    {
+      "fqn": "snap-nestjs-golden:default:src/app.controller#AppController",
+      "role": "controller",
+      "lifecycle": ["handler"],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/app.controller.ts"
+    },
+    {
+      "fqn": "snap-nestjs-golden:default:src/app.module#AppModule",
+      "role": "module",
+      "lifecycle": [],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/app.module.ts"
+    },
+    {
+      "fqn": "snap-nestjs-golden:default:src/app.service#AppService",
+      "role": "service",
+      "lifecycle": [],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/app.service.ts"
+    },
+    {
+      "fqn": "snap-nestjs-golden:default:src/users/users.controller#UsersController",
+      "role": "controller",
+      "lifecycle": ["handler"],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/users/users.controller.ts"
+    },
+    {
+      "fqn": "snap-nestjs-golden:default:src/users/users.module#UsersModule",
+      "role": "module",
+      "lifecycle": [],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/users/users.module.ts"
+    },
+    {
+      "fqn": "snap-nestjs-golden:default:src/users/users.service#UsersService",
+      "role": "service",
+      "lifecycle": [],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/users/users.service.ts"
+    }
+  ]
+}
