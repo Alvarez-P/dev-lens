@@ -1,0 +1,9 @@
+{
+  "name": "tripwire-express",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Adversarial express corpus for the classify-lifecycle tripwire evaluation (Phase 3, task 3.3): comment injection + .env deny-list.",
+  "dependencies": {
+    "express": "^4.19.0"
+  }
+}
