@@ -13,6 +13,16 @@ describe('FrameworkCandidate', () => {
       expect(candidate.file).toBe('package.json');
       expect(candidate.markers).toEqual(['@nestjs/core']);
     });
+
+    it('should normalize framework casing to lowercase', () => {
+      const candidate = FrameworkCandidate.create({
+        framework: 'NestJS',
+        file: 'package.json',
+        markers: ['@nestjs/core'],
+      });
+
+      expect(candidate.framework).toBe('nestjs');
+    });
   });
 
   describe('validation', () => {

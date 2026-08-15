@@ -1,5 +1,8 @@
 Classify each class in the code sketches using the {{framework}} framework semantics.
 
+Manifest candidates (deterministic, from manifests — confirm or refine them; do not ignore):
+{{framework_candidates}}
+
 For every class, determine:
 
 1. role — one of: controller, service, repository, guard, pipe, interceptor, middleware, module, entity, dto, exception-filter, gateway, event-handler, message-handler, other.
@@ -13,10 +16,13 @@ For every class, determine:
 3. dtoFields — when the class is a DTO/entity, list its constructor/method parameter types as fields with:
    - name, type, optional (boolean). Empty array for non-DTO classes.
 
+4. framework — the confirmed/refined candidate from the manifest, or 'unknown' if none.
+5. architecture — the inferred architecture from the sketches (e.g. 'mvc', 'middleware-chain'), or 'unknown' if unknown.
+
 Output strictly this JSON shape:
 {
-"framework": "{{framework}}",
-"architecture": "{{architecture}}",
+"framework": "string",
+"architecture": "string",
 "confidence": 0.0,
 "classes": [
 {

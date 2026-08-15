@@ -103,6 +103,31 @@ describe('CapabilityRegistryService (spec R2)', () => {
     expect(registry.isAvailable('never-registered')).toBe(false);
   });
 
+  it('should exclude enrichment-only capabilities from list() and availability', () => {
+    const registry = new CapabilityRegistryService();
+
+    registry.register(
+      makeCapability({
+        id: 'classify-lifecycle',
+        name: 'Classify Lifecycle',
+        enrichmentOnly: true,
+      }),
+    );
+    registry.register(makeCapability({ id: 'explain-module' }));
+
+    // Orchestration-visible list never exposes enrichment-only capabilities,
+    // regardless of the enabledOnly flag.
+    expect(registry.list().map((capability) => capability.id)).toEqual(['explain-module']);
+    expect(registry.list(false).map((capability) => capability.id)).toEqual(['explain-module']);
+
+    // Routing treats enrichment-only as unavailable (rejects gracefully).
+    expect(registry.isAvailable('classify-lifecycle')).toBe(false);
+    expect(registry.isAvailable('explain-module')).toBe(true);
+
+    // Registration is intact so the enrichment pipeline can still resolve it.
+    expect(registry.get('classify-lifecycle').id).toBe('classify-lifecycle');
+  });
+
   it('should preserve the registered order in list()', () => {
     const registry = new CapabilityRegistryService();
 

@@ -4,7 +4,12 @@ import { tmpdir } from 'os';
 
 import { Language } from '@/modules/analysis/domain/language.vo';
 import { IrProject } from '@/modules/analysis/domain/ir-nodes';
-import { Analysis, AnalysisId, AnalysisStatus } from '@/modules/analysis/domain';
+import {
+  Analysis,
+  AnalysisId,
+  AnalysisStatus,
+  FrameworkCandidate,
+} from '@/modules/analysis/domain';
 import { SnapshotId, RepositoryId } from '@/modules/repositories/domain';
 import { FileManifestService } from '@/modules/analysis/application/file-manifest.service';
 import { AnalysisRepository } from '@/modules/analysis/infrastructure/persistence/repositories/analysis.repository';
@@ -15,7 +20,7 @@ import { SourceFileFilter } from '@/modules/ai/application/source-file-filter';
 import { SketchCache } from '@/modules/ai/application/sketch-cache';
 import { PromptTemplateLoader } from '@/modules/ai/application/prompt-template-loader.service';
 import { FrameworkConfigLoader } from '@/modules/ai/application/framework-config-loader.service';
-import { PromptBuilder } from '@/modules/ai/application/prompt-builder.service';
+import { PromptBuilder, PromptBuildInput } from '@/modules/ai/application/prompt-builder.service';
 import { ProviderSelectorService } from '@/modules/ai/application/provider-selector.service';
 import { ThreeGatesValidator } from '@/modules/ai/application/three-gates-validator.service';
 import { EnrichmentService } from '@/modules/ai/application/enrichment.service';
@@ -98,6 +103,21 @@ function buildAnalysis(): Analysis {
   );
 }
 
+function buildAnalysisWithCandidates(candidates: FrameworkCandidate[]): Analysis {
+  return Analysis.reconstitute(
+    AnalysisId.from('analysis-1'),
+    SnapshotId.from('snap-1'),
+    RepositoryId.from('repo-1'),
+    AnalysisStatus.COMPLETED,
+    buildIr(),
+    MANIFEST,
+    null,
+    new Date(),
+    new Date(),
+    candidates,
+  );
+}
+
 const validResponse = {
   framework: 'nestjs',
   architecture: 'mvc',
@@ -145,11 +165,14 @@ describe('Enrichment pipeline integration (REQ-EP-003/009)', () => {
   let provider: MockProvider;
   let service: EnrichmentService;
   let enrichmentRepository: InMemoryEnrichmentRepository;
+  let promptBuilder: PromptBuilder;
+  let currentAnalysis: Analysis;
   const dispatched: unknown[] = [];
 
   function buildPipeline(): void {
+    currentAnalysis = buildAnalysis();
     const analysisRepository = {
-      findById: jest.fn().mockResolvedValue(buildAnalysis()),
+      findById: jest.fn().mockImplementation(() => Promise.resolve(currentAnalysis)),
     } as unknown as AnalysisRepository;
 
     enrichmentRepository = new InMemoryEnrichmentRepository();
@@ -166,10 +189,7 @@ describe('Enrichment pipeline integration (REQ-EP-003/009)', () => {
       new SketchCache(),
     );
 
-    const promptBuilder = new PromptBuilder(
-      new PromptTemplateLoader(),
-      new FrameworkConfigLoader(),
-    );
+    promptBuilder = new PromptBuilder(new PromptTemplateLoader(), new FrameworkConfigLoader());
 
     const providerSelector = {
       getProvider: jest.fn().mockResolvedValue(provider as AIProvider),
@@ -293,4 +313,58 @@ describe('Enrichment pipeline integration (REQ-EP-003/009)', () => {
     const completed = dispatched.find((event) => event instanceof EnrichmentCompletedEvent);
     expect((completed as EnrichmentCompletedEvent).failedUnitCount).toBe(1);
   });
+
+  it('should flow manifest candidates into the prompt and persist the confirmed enrichment', async () => {
+    const candidates = [
+      FrameworkCandidate.create({
+        framework: 'nestjs',
+        file: 'package.json',
+        markers: ['@nestjs/core'],
+      }),
+    ];
+    analysisRepositoryFor(buildAnalysisWithCandidates(candidates));
+
+    const buildSpy = jest.spyOn(promptBuilder, 'build');
+    await service.run(job, { finalAttempt: true });
+
+    // The candidates reach the prompt input and the rendered prompt text.
+    const built = buildSpy.mock.calls[0][0] as PromptBuildInput;
+    expect(built.framework).toBe('nestjs');
+    expect(built.frameworkCandidates).toEqual(candidates);
+
+    const renderedPrompt = buildSpy.mock.results[0].value as string;
+    expect(renderedPrompt).toContain('- nestjs (from package.json: @nestjs/core)');
+
+    const saved = await enrichmentRepository.findByAnalysisId('analysis-1');
+    expect(saved).not.toBeNull();
+    expect(saved!.framework).toBe('nestjs');
+    expect(saved!.classes).toHaveLength(2);
+
+    const completed = dispatched.find((event) => event instanceof EnrichmentCompletedEvent);
+    expect(completed).toBeInstanceOf(EnrichmentCompletedEvent);
+    buildSpy.mockRestore();
+  });
+
+  it('should never persist unvalidated provider output (schema fail on both attempts)', async () => {
+    // Missing `framework` → schema gate rejects the first call and the retry.
+    writeFileSync(
+      join(fixtureDir, 'classify-lifecycle', `${MANIFEST_SHA}.response.json`),
+      JSON.stringify({ ...validResponse, framework: undefined }),
+      'utf8',
+    );
+
+    await expect(service.run(job, { finalAttempt: true })).rejects.toThrow();
+
+    expect(await enrichmentRepository.findByAnalysisId('analysis-1')).toBeNull();
+
+    const failed = dispatched.find((event) => event instanceof EnrichmentFailedEvent);
+    expect(failed).toBeInstanceOf(EnrichmentFailedEvent);
+  });
+
+  function analysisRepositoryFor(analysis: Analysis): void {
+    // Both EnrichmentService and ContextAssembler share the same repository
+    // mock, which resolves the settable analysis — no private-field mutation,
+    // so the two collaborators can never read divergent analyses.
+    currentAnalysis = analysis;
+  }
 });

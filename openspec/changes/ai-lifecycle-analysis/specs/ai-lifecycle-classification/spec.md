@@ -33,7 +33,7 @@ Framework detection SHALL parse manifests deterministically (`package.json`, `po
 - GIVEN a repo with no supported manifest file
 - WHEN framework detection runs
 - THEN no candidates are produced
-- AND the result SHALL be `{ framework: 'unknown', confidence: 0 }` (never guessed)
+- AND the detector SHALL emit `{ candidates: [], primary: 'unknown' }` (never guessed), with the LLM confirming via its own confidence (REQ-EP-004 gate)
 
 ### Requirement: Per-Endpoint Lifecycle Mapping
 

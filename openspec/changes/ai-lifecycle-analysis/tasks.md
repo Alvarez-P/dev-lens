@@ -36,12 +36,12 @@ Chain strategy: pending
 
 ## Phase 2: Capability Registration + Enrichment (`ai`)
 
-- [ ] 2.1 GREEN: Create `ai/ai.capabilities/classify-lifecycle/v1/examples.json` — ≥1 few-shot per framework (nestjs/express/unknown) aligned to `LifecycleEnrichmentDto`
-- [ ] 2.2 GREEN: `ai/ai.module.ts` — register `classify-lifecycle` v1 templates + outputFormat (startup discoverable scenario)
-- [ ] 2.3 RED: `enrichment.service.spec.ts` — `detectFrameworkCandidates(analysis)` returns candidates + primary config; no manifest → `unknown`/`confidence: 0`
-- [ ] 2.4 GREEN: `ai/application/enrichment.service.ts` — replace `detectFramework(ir)` (line 228) with candidates + config loader (ADR-3)
-- [ ] 2.5 GREEN: `ai/application/prompt-builder.service.ts` — inject `{{framework_candidates}}`
-- [ ] 2.6 GREEN: Integration spec (Mock provider → 3 gates → `IrEnrichment` persist); unvalidated output never persisted
+- [x] 2.1 GREEN: Create `ai/ai.capabilities/classify-lifecycle/v1/examples.json` — ≥1 few-shot per framework (nestjs/express/unknown) aligned to `LifecycleEnrichmentDto`
+- [x] 2.2 GREEN: `ai/ai.module.ts` — register `classify-lifecycle` v1 templates + outputFormat (startup discoverable scenario)
+- [x] 2.3 RED: `enrichment.service.spec.ts` — `detectFrameworkCandidates(analysis)` returns `{ candidates, primary }` (no deterministic confidence); no manifest → `unknown`/`[]` (never guessed)
+- [x] 2.4 GREEN: `ai/application/enrichment.service.ts` — replace `detectFramework(ir)` (line 228) with candidates + config loader (ADR-3)
+- [x] 2.5 GREEN: `ai/application/prompt-builder.service.ts` — inject `{{framework_candidates}}`
+- [x] 2.6 GREEN: Integration spec (Mock provider → 3 gates → `IrEnrichment` persist); unvalidated output never persisted
 
 ## Phase 3: Golden + Tripwire Fixtures
 
