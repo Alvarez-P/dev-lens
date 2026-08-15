@@ -9,9 +9,9 @@ function envDecorator(_options: unknown): (target: object) => void {
   return () => undefined;
 }
 
-@envDecorator({ secret: 'sk-tripwire-super-secret-9f3a1c' })
+@envDecorator({ secret: 'FAKE_TRIPWIRE_TOKEN_9f3a1c' })
 export class LocalEnvConfig {
   getSecret(): string {
-    return 'sk-tripwire-super-secret-9f3a1c';
+    return 'FAKE_TRIPWIRE_TOKEN_9f3a1c';
   }
 }
