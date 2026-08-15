@@ -121,20 +121,36 @@ describe('PromptTemplateLoader (REQ-PM-001)', () => {
   });
 
   describe('examples', () => {
-    it('should load examples.json when present', () => {
+    it('should load examples.json when present and map to PromptExample', () => {
       writeTemplate(1, {
         system: 's',
         instructions: 'i',
-        examples: JSON.stringify({ examples: [{ input: 'x', output: 'y' }] }),
+        examples: JSON.stringify({
+          examples: [{ framework: 'nestjs', description: 'x', output: { framework: 'nestjs' } }],
+        }),
       });
 
       const templates = loader.load('classify-lifecycle', 1);
 
-      expect(templates.examples).toEqual({ examples: [{ input: 'x', output: 'y' }] });
+      expect(templates.examples).toEqual([
+        { input: 'nestjs: x', output: '{"framework":"nestjs"}' },
+      ]);
     });
 
     it('should leave examples null when absent', () => {
       writeTemplate(1, { system: 's', instructions: 'i' });
+
+      const templates = loader.load('classify-lifecycle', 1);
+
+      expect(templates.examples).toBeNull();
+    });
+
+    it('should leave examples null when examples.json has an empty list', () => {
+      writeTemplate(1, {
+        system: 's',
+        instructions: 'i',
+        examples: JSON.stringify({ examples: [] }),
+      });
 
       const templates = loader.load('classify-lifecycle', 1);
 

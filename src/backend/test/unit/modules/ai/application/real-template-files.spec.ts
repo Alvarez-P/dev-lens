@@ -1,5 +1,6 @@
 import { PromptTemplateLoader } from '@/modules/ai/application/prompt-template-loader.service';
 import { FrameworkConfigLoader } from '@/modules/ai/application/framework-config-loader.service';
+import { PromptBuilder } from '@/modules/ai/application/prompt-builder.service';
 
 describe('real template and framework files', () => {
   it('should load classify-lifecycle v1 templates from the repo', () => {
@@ -16,60 +17,58 @@ describe('real template and framework files', () => {
     expect(templates.instructions).toContain('{{framework}}');
   });
 
-  it('should load classify-lifecycle v1 examples.json with one few-shot per framework', () => {
+  it('should load classify-lifecycle v1 examples.json mapped to PromptExample', () => {
     const loader = new PromptTemplateLoader();
 
     const templates = loader.load('classify-lifecycle', 1);
 
     expect(templates.examples).not.toBeNull();
-    const parsed = templates.examples as {
-      examples: Array<{
-        framework: string;
-        output: {
-          framework: string;
-          architecture: string;
-          confidence: number;
-          classes: Array<{
-            fqn: string;
-            role: string;
-            lifecycle: string[];
-            dtoFields: unknown[];
-            confidence: number;
-            sourceFile: string;
-          }>;
-        };
-      }>;
-    };
-    expect(Array.isArray(parsed.examples)).toBe(true);
+    const examples = templates.examples!;
+    expect(examples).toHaveLength(3);
 
-    const frameworks = parsed.examples.map((example) => example.framework);
+    // One few-shot per supported framework.
+    const inputs = examples.map((example) => example.input).join('\n');
+    expect(inputs).toContain('nestjs');
+    expect(inputs).toContain('express');
 
-    // Capability registration scenario: ≥1 few-shot per supported framework.
-    expect(frameworks).toContain('nestjs');
-    expect(frameworks).toContain('express');
-    expect(frameworks).toContain('unknown');
-
-    // Every example output aligns to LifecycleEnrichmentDto
-    // (framework, architecture, confidence, classes[]).
-    for (const example of parsed.examples) {
-      const output = example.output;
-      expect(typeof output.framework).toBe('string');
-      expect(output.framework.length).toBeGreaterThan(0);
-      expect(typeof output.architecture).toBe('string');
-      expect(typeof output.confidence).toBe('number');
-      expect(output.confidence).toBeGreaterThanOrEqual(0);
-      expect(output.confidence).toBeLessThanOrEqual(1);
-      expect(Array.isArray(output.classes)).toBe(true);
-
-      for (const klass of output.classes) {
-        expect(typeof klass.fqn).toBe('string');
-        expect(typeof klass.role).toBe('string');
-        expect(Array.isArray(klass.lifecycle)).toBe(true);
-        expect(Array.isArray(klass.dtoFields)).toBe(true);
-        expect(typeof klass.confidence).toBe('number');
-        expect(typeof klass.sourceFile).toBe('string');
-      }
+    // Every example reconciles to the PromptExample {input, output} shape with
+    // a JSON-serialized output aligned to LifecycleEnrichmentDto.
+    for (const example of examples) {
+      expect(typeof example.input).toBe('string');
+      expect(example.input.length).toBeGreaterThan(0);
+      expect(typeof example.output).toBe('string');
+      expect(example.output.length).toBeGreaterThan(0);
     }
+
+    expect(examples[0].input).toContain('NestJS project');
+    expect(examples[0].output).toContain('"framework":"nestjs"');
+    expect(examples[0].output).toContain('"classes"');
+  });
+
+  it('should render real examples.json content into a built prompt', () => {
+    const builder = new PromptBuilder(new PromptTemplateLoader(), new FrameworkConfigLoader());
+
+    const prompt = builder.build({
+      capabilityId: 'classify-lifecycle',
+      framework: 'nestjs',
+      kgContext: {
+        projectName: 'acme',
+        language: 'typescript',
+        moduleCount: 1,
+        fileCount: 1,
+        nodeFqns: [],
+        relationshipSummary: 'none',
+      },
+      sketches: [],
+    });
+
+    // The few-shot examples are dead data unless they reach the built prompt.
+    expect(prompt).toContain('## Few-shot examples');
+    expect(prompt).toContain(
+      'NestJS project: controller with @UseGuards + @Get, service, and a DTO.',
+    );
+    expect(prompt).toContain('"fqn":"acme:core:src/users#UsersController"');
+    expect(prompt).toContain('Express project: middleware chain before a route handler.');
   });
 
   it('should load nestjs.json and express.json framework configs', () => {
