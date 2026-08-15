@@ -227,8 +227,7 @@ export class EnrichmentService {
 /**
  * Manifest-based framework detection (ADR-2/3, spec "Manifest-Based Framework
  * Detection"): returns the candidates captured at analysis time together with
- * the primary framework that selects the format config, plus a deterministic
- * `confidence` for the detection itself (NOT the LLM-authored confidence).
+ * the primary framework that selects the format config.
  *
  * - No manifest candidates → decorator/import fallback over the IR (ADR-3,
  *   design.md L72 "manifest + decorator fallback"): a monorepo/workspace whose
@@ -237,8 +236,8 @@ export class EnrichmentService {
  *   synthesized so the primary config + prompt stay framework-aware; the LLM
  *   still confirms.
  * - Still no candidates (manifest empty AND IR has no framework markers) →
- *   `primary: 'unknown'`, `confidence: 0` (never guessed); the prompt
- *   instructs the LLM accordingly.
+ *   `primary: 'unknown'` (never guessed); the prompt instructs the LLM
+ *   accordingly.
  * - Multiple distinct candidate frameworks → `primary: 'unknown'` so the
  *   generic format config is used on ambiguity (ADR-3) and the LLM decides.
  * - A single distinct framework → that framework drives the config.
@@ -250,8 +249,6 @@ export class EnrichmentService {
 export interface FrameworkCandidateResult {
   candidates: FrameworkCandidate[];
   primary: string;
-  /** Deterministic detection confidence (0 when nothing resolved). */
-  confidence: number;
 }
 
 export function detectFrameworkCandidates(
@@ -273,22 +270,21 @@ export function detectFrameworkCandidates(
         markers: ['decorator/import fallback'],
       });
 
-      return { candidates: [synthesized], primary: detected, confidence: 1 };
+      return { candidates: [synthesized], primary: detected };
     }
   }
 
-  // No candidates at all → deterministic result is unknown with confidence 0.
+  // No candidates at all → deterministic result is unknown (never guessed).
   if (candidates.length === 0) {
-    return { candidates: [], primary: 'unknown', confidence: 0 };
+    return { candidates: [], primary: 'unknown' };
   }
 
   const distinctFrameworks = new Set(
     candidates.map((candidate) => candidate.framework.toLowerCase()),
   );
   const primary = distinctFrameworks.size === 1 ? candidates[0].framework : 'unknown';
-  const confidence = distinctFrameworks.size === 1 ? 1 : 0;
 
-  return { candidates, primary, confidence };
+  return { candidates, primary };
 }
 
 /**
@@ -296,9 +292,8 @@ export function detectFrameworkCandidates(
  * and resolved imports for NestJS/Express markers. Unknown frameworks fall
  * back to the generic format config.
  *
- * Kept as the deterministic fallback (ADR-3) for the per-unit fallback path
- * when the LLM cannot run; the pipeline itself uses manifest candidates via
- * `detectFrameworkCandidates`.
+ * Invoked only by `detectFrameworkCandidates` as the deterministic
+ * decorator/import fallback (ADR-3) when the manifest yields no candidate.
  */
 export function detectFramework(ir: IrProject): string {
   let nestjs = false;

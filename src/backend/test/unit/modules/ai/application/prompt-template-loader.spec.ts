@@ -156,6 +156,42 @@ describe('PromptTemplateLoader (REQ-PM-001)', () => {
 
       expect(templates.examples).toBeNull();
     });
+
+    it('should leave examples null when examples.json is a literal null', () => {
+      writeTemplate(1, {
+        system: 's',
+        instructions: 'i',
+        examples: 'null',
+      });
+
+      const templates = loader.load('classify-lifecycle', 1);
+
+      expect(templates.examples).toBeNull();
+    });
+
+    it('should leave examples null when examples.json is a primitive value', () => {
+      writeTemplate(1, {
+        system: 's',
+        instructions: 'i',
+        examples: JSON.stringify('not-an-object'),
+      });
+
+      const templates = loader.load('classify-lifecycle', 1);
+
+      expect(templates.examples).toBeNull();
+    });
+
+    it('should leave examples null when examples.json examples is not an array', () => {
+      writeTemplate(1, {
+        system: 's',
+        instructions: 'i',
+        examples: JSON.stringify({ examples: 'not-an-array' }),
+      });
+
+      const templates = loader.load('classify-lifecycle', 1);
+
+      expect(templates.examples).toBeNull();
+    });
   });
 
   describe('filesystem loading at build time (REQ-PM-001)', () => {

@@ -101,9 +101,13 @@ export class PromptTemplateLoader {
 
     const raw = JSON.parse(readFileSync(examplesPath, 'utf8')) as {
       examples?: RawPromptExample[];
-    };
+    } | null;
 
-    const entries = raw.examples ?? [];
+    if (raw === null || typeof raw !== 'object' || !Array.isArray(raw.examples)) {
+      return null;
+    }
+
+    const entries = raw.examples;
 
     if (entries.length === 0) {
       return null;
