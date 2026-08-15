@@ -383,27 +383,31 @@ describe('AI Lifecycle Evaluation Harness', () => {
       expect((completed as EnrichmentCompletedEvent).unitCount).toBe(golden.classes.length);
     });
 
-    it('nestjs corpus: re-verifies the abc123 reference shape and persists the matching golden', async () => {
+    it('nestjs corpus: persisted enrichment equals the committed golden response', async () => {
       const analysis = await analyzeFixture(NESTJS_FIXTURE, NESTJS_SNAPSHOT, 'repo-nestjs-golden');
-      const ir = analysis.ir!;
+      const sha = FileManifestService.computeManifestSha256(analysis.fileManifest ?? {});
+      const goldenPath = join(AI_FIXTURES_DIR, 'classify-lifecycle', `${sha}.response.json`);
 
-      // Re-verify the existing abc123 reference: it must still parse against
-      // the current output DTO (schema gate passes; its placeholder FQNs are
-      // intentionally not part of the mini-nestjs IR).
-      const referencePath = join(AI_FIXTURES_DIR, 'classify-lifecycle', 'abc123.response.json');
-      expect(existsSync(referencePath)).toBe(true);
-      const reference = JSON.parse(readFileSync(referencePath, 'utf8')) as GoldenResponse;
-      expect(reference.framework).toBe('nestjs');
-      expect(() => new ThreeGatesValidator().validate(reference, ir)).not.toThrow();
+      // The committed golden fixture is keyed by the corpus manifest sha — a
+      // mismatch here means the corpus changed and the golden must be regenerated.
+      expect(existsSync(goldenPath)).toBe(true);
+      const golden = JSON.parse(readFileSync(goldenPath, 'utf8')) as GoldenResponse;
+      expect(golden.framework).toBe('nestjs');
 
-      // Golden equality over the real corpus IR with reference-aligned roles.
-      const expected = buildNestjsExpected(analysis);
-      const { saved } = await runEnrichmentWithExpected(analysis, expected);
+      // Mock provider with its DEFAULT fixtures dir consumes the committed
+      // golden response end-to-end (ADR-4, 0 live API calls).
+      const handle = buildPipeline(analysis, new MockProvider(undefined));
+      await handle.service.run(jobFor(analysis), { finalAttempt: true });
 
+      const saved = await handle.enrichmentRepository.findByAnalysisId(analysis.id.toString());
       expect(saved).not.toBeNull();
-      expect(saved!.framework).toBe('nestjs');
-      expect(saved!.architecture).toBe('mvc');
-      expect(saved!.classes.map(toGoldenClass)).toEqual(expected.classes);
+      expect(saved!.manifestSha256).toBe(sha);
+      expect(saved!.framework).toBe(golden.framework);
+      expect(saved!.architecture).toBe(golden.architecture);
+      expect(saved!.confidence).toBe(golden.confidence);
+      // The golden contract covers the six output fields; `status` is
+      // pipeline bookkeeping added by the confidence gate.
+      expect(saved!.classes.map(toGoldenClass)).toEqual(golden.classes);
       expect(saved!.failedUnits).toEqual([]);
     });
   });
@@ -521,24 +525,6 @@ describe('AI Lifecycle Evaluation Harness', () => {
     });
   });
 
-  function buildNestjsExpected(analysis: Analysis): GoldenResponse {
-    const ir = analysis.ir!;
-    const classes: GoldenClass[] = ir.packages
-      .flatMap((pkg) => pkg.modules)
-      .flatMap((mod) =>
-        mod.classes.map((cls) => ({
-          fqn: cls.fqn,
-          role: nestjsRoleFor(cls.name, cls.role),
-          lifecycle: cls.role === 'controller' ? ['handler'] : [],
-          dtoFields: [],
-          confidence: 0.9,
-          sourceFile: toRepoRelative(mod.path, ir.rootPath),
-        })),
-      );
-
-    return { framework: 'nestjs', architecture: 'mvc', confidence: 0.9, classes };
-  }
-
   function buildTripwireExpected(analysis: Analysis): GoldenResponse {
     const ir = analysis.ir!;
     const classes: GoldenClass[] = ir.packages
@@ -555,14 +541,6 @@ describe('AI Lifecycle Evaluation Harness', () => {
       );
 
     return { framework: 'express', architecture: 'middleware-chain', confidence: 0.85, classes };
-  }
-
-  function nestjsRoleFor(className: string, irRole: string | null | undefined): string {
-    if (irRole !== null && irRole !== undefined) {
-      return irRole;
-    }
-
-    return genericRoleFor(className);
   }
 
   function genericRoleFor(className: string): string {
