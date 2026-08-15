@@ -2,9 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { tmpdir } from 'os';
 
 import { AnalysisModule } from '@/modules/analysis/analysis.module';
 import { ANALYSIS_QUEUE, ANALYSIS_DLQ } from '@/modules/analysis/analysis.tokens';
@@ -309,39 +308,23 @@ describe('AI Lifecycle Evaluation Harness', () => {
   }
 
   /**
-   * Run the real enrichment pipeline over `analysis` with a temp-dir Mock
-   * provider serving `expected` keyed by the corpus manifest sha. Returns the
-   * rendered prompt and the persisted enrichment. Used for corpora whose
-   * golden key does not match a committed response file (nestjs + tripwire).
+   * Run the real enrichment pipeline over `analysis` with the DEFAULT Mock
+   * provider (committed sha-keyed golden — ADR-4, 0 live API calls). Returns
+   * the rendered prompt, the persisted enrichment, and the prompt-build spy so
+   * callers can assert the prompt was really built before any `not.toContain`.
    */
-  async function runEnrichmentWithExpected(
+  async function runEnrichment(
     analysis: Analysis,
-    expected: GoldenResponse,
-  ): Promise<{ prompt: string; saved: IrEnrichment | null }> {
-    const sha = FileManifestService.computeManifestSha256(analysis.fileManifest ?? {});
-    const tmpFixtures = mkdtempSync(join(tmpdir(), 'ai-lifecycle-fixtures-'));
+  ): Promise<{ prompt: string; saved: IrEnrichment | null; buildSpy: jest.SpyInstance }> {
+    const handle = buildPipeline(analysis, new MockProvider(undefined));
+    const buildSpy = jest.spyOn(handle.promptBuilder, 'build');
 
-    try {
-      mkdirSync(join(tmpFixtures, 'classify-lifecycle'), { recursive: true });
-      writeFileSync(
-        join(tmpFixtures, 'classify-lifecycle', `${sha}.response.json`),
-        JSON.stringify(expected),
-        'utf8',
-      );
+    await handle.service.run(jobFor(analysis), { finalAttempt: true });
 
-      const handle = buildPipeline(analysis, new MockProvider(undefined, tmpFixtures));
-      const buildSpy = jest.spyOn(handle.promptBuilder, 'build');
+    const prompt = (buildSpy.mock.results[0]?.value as string) ?? '';
+    const saved = await handle.enrichmentRepository.findByAnalysisId(analysis.id.toString());
 
-      await handle.service.run(jobFor(analysis), { finalAttempt: true });
-
-      const prompt = (buildSpy.mock.results[0]?.value as string) ?? '';
-      const saved = await handle.enrichmentRepository.findByAnalysisId(analysis.id.toString());
-      buildSpy.mockRestore();
-
-      return { prompt, saved };
-    } finally {
-      rmSync(tmpFixtures, { recursive: true, force: true });
-    }
+    return { prompt, saved, buildSpy };
   }
 
   describe('4.1 Golden classification equality', () => {
@@ -479,17 +462,30 @@ describe('AI Lifecycle Evaluation Harness', () => {
       expect(sketch).not.toBeNull();
       expect(serializeSketch(sketch!)).not.toContain(INJECTION_MARKER);
 
-      // Full pipeline over the adversarial corpus: the injection never reaches
-      // the prompt and the persisted classification is unaffected.
+      // Full pipeline over the adversarial corpus against the committed golden.
       const analysis = await analyzeFixture(TRIPWIRE_FIXTURE, TRIPWIRE_SNAPSHOT, 'repo-tripwire');
-      const { prompt, saved } = await runEnrichmentWithExpected(
-        analysis,
-        buildTripwireExpected(analysis),
-      );
+      const sha = FileManifestService.computeManifestSha256(analysis.fileManifest ?? {});
+      const goldenPath = join(AI_FIXTURES_DIR, 'classify-lifecycle', `${sha}.response.json`);
+      expect(existsSync(goldenPath)).toBe(true);
+      const golden = JSON.parse(readFileSync(goldenPath, 'utf8')) as GoldenResponse;
+
+      const { prompt, saved, buildSpy } = await runEnrichment(analysis);
+
+      // Non-vacuous prompt defense: the prompt was really built and is non-empty.
+      expect(buildSpy).toHaveBeenCalled();
+      expect(prompt.length).toBeGreaterThan(0);
       expect(prompt).not.toContain(INJECTION_MARKER);
+
+      // The persisted output reflects the corpus's real classification
+      // (express/middleware-chain) — not the injected rust/p2p/confidence-1.0
+      // demands in the source comments — and equals the committed golden.
       expect(saved).not.toBeNull();
-      expect(saved!.classes.map(toGoldenClass)).toEqual(buildTripwireExpected(analysis).classes);
+      expect(saved!.framework).toBe('express');
+      expect(saved!.architecture).toBe('middleware-chain');
+      expect(saved!.confidence).not.toBe(1.0);
+      expect(saved!.classes.map(toGoldenClass)).toEqual(golden.classes);
       expect(saved!.failedUnits).toEqual([]);
+      buildSpy.mockRestore();
     });
 
     it('.env deny-list: secrets never reach the manifest, sketches, or prompt', async () => {
@@ -519,55 +515,14 @@ describe('AI Lifecycle Evaluation Harness', () => {
       expect(irModules.some((mod) => mod.name.includes('.env'))).toBe(false);
 
       // Defense 4 — the rendered prompt never carries the secret value.
-      const { prompt } = await runEnrichmentWithExpected(analysis, buildTripwireExpected(analysis));
+      const { prompt, buildSpy } = await runEnrichment(analysis);
+      expect(buildSpy).toHaveBeenCalled();
+      expect(prompt.length).toBeGreaterThan(0);
       expect(prompt).not.toContain(TRIPWIRE_SECRET);
       expect(prompt).not.toContain(INJECTION_MARKER);
+      buildSpy.mockRestore();
     });
   });
-
-  function buildTripwireExpected(analysis: Analysis): GoldenResponse {
-    const ir = analysis.ir!;
-    const classes: GoldenClass[] = ir.packages
-      .flatMap((pkg) => pkg.modules)
-      .flatMap((mod) =>
-        mod.classes.map((cls) => ({
-          fqn: cls.fqn,
-          role: genericRoleFor(cls.name),
-          lifecycle: ['handler'],
-          dtoFields: [],
-          confidence: 0.9,
-          sourceFile: toRepoRelative(mod.path, ir.rootPath),
-        })),
-      );
-
-    return { framework: 'express', architecture: 'middleware-chain', confidence: 0.85, classes };
-  }
-
-  function genericRoleFor(className: string): string {
-    if (className.endsWith('Controller')) {
-      return 'controller';
-    }
-
-    if (className.endsWith('Service')) {
-      return 'service';
-    }
-
-    if (/(Dto|DTO|dto)$/.test(className)) {
-      return 'dto';
-    }
-
-    return 'other';
-  }
-
-  function toRepoRelative(filePath: string, rootPath: string): string {
-    const normalizedRoot = rootPath.replace(/\/+$/, '');
-
-    if (filePath.startsWith(normalizedRoot)) {
-      return filePath.slice(normalizedRoot.length).replace(/^\/+/, '');
-    }
-
-    return filePath;
-  }
 
   /** Project a persisted class role onto the golden contract shape. */
   function toGoldenClass(cls: {
