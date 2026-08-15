@@ -15,6 +15,7 @@ import { ParserRegistry } from '../domain/interfaces/parser-registry.interface';
 import { TypeScriptIrBuilder } from '../infrastructure/parsers/typescript/typescript-ir-builder';
 import { AnalysisRepository } from '../infrastructure/persistence/repositories/analysis.repository';
 import { FileManifestService, FileDiff, IGNORED_DIRECTORIES } from './file-manifest.service';
+import { ManifestFrameworkDetector } from './manifest-framework-detector';
 import { SnapshotRepository } from '../../repositories/infrastructure/persistence/repositories/snapshot.repository';
 import { GitService } from '../../repositories/infrastructure/git/git.service';
 import { SnapshotId, RepositoryId } from '../../repositories/domain';
@@ -49,6 +50,7 @@ export class StaticAnalysisService {
     private readonly eventDispatcher: DomainEventDispatcher,
     private readonly manifestService: FileManifestService,
     private readonly configService: ConfigService,
+    private readonly manifestFrameworkDetector: ManifestFrameworkDetector,
   ) {}
 
   async analyze(input: AnalysisJobData): Promise<void> {
@@ -86,12 +88,15 @@ export class StaticAnalysisService {
         throw new InvalidIrError([...validation.errors]);
       }
 
+      const frameworkCandidates = this.manifestFrameworkDetector.detect(repoPath);
+
       analysis.completeProcessing(
         outcome.ir,
         fileManifest,
         null,
         correlationId,
         outcome.reuseRatio,
+        frameworkCandidates,
       );
       await this.analysisRepository.save(analysis);
       await this.eventDispatcher.dispatchBatch(analysis.domainEvents);

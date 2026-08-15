@@ -10,8 +10,9 @@ import { CapabilityNotFoundError, DuplicateCapabilityError } from '../domain/ai-
  * ai-capability-framework spec:
  * - `register` rejects duplicate ids (`DuplicateCapabilityError`)
  * - `get` throws `CapabilityNotFoundError` for unknown ids
- * - `list(enabledOnly?)` filters to enabled capabilities by default
- * - `isAvailable` returns false for disabled capabilities
+ * - `list(enabledOnly?)` filters to enabled capabilities by default and never
+ *   returns enrichment-only capabilities (they are not orchestration-visible)
+ * - `isAvailable` returns false for disabled or enrichment-only capabilities
  *
  * Module wiring (DI token, onModuleInit registration of the MVP
  * capability catalog) is owned by PR14.
@@ -39,12 +40,16 @@ export class CapabilityRegistryService implements CapabilityRegistry {
   }
 
   list(enabledOnly = true): AICapability[] {
-    const all = [...this.capabilities.values()];
+    const orchestratable = [...this.capabilities.values()].filter(
+      (capability) => capability.enrichmentOnly !== true,
+    );
 
-    return enabledOnly ? all.filter((capability) => capability.enabled) : all;
+    return enabledOnly ? orchestratable.filter((capability) => capability.enabled) : orchestratable;
   }
 
   isAvailable(capabilityId: string): boolean {
-    return this.capabilities.get(capabilityId)?.enabled === true;
+    const capability = this.capabilities.get(capabilityId);
+
+    return capability?.enabled === true && capability.enrichmentOnly !== true;
   }
 }

@@ -2,6 +2,7 @@ import { AggregateRoot } from '../../../shared/domain/aggregate-root';
 import { SnapshotId, RepositoryId } from '../../repositories/domain';
 import { AnalysisId } from './analysis-id.vo';
 import { AnalysisStatus } from './analysis-status.enum';
+import { FrameworkCandidate } from './framework-candidate.vo';
 import { IrProject } from './ir-nodes';
 import {
   AnalysisStartedEvent,
@@ -18,6 +19,7 @@ export class Analysis extends AggregateRoot<AnalysisId> {
     public ir: IrProject | null,
     public fileManifest: Record<string, string> | null,
     public reuseRatio: number | null,
+    public frameworkCandidates: FrameworkCandidate[] | null,
     public readonly createdAt: Date,
     public updatedAt: Date,
   ) {
@@ -32,6 +34,7 @@ export class Analysis extends AggregateRoot<AnalysisId> {
       snapshotId,
       repositoryId,
       AnalysisStatus.PENDING,
+      null,
       null,
       null,
       null,
@@ -50,6 +53,7 @@ export class Analysis extends AggregateRoot<AnalysisId> {
     reuseRatio: number | null,
     createdAt: Date,
     updatedAt: Date,
+    frameworkCandidates: FrameworkCandidate[] | null = null,
   ): Analysis {
     return new Analysis(
       id,
@@ -59,6 +63,7 @@ export class Analysis extends AggregateRoot<AnalysisId> {
       ir,
       fileManifest,
       reuseRatio,
+      frameworkCandidates,
       createdAt,
       updatedAt,
     );
@@ -87,6 +92,7 @@ export class Analysis extends AggregateRoot<AnalysisId> {
     workspaceId: string | null,
     correlationId: string,
     reuseRatio: number | null = null,
+    frameworkCandidates: FrameworkCandidate[] | null = null,
   ): void {
     if (this.status !== AnalysisStatus.PROCESSING) {
       throw new Error('Analysis can only complete processing from PROCESSING status');
@@ -95,6 +101,7 @@ export class Analysis extends AggregateRoot<AnalysisId> {
     this.ir = ir;
     this.fileManifest = fileManifest;
     this.reuseRatio = reuseRatio;
+    this.frameworkCandidates = frameworkCandidates;
     this.status = AnalysisStatus.COMPLETED;
     this.updatedAt = new Date();
     this.addDomainEvent(

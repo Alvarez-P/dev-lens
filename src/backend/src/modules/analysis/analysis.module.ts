@@ -8,6 +8,7 @@ import { DomainEventDispatcher } from '../../shared/domain/domain-event-dispatch
 
 import { StaticAnalysisService } from './application/static-analysis.service';
 import { FileManifestService } from './application/file-manifest.service';
+import { ManifestFrameworkDetector } from './application/manifest-framework-detector';
 import { AnalysisRepository } from './infrastructure/persistence/repositories/analysis.repository';
 import { AnalysisTypeOrmEntity } from './infrastructure/persistence/typeorm/analysis.typeorm-entity';
 import { AnalysisJobProcessor } from './infrastructure/jobs/analysis.job-processor';
@@ -32,6 +33,7 @@ import { ANALYSIS_QUEUE, ANALYSIS_DLQ, PARSER_REGISTRY } from './analysis.tokens
   providers: [
     StaticAnalysisService,
     FileManifestService,
+    ManifestFrameworkDetector,
     AnalysisRepository,
     AnalysisJobProcessor,
     AnalysisEventHandler,

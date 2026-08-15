@@ -1,6 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
+import { PromptExample } from '../domain/prompt-template';
 
 export interface LoadedPromptTemplates {
   capabilityId: string;
@@ -8,8 +9,15 @@ export interface LoadedPromptTemplates {
   version: number;
   system: string;
   instructions: string;
-  /** Parsed examples.json, or null when the file is absent. */
-  examples: unknown | null;
+  /** Parsed examples.json mapped to PromptExample, or null when absent/empty. */
+  examples: PromptExample[] | null;
+}
+
+/** Raw shape of examples.json entries before reconciliation to PromptExample. */
+interface RawPromptExample {
+  framework?: string;
+  description?: string;
+  output?: unknown;
 }
 
 /** Default location: src/modules/ai/ai.capabilities (relative to workspace root). */
@@ -84,13 +92,49 @@ export class PromptTemplateLoader {
     return available.includes(requested) ? requested : null;
   }
 
-  private readExamples(templateDir: string): unknown | null {
+  private readExamples(templateDir: string): PromptExample[] | null {
     const examplesPath = join(templateDir, 'examples.json');
 
     if (!existsSync(examplesPath)) {
       return null;
     }
 
-    return JSON.parse(readFileSync(examplesPath, 'utf8'));
+    const raw = JSON.parse(readFileSync(examplesPath, 'utf8')) as {
+      examples?: RawPromptExample[];
+    } | null;
+
+    if (raw === null || typeof raw !== 'object' || !Array.isArray(raw.examples)) {
+      return null;
+    }
+
+    const entries = raw.examples;
+
+    if (entries.length === 0) {
+      return null;
+    }
+
+    // Reconcile the on-disk {framework, description, output} shape to the
+    // domain PromptExample {input, output} shape (RFC-010 §5.3). Malformed
+    // entries (null, primitives, arrays) are skipped so a single bad entry
+    // never aborts template loading; non-string framework/description coerce
+    // to '' rather than crashing on .trim().
+    const validEntries = entries.filter(
+      (entry): entry is RawPromptExample =>
+        entry !== null && typeof entry === 'object' && !Array.isArray(entry),
+    );
+
+    if (validEntries.length === 0) {
+      return null;
+    }
+
+    return validEntries.map((entry) => {
+      const framework = typeof entry.framework === 'string' ? entry.framework.trim() : '';
+      const description = typeof entry.description === 'string' ? entry.description.trim() : '';
+
+      return {
+        input: [framework, description].filter(Boolean).join(': '),
+        output: entry.output === undefined ? '' : JSON.stringify(entry.output),
+      };
+    });
   }
 }

@@ -1,6 +1,11 @@
 import { Language } from '@/modules/analysis/domain/language.vo';
 import { IrProject } from '@/modules/analysis/domain/ir-nodes';
-import { Analysis, AnalysisId, AnalysisStatus } from '@/modules/analysis/domain';
+import {
+  Analysis,
+  AnalysisId,
+  AnalysisStatus,
+  FrameworkCandidate,
+} from '@/modules/analysis/domain';
 import { SnapshotId, RepositoryId } from '@/modules/repositories/domain';
 import { AnalysisRepository } from '@/modules/analysis/infrastructure/persistence/repositories/analysis.repository';
 import { EnrichmentRepository } from '@/modules/ai/infrastructure/persistence/repositories/enrichment.repository';
@@ -8,7 +13,11 @@ import { ContextAssembler } from '@/modules/ai/application/context-assembler.ser
 import { PromptBuilder } from '@/modules/ai/application/prompt-builder.service';
 import { ProviderSelectorService } from '@/modules/ai/application/provider-selector.service';
 import { ThreeGatesValidator } from '@/modules/ai/application/three-gates-validator.service';
-import { EnrichmentService } from '@/modules/ai/application/enrichment.service';
+import {
+  EnrichmentService,
+  detectFramework,
+  detectFrameworkCandidates,
+} from '@/modules/ai/application/enrichment.service';
 import { AIProvider } from '@/modules/ai/domain/ai-provider.interface';
 import {
   EnrichmentStartedEvent,
@@ -61,6 +70,21 @@ function buildAnalysis(): Analysis {
     null,
     new Date(),
     new Date(),
+  );
+}
+
+function buildAnalysisWithCandidates(candidates: FrameworkCandidate[]): Analysis {
+  return Analysis.reconstitute(
+    AnalysisId.from('analysis-1'),
+    SnapshotId.from('snap-1'),
+    RepositoryId.from('repo-1'),
+    AnalysisStatus.COMPLETED,
+    buildIr(),
+    MANIFEST,
+    null,
+    new Date(),
+    new Date(),
+    candidates,
   );
 }
 
@@ -309,6 +333,33 @@ describe('EnrichmentService 7-stage pipeline (REQ-EP-003/006/008)', () => {
     await expect(service.run(job, { finalAttempt: true })).rejects.toThrow(/no intermediate/i);
   });
 
+  it('should pass manifest candidates and the primary framework into the prompt builder', async () => {
+    analysisRepository.findById.mockResolvedValue(
+      buildAnalysisWithCandidates([
+        FrameworkCandidate.create({
+          framework: 'nestjs',
+          file: 'package.json',
+          markers: ['@nestjs/core'],
+        }),
+      ]),
+    );
+
+    await service.run(job);
+
+    expect(promptBuilder.build).toHaveBeenCalledWith(
+      expect.objectContaining({
+        capabilityId: 'classify-lifecycle',
+        framework: 'nestjs',
+        frameworkCandidates: [
+          expect.objectContaining({ framework: 'nestjs', file: 'package.json' }),
+        ],
+      }),
+    );
+
+    const request = (provider.enrich as jest.Mock).mock.calls[0][0];
+    expect(request.framework).toBe('nestjs');
+  });
+
   function buildAnalysisWithNullIr(): Analysis {
     return Analysis.reconstitute(
       AnalysisId.from('analysis-1'),
@@ -322,4 +373,213 @@ describe('EnrichmentService 7-stage pipeline (REQ-EP-003/006/008)', () => {
       new Date(),
     );
   }
+});
+
+describe('detectFrameworkCandidates (ADR-3)', () => {
+  const nestjsCandidate = FrameworkCandidate.create({
+    framework: 'nestjs',
+    file: 'package.json',
+    markers: ['@nestjs/core'],
+  });
+  const expressCandidate = FrameworkCandidate.create({
+    framework: 'express',
+    file: 'package.json',
+    markers: ['express'],
+  });
+
+  function analysisWith(candidates: FrameworkCandidate[] | null): Analysis {
+    return Analysis.reconstitute(
+      AnalysisId.from('analysis-1'),
+      SnapshotId.from('snap-1'),
+      RepositoryId.from('repo-1'),
+      AnalysisStatus.COMPLETED,
+      null,
+      MANIFEST,
+      null,
+      new Date(),
+      new Date(),
+      candidates,
+    );
+  }
+
+  function analysisWithIr(ir: IrProject, candidates: FrameworkCandidate[] | null): Analysis {
+    return Analysis.reconstitute(
+      AnalysisId.from('analysis-1'),
+      SnapshotId.from('snap-1'),
+      RepositoryId.from('repo-1'),
+      AnalysisStatus.COMPLETED,
+      ir,
+      MANIFEST,
+      null,
+      new Date(),
+      new Date(),
+      candidates,
+    );
+  }
+
+  it('should return manifest candidates with the single framework as primary', () => {
+    const result = detectFrameworkCandidates(analysisWith([nestjsCandidate]));
+
+    expect(result.candidates).toEqual([nestjsCandidate]);
+    expect(result.primary).toBe('nestjs');
+  });
+
+  it('should return unknown when no manifest candidates exist (never guessed)', () => {
+    expect(detectFrameworkCandidates(analysisWith(null))).toEqual({
+      candidates: [],
+      primary: 'unknown',
+    });
+
+    expect(detectFrameworkCandidates(analysisWith([]))).toEqual({
+      candidates: [],
+      primary: 'unknown',
+    });
+  });
+
+  it('should fall back to the generic config when candidates are ambiguous', () => {
+    const result = detectFrameworkCandidates(analysisWith([nestjsCandidate, expressCandidate]));
+
+    expect(result.candidates).toHaveLength(2);
+    expect(result.primary).toBe('unknown');
+  });
+
+  it('should synthesize a candidate from IR decorators when the manifest has none (ADR-3 fallback)', () => {
+    const ir = IrProject.create({
+      name: 'acme',
+      rootPath: '/repo',
+      language: LANGUAGE,
+      packages: [
+        {
+          name: 'core',
+          modules: [
+            {
+              name: 'src/users',
+              path: '/repo/src/users/users.controller.ts',
+              classes: [
+                { name: 'UsersController', decorators: ["@Controller('users')"] },
+                { name: 'UsersService', decorators: ['@Injectable()'] },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = detectFrameworkCandidates(analysisWithIr(ir, []));
+
+    expect(result.primary).toBe('nestjs');
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].framework).toBe('nestjs');
+  });
+
+  it('should still resolve unknown when the IR has no framework markers', () => {
+    const ir = IrProject.create({
+      name: 'acme',
+      rootPath: '/repo',
+      language: LANGUAGE,
+      packages: [
+        {
+          name: 'core',
+          modules: [
+            {
+              name: 'src/users',
+              path: '/repo/src/users/users.controller.ts',
+              classes: [{ name: 'UsersController' }],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(detectFrameworkCandidates(analysisWithIr(ir, []))).toEqual({
+      candidates: [],
+      primary: 'unknown',
+    });
+  });
+});
+
+describe('detectFramework (REQ-PM-006 express marker)', () => {
+  function irWithImports(imports: string[]): IrProject {
+    return IrProject.create({
+      name: 'acme',
+      rootPath: '/repo',
+      language: LANGUAGE,
+      packages: [
+        {
+          name: 'core',
+          modules: [
+            {
+              name: 'src/index',
+              path: '/repo/src/index.ts',
+              classes: [{ name: 'App' }],
+              imports,
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  it('should detect a real express import', () => {
+    expect(detectFramework(irWithImports(['express']))).toBe('express');
+  });
+
+  it('should detect express subpath imports', () => {
+    expect(detectFramework(irWithImports(['express/lib/application']))).toBe('express');
+  });
+
+  it('should resolve @nestjs/platform-express as nestjs, never express', () => {
+    // @nestjs/platform-express is NestJS's HTTP adapter, not the express
+    // framework. This is a nestjs-side regression guard ONLY — the nestjs
+    // branch wins regardless of the express flag, so `not.toBe('express')`
+    // would be tautological here and does not guard the express-marker fix.
+    expect(detectFramework(irWithImports(['@nestjs/platform-express']))).toBe('nestjs');
+  });
+
+  it('should NOT treat express-like non-framework packages as the express framework', () => {
+    // Contains 'express' but is neither `express` nor an `express/` subpath.
+    // These flip old→new: under `specifier.includes('express')` they resolve
+    // as 'express', so they are the real regression guards for the fix.
+    expect(detectFramework(irWithImports(['express-session']))).toBe('unknown');
+    expect(detectFramework(irWithImports(['express-handlebars']))).toBe('unknown');
+    expect(detectFramework(irWithImports(['express-validator']))).toBe('unknown');
+    expect(detectFramework(irWithImports(['@types/express']))).toBe('unknown');
+  });
+});
+
+describe('detectFramework (REQ-PM-006 nestjs marker)', () => {
+  function irWithImports(imports: string[]): IrProject {
+    return IrProject.create({
+      name: 'acme',
+      rootPath: '/repo',
+      language: LANGUAGE,
+      packages: [
+        {
+          name: 'core',
+          modules: [
+            {
+              name: 'src/index',
+              path: '/repo/src/index.ts',
+              classes: [{ name: 'App' }],
+              imports,
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  it('should set the nestjs marker for @nestjs/core', () => {
+    expect(detectFramework(irWithImports(['@nestjs/core']))).toBe('nestjs');
+  });
+
+  it('should set the nestjs marker for @nestjs/ scoped packages', () => {
+    expect(detectFramework(irWithImports(['@nestjs/common']))).toBe('nestjs');
+  });
+
+  it('should NOT set the nestjs marker for @nestjs- prefixed non-core packages', () => {
+    // Contains '@nestjs' but is neither @nestjs/core nor an @nestjs/ subpath —
+    // e.g. the third-party @nestjs-common/filters scoped package.
+    expect(detectFramework(irWithImports(['@nestjs-common/filters']))).toBe('unknown');
+  });
 });

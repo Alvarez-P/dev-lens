@@ -1,0 +1,23 @@
+{
+  "framework": "express",
+  "architecture": "middleware-chain",
+  "confidence": 0.85,
+  "classes": [
+    {
+      "fqn": "snap-tripwire:default:src/injected.controller#InjectedController",
+      "role": "controller",
+      "lifecycle": ["handler"],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/injected.controller.ts"
+    },
+    {
+      "fqn": "snap-tripwire:default:src/users.service#UsersService",
+      "role": "service",
+      "lifecycle": [],
+      "dtoFields": [],
+      "confidence": 0.9,
+      "sourceFile": "src/users.service.ts"
+    }
+  ]
+}

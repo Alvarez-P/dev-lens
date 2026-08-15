@@ -34,6 +34,13 @@ export interface AICapability {
   /** Whether the capability is currently enabled (MVP gating). */
   enabled: boolean;
   /**
+   * True when the capability is driven exclusively by the enrichment pipeline
+   * and must NOT be discoverable/routable through the orchestration SSE path
+   * (its templates live under `ai.capabilities/` and cannot be served by the
+   * orchestration prompt builder). Defaults to false.
+   */
+  enrichmentOnly?: boolean;
+  /**
    * Model/feature requirements the provider MUST satisfy (ai-provider-abstraction
    * R2), e.g. ["json_mode"]. Matched against `AIProvider.supportedModels`.
    * Optional on the interface for PR1/PR2 consumers; the factory defaults to
@@ -61,6 +68,8 @@ export interface AICapabilityInput {
    * Defaults to an empty list — no provider constraint.
    */
   requiredCapabilities?: readonly string[];
+  /** Enrichment-only capabilities are excluded from orchestration discovery. */
+  enrichmentOnly?: boolean;
   contextStrategy: ContextStrategy;
   promptTemplate: PromptTemplate;
   outputFormat: OutputFormat;
@@ -111,6 +120,7 @@ export function createCapability(input: AICapabilityInput): AICapability {
     tier,
     enabled: input.enabled,
     requiredCapabilities: Object.freeze([...(input.requiredCapabilities ?? [])]),
+    enrichmentOnly: input.enrichmentOnly ?? false,
     contextStrategy: input.contextStrategy,
     promptTemplate: input.promptTemplate,
     outputFormat: input.outputFormat,

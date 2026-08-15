@@ -1,0 +1,50 @@
+# Apply Progress: documentation-engine
+
+## TDD Cycle Evidence
+
+| Task | Test File                                                                                                                                                                                 | Layer | RED     | GREEN   | TRIANGULATE | REFACTOR |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------- | ------- | ----------- | -------- |
+| 1.1  | documentation.tokens.spec.ts                                                                                                                                                              | Unit  | Written | PASS    | Structural  | Clean    |
+| 1.2  | doc-type.enum.spec.ts, doc-format.enum.spec.ts, doc-build-status.enum.spec.ts                                                                                                             | Unit  | Written | PASS    | Structural  | Clean    |
+| 1.3  | doc-format-policy.spec.ts                                                                                                                                                                 | Unit  | Written | PASS    | Structural  | Clean    |
+| 1.4  | doc-template.spec.ts                                                                                                                                                                      | Unit  | Written | PASS    | Structural  | Clean    |
+| 1.5  | doc-artifact.entity.spec.ts, documentation-events.spec.ts                                                                                                                                 | Unit  | Written | PASS    | Structural  | Clean    |
+| 1.6  | doc-template-loader.service.spec.ts                                                                                                                                                       | Unit  | Written | PASS    | Structural  | Clean    |
+| 1.7  | renderer.interface.spec.ts                                                                                                                                                                | Unit  | Written | PASS    | Structural  | Clean    |
+| 2.1  | markdown.renderer.spec.ts                                                                                                                                                                 | Unit  | Written | PASS    | Structural  | Clean    |
+| 2.2  | html.renderer.spec.ts                                                                                                                                                                     | Unit  | Written | PASS    | Structural  | Clean    |
+| 2.3  | openapi.renderer.spec.ts                                                                                                                                                                  | Unit  | Written | PASS    | Structural  | Clean    |
+| 2.4  | mermaid.renderer.spec.ts                                                                                                                                                                  | Unit  | Written | PASS    | Structural  | Clean    |
+| 2.5  | plantuml.renderer.spec.ts                                                                                                                                                                 | Unit  | Written | PASS    | Structural  | Clean    |
+| 2.6  | json.renderer.spec.ts                                                                                                                                                                     | Unit  | Written | PASS    | Structural  | Clean    |
+| 3.1  | doc-template-loader.service.spec.ts                                                                                                                                                       | Unit  | Written | PASS    | Structural  | Clean    |
+| 3.2  | doc-template-registry.service.spec.ts                                                                                                                                                     | Unit  | Written | PASS    | Structural  | Clean    |
+| 3.3  | builtin-doc-templates.spec.ts                                                                                                                                                             | Unit  | Written | PASS    | Structural  | Clean    |
+| 4.1  | minio.service.spec.ts                                                                                                                                                                     | Unit  | Written | PASS    | Structural  | Clean    |
+| 4.2  | doc-storage.service.spec.ts                                                                                                                                                               | Unit  | Written | PASS    | Structural  | Clean    |
+| 4.3  | doc-artifact.repository.spec.ts, doc-artifact.typeorm-entity.spec.ts                                                                                                                      | Unit  | Written | PASS    | Structural  | Clean    |
+| 5.1  | content-generator.interface.spec.ts                                                                                                                                                       | Unit  | Written | PASS    | Structural  | Clean    |
+| 5.2  | readme.generator.spec.ts, architecture-guide.generator.spec.ts, api-reference.generator.spec.ts, module-docs.generator.spec.ts, onboarding-guide.generator.spec.ts, graph-content.spec.ts | Unit  | Written | PASS    | Structural  | Clean    |
+| 5.3  | doc-enricher.service.spec.ts                                                                                                                                                              | Unit  | Written | PASS    | Structural  | Clean    |
+| 5.4  | documentation.service.spec.ts                                                                                                                                                             | Unit  | Written | PASS    | Structural  | Clean    |
+| 6.1  | documentation-event-handler.spec.ts                                                                                                                                                       | Unit  | Written | PASS    | Structural  | Clean    |
+| 6.2  | documentation.job-processor.spec.ts                                                                                                                                                       | Unit  | Written | PASS    | Structural  | Clean    |
+| 6.3  | documentation.controller.spec.ts, doc-file-meta.spec.ts                                                                                                                                   | Unit  | Written | PASS    | Structural  | Clean    |
+| 6.4  | documentation.module.spec.ts                                                                                                                                                              | Unit  | Written | PASS    | Structural  | Clean    |
+| 6.5  | documentation.module.spec.ts                                                                                                                                                              | Unit  | Written | PASS    | Structural  | Clean    |
+| 7.1  | documentation.test.ts                                                                                                                                                                     | Unit  | Written | PASS    | Structural  | Clean    |
+| 7.2  | docs-list.test.tsx, doc-type-card.test.tsx                                                                                                                                                | Unit  | Written | PASS    | Structural  | Clean    |
+| 7.3  | markdown-viewer.test.tsx                                                                                                                                                                  | Unit  | Written | PASS    | Structural  | Clean    |
+| 7.4  | generate-docs-button.test.tsx                                                                                                                                                             | Unit  | Written | PASS    | Structural  | Clean    |
+| 7.5  | documentation.test.ts                                                                                                                                                                     | Unit  | Written | PASS    | Structural  | Clean    |
+| 8.1  | documentation-roundtrip.e2e-spec.ts                                                                                                                                                       | E2E   | Written | PASS    | Structural  | Clean    |
+| 8.2  | documentation-api.e2e-spec.ts                                                                                                                                                             | E2E   | Written | PASS    | Structural  | Clean    |
+| 8.3  | documentation.spec.ts                                                                                                                                                                     | E2E   | Written | SKIPPED | Structural  | Clean    |
+| 8.4  | documentation.module.spec.ts                                                                                                                                                              | Unit  | Written | PASS    | Structural  | Clean    |
+
+## Test Summary
+
+- Backend unit: 244 tests, 0 failures
+- Backend e2e (supertest): 13 tests, 0 failures
+- Frontend unit (Vitest): 41 tests, 0 failures
+- Frontend Playwright e2e: SKIPPED (browser/services unavailable)

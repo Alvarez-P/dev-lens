@@ -13,8 +13,11 @@ import {
   AI_ENRICHMENT_QUEUE,
   AI_ENRICHMENT_DLQ,
   AI_PROVIDER_REGISTRY,
+  CAPABILITY_REGISTRY,
 } from '@/modules/ai/ai.tokens';
 import { AIProvider } from '@/modules/ai/domain/ai-provider.interface';
+import { CapabilityRegistryService } from '@/modules/ai/application/capability-registry.service';
+import { LifecycleEnrichmentDto } from '@/modules/ai/domain/output/lifecycle-enrichment.dto';
 import { ProviderSelectorService } from '@/modules/ai/application/provider-selector.service';
 import { CodeSketchBuilder } from '@/modules/ai/application/code-sketch.builder';
 import { SourceFileFilter } from '@/modules/ai/application/source-file-filter';
@@ -182,6 +185,31 @@ describe('AiModule', () => {
     expect(moduleRef.get(EnrichmentRepository)).toBeInstanceOf(EnrichmentRepository);
     expect(moduleRef.get(EnrichmentJobProcessor)).toBeInstanceOf(EnrichmentJobProcessor);
     expect(moduleRef.get(EnrichmentEventHandler)).toBeInstanceOf(EnrichmentEventHandler);
+  });
+
+  it('should register classify-lifecycle at startup with v1 templates and json output format', async () => {
+    await moduleRef.get(AiModule).onModuleInit();
+
+    const registry = moduleRef.get<CapabilityRegistryService>(CAPABILITY_REGISTRY);
+    const capability = registry.get('classify-lifecycle');
+
+    expect(capability).toBeDefined();
+    expect(capability.version).toBe(1);
+    expect(capability.enabled).toBe(true);
+    expect(capability.outputFormat.type).toBe('json');
+    expect(capability.outputFormat.dto).toBe(LifecycleEnrichmentDto);
+  });
+
+  it('should keep classify-lifecycle out of the orchestration-visible capability list', async () => {
+    await moduleRef.get(AiModule).onModuleInit();
+
+    const registry = moduleRef.get<CapabilityRegistryService>(CAPABILITY_REGISTRY);
+
+    // Registered (the enrichment pipeline resolves it directly) but excluded
+    // from orchestration discovery/routing — it has no SSE-servable templates.
+    expect(registry.get('classify-lifecycle').id).toBe('classify-lifecycle');
+    expect(registry.list().map((capability) => capability.id)).not.toContain('classify-lifecycle');
+    expect(registry.isAvailable('classify-lifecycle')).toBe(false);
   });
 
   it('should register an analysis.completed handler that enqueues an enrichment job', async () => {
