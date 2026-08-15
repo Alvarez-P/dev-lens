@@ -144,3 +144,73 @@ None material. `detectFramework(ir)` (IR decorator/import scan) is retained as a
 
 - ✅ `npx tsc --noEmit -p tsconfig.json` exit 0
 - ✅ `npx jest --config jest.config.js --testPathPattern "modules/ai" --runInBand`: 41 suites, **404/404** passing (+3 new loader tests)
+
+---
+
+# Apply Progress — PR 3: Golden + Tripwire Fixtures and Evaluation Harness
+
+**Change**: ai-lifecycle-analysis
+**Slice**: Phase 3 (golden + tripwire fixtures) + Phase 4 (evaluation harness) — PR 3 of feature-branch-chain (targets `feat/ai-lifecycle-analysis`)
+**Mode**: Strict TDD (openspec `testing.strict_tdd: true`)
+**Chain strategy**: feature-branch-chain
+**Branch**: `feat/ai-lifecycle-pr3-fixtures-eval`
+**Base**: `feat/ai-lifecycle-analysis` @ `fa3fb8a` (includes merged PR 1 + PR 2 via #43)
+
+## Scope (this slice)
+
+Tasks 3.1–3.4 (fixtures + eval harness). No production behavior changes: `analysis`/`ai` modules untouched — the harness consumes existing services (MockProvider default fixtures dir, real parser/IR/sketch/prompt pipeline) read-only.
+
+## TDD Cycle Evidence
+
+| Task | Test File                                                       | Layer | Safety Net      | RED                                                                   | GREEN                             | TRIANGULATE                                                                                          | REFACTOR                                                            |
+| ---- | --------------------------------------------------------------- | ----- | --------------- | --------------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 3.1  | `test/e2e/ai-lifecycle.e2e-spec.ts` (express golden case)       | E2E   | ✅ e2e/ai 15/15 | ✅ Written (ENOENT `mini-express`)                                    | ✅ Passed                         | ✅ 3 classes: controller/service/DTO + middleware-chain architecture                                 | ✅ Clean (type-correct fixtures under `tsc`)                        |
+| 3.2  | (same — golden equality asserts the committed `{sha}` response) | E2E   | ✅ e2e/ai 15/15 | — (data; consumed by the 4.1 harness)                                 | ✅ Passed (sha-keyed fixture hit) | ✅ aligned to `LifecycleEnrichmentDto` shape (mirrors `abc123` + examples.json express few-shot)     | ✅ Clean                                                            |
+| 3.3  | (same — tripwire cases)                                         | E2E   | ✅ e2e/ai 15/15 | ✅ Written (ENOENT `tripwire/injected.controller.ts`, `.env.example`) | ✅ Passed                         | ✅ 2 fixtures: comment-injection file + `.env.example` deny-list — both consumed by the 4.3 harness  | ✅ Clean                                                            |
+| 4.1  | `test/e2e/ai-lifecycle.e2e-spec.ts`                             | E2E   | ✅ e2e/ai 15/15 | ✅ Written (fixtures missing)                                         | ✅ Passed 2/2                     | ✅ 2 cases: express (committed golden, real ai.fixtures dir) + nestjs (abc123 reference re-verified) | ✅ Clean (status projection helper)                                 |
+| 4.2  | (same — determinism describe)                                   | E2E   | ✅ e2e/ai 15/15 | ✅ Written (fixtures missing)                                         | ✅ Passed 1/1                     | ✅ control(enabled)→enqueue vs disabled→no enqueue + byte-identical IR/candidates/manifest-sha       | ✅ Clean                                                            |
+| 4.3  | (same — tripwire describe)                                      | E2E   | ✅ e2e/ai 15/15 | ✅ Written (fixtures missing)                                         | ✅ Passed 2/2                     | ✅ injection absent from sketch+prompt+output; `.env` denied at filter/manifest/IR/prompt layers     | ✅ Clean                                                            |
+| 4.4  | — (REFACTOR/verify)                                             | —     | —               | —                                                                     | —                                 | —                                                                                                    | ✅ `tsc` clean + unit 1249/1249 + e2e 20/20 + `pnpm -r build` green |
+
+## Safety Net Baseline (pre/post)
+
+- Pre-change (`fa3fb8a`):
+  - `npx jest --config jest.config.js --testPathPattern unit --runInBand`: 139 suites, **1249/1249** passing
+  - `npx jest --config test/jest-e2e.json ai --runInBand`: 3 suites, **15/15** passing
+  - `npx tsc --noEmit -p tsconfig.json`: **clean (exit 0)**
+- Post-change (`HEAD` of `feat/ai-lifecycle-pr3-fixtures-eval`):
+  - `npx jest --config jest.config.js --testPathPattern unit --runInBand`: 139 suites, **1249/1249** passing (unchanged)
+  - `npx jest --config test/jest-e2e.json ai --runInBand`: 4 suites, **20/20** passing (+5 new harness tests)
+  - `npx tsc --noEmit -p tsconfig.json`: **clean (exit 0)**
+  - `pnpm -r build`: **green** (0 live API calls — Mock provider only, verified via `providerSelector.getProvider` mock)
+
+## Commits (work units)
+
+| Commit               | Message                                                                     | Files                                                                              |
+| -------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `(see git log)`      | `test(ai-lifecycle): add express golden corpus and classification response` | test/fixtures/mini-express/** + ai.fixtures/classify-lifecycle/{sha}.response.json |
+| `(see git log)`      | `test(ai-lifecycle): add injection-tripwire fixtures`                       | test/fixtures/tripwire/** (package.json, src/, .env.example)                       |
+| `(see git log)`      | `test(ai-lifecycle): add golden determinism and tripwire eval harness`      | test/e2e/ai-lifecycle.e2e-spec.ts                                                  |
+| `(this docs commit)` | `docs(sdd): track ai-lifecycle PR3 apply progress`                          | openspec/changes/ai-lifecycle-analysis/apply-progress.md                           |
+
+## Verification (PR3 boundary)
+
+- ✅ Golden equality: express corpus → committed `{manifestSha}.response.json` consumed via the MockProvider **default** fixtures dir (ADR-4); nestjs corpus re-verifies the `abc123` reference (schema gate passes; equality keyed to real mini-nestjs sha)
+- ✅ Determinism: `ai.enabled=false` → no `ai-enrichment` enqueue, deterministic IR/frameworkCandidates/manifest byte-identical to the enabled control run
+- ✅ Tripwires: `// IGNORE ALL PREVIOUS INSTRUCTIONS` absent from real parser→IR→sketch, from the rendered prompt, and the persisted classification is unaffected; `.env.example` denied by SourceFileFilter, excluded from manifest/IR/prompt (fake secret never leaks)
+- ✅ Typecheck + unit (1249) + e2e/ai (20) + `pnpm -r build` all green; 0 live API calls (Mock provider only)
+- ✅ Boundary honored: no production code in `analysis`/`ai` modified; Phase 1/2 untouched; only fixtures + harness + docs added
+
+## Deviations from Design
+
+- **Harness size**: `ai-lifecycle.e2e-spec.ts` is ~600 lines (vs the ~200-400 slice estimate). The overage is e2e scaffolding that mirrors the two established patterns (`analysis.e2e-spec.ts` module boot + `enrichment-pipeline.integration.spec.ts` pipeline builder) — not product logic. Orchestrator explicitly forbade splitting PR 3 further; flagging the size for the PR decision.
+- **NestJS golden keying**: the committed `abc123.response.json` is a placeholder key (does not match mini-nestjs's real manifest sha). The harness re-verifies the reference shape (schema gate) and writes the derived expected response under the real sha into a temp fixtures dir — no duplication of the reference file.
+- **`.env` deny-list fixture**: named `.env.example` (the repo's `.gitignore` ignores `.env*` but keeps `.env.example`, mirroring the existing root file); `SourceFileFilter`'s `ENV_FILE_PATTERN` denies it (`\.env\.`).
+- **Golden contract equality**: persisted classes carry a validator-added `status` field (pipeline bookkeeping); the harness projects to the six-field golden contract via `toGoldenClass()` instead of coupling assertions to `status`.
+
+## Notes
+
+- Golden response key: `1414b73d…` (sha of the committed mini-express corpus; recompute + rename the fixture if the corpus changes — the harness fails fast with `existsSync` when the key drifts).
+- FQNs in the golden response embed the harness snapshot id `snap-express-golden` (IR `projectName` = snapshotId); both are constants in the same spec.
+- Openspec artifacts committed as a docs work-unit after source commits (PR2 convention).
+- Fixture `.ts` files are type-clean under `tsc --noEmit` (express + @types/express resolve in the workspace); no tsconfig changes were needed.
