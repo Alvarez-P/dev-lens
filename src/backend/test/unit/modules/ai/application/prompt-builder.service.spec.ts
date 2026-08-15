@@ -36,7 +36,7 @@ describe('PromptBuilder (REQ-PM-002/003/005)', () => {
     );
     writeFileSync(
       join(baseDir, 'ai.capabilities', 'classify-lifecycle', 'v1', 'instructions.md'),
-      'Classify roles. Framework: {{framework}}. Architecture: {{architecture}}.\n' +
+      'Classify roles. Framework: {{framework}}.\n' +
         'Modules: {{module_count}}, files: {{file_count}}.\n',
     );
     writeFileSync(
@@ -152,7 +152,6 @@ describe('PromptBuilder (REQ-PM-002/003/005)', () => {
       const prompt = builder.build(input({ substitutions: { framework: 'NestJS' } }));
 
       expect(prompt).toContain('You are analyzing a NestJS project named DevLens');
-      expect(prompt).toContain('Architecture: unknown');
       expect(prompt).toContain('Modules: 42, files: 130');
     });
 
@@ -167,10 +166,19 @@ describe('PromptBuilder (REQ-PM-002/003/005)', () => {
 
     it('should allow caller-supplied substitutions to override defaults', () => {
       const prompt = builder.build(
-        input({ substitutions: { architecture: 'modular', framework: 'nestjs' } }),
+        input({ substitutions: { module_count: '7', framework: 'nestjs' } }),
       );
 
-      expect(prompt).toContain('Architecture: modular');
+      expect(prompt).toContain('Modules: 7, files: 130');
+    });
+
+    it('should throw on {{architecture}} now that it is not a default variable', () => {
+      writeFileSync(
+        join(baseDir, 'ai.capabilities', 'classify-lifecycle', 'v1', 'instructions.md'),
+        'Architecture: {{architecture}}',
+      );
+
+      expect(() => builder.build(input())).toThrow('Unresolved template variable: architecture');
     });
   });
 

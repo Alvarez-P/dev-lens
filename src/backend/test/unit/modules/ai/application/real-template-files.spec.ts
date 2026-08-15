@@ -90,4 +90,34 @@ describe('real template and framework files', () => {
     const unknown = loader.load('definitely-not-a-framework');
     expect(unknown.name).toBe('unknown');
   });
+
+  it('should not bake the deterministic primary/architecture into the output-shape example', () => {
+    const builder = new PromptBuilder(new PromptTemplateLoader(), new FrameworkConfigLoader());
+
+    const prompt = builder.build({
+      capabilityId: 'classify-lifecycle',
+      framework: 'unknown',
+      kgContext: {
+        projectName: 'acme',
+        language: 'typescript',
+        moduleCount: 1,
+        fileCount: 1,
+        nodeFqns: [],
+        relationshipSummary: 'none',
+      },
+      sketches: [],
+    });
+
+    // ADR-2: the LLM confirms/refines the framework. The output-shape example
+    // must describe the schema, not pre-bake the deterministic primary
+    // ('unknown' on ambiguity) or the deterministic architecture fallback.
+    expect(prompt).not.toContain('"framework": "unknown"');
+    expect(prompt).not.toContain('"architecture": "unknown"');
+    expect(prompt).toContain('"framework": "string"');
+    expect(prompt).toContain('"architecture": "string"');
+    // The JSON shape must carry type-only placeholders — no explanatory prose
+    // glued to the field value, which a literalist model would echo verbatim.
+    expect(prompt).not.toContain('"framework": "string —');
+    expect(prompt).not.toContain('"architecture": "string —');
+  });
 });

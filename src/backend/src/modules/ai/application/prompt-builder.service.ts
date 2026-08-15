@@ -206,7 +206,6 @@ export class PromptBuilder {
   private buildVariables(input: PromptBuildInput): Record<string, string> {
     return {
       framework: input.framework,
-      architecture: input.kgContext.architecture ?? 'unknown',
       project_name: input.kgContext.projectName,
       language: input.kgContext.language,
       module_count: String(input.kgContext.moduleCount),

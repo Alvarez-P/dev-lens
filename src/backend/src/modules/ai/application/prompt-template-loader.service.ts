@@ -114,10 +114,22 @@ export class PromptTemplateLoader {
     }
 
     // Reconcile the on-disk {framework, description, output} shape to the
-    // domain PromptExample {input, output} shape (RFC-010 §5.3).
-    return entries.map((entry) => {
-      const framework = entry.framework?.trim() ?? '';
-      const description = entry.description?.trim() ?? '';
+    // domain PromptExample {input, output} shape (RFC-010 §5.3). Malformed
+    // entries (null, primitives, arrays) are skipped so a single bad entry
+    // never aborts template loading; non-string framework/description coerce
+    // to '' rather than crashing on .trim().
+    const validEntries = entries.filter(
+      (entry): entry is RawPromptExample =>
+        entry !== null && typeof entry === 'object' && !Array.isArray(entry),
+    );
+
+    if (validEntries.length === 0) {
+      return null;
+    }
+
+    return validEntries.map((entry) => {
+      const framework = typeof entry.framework === 'string' ? entry.framework.trim() : '';
+      const description = typeof entry.description === 'string' ? entry.description.trim() : '';
 
       return {
         input: [framework, description].filter(Boolean).join(': '),

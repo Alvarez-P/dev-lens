@@ -192,6 +192,52 @@ describe('PromptTemplateLoader (REQ-PM-001)', () => {
 
       expect(templates.examples).toBeNull();
     });
+
+    it('should skip malformed (non-object) entries instead of crashing', () => {
+      writeTemplate(1, {
+        system: 's',
+        instructions: 'i',
+        examples: JSON.stringify({
+          examples: [
+            null,
+            42,
+            { framework: 'nestjs', description: 'x', output: { framework: 'nestjs' } },
+          ],
+        }),
+      });
+
+      const templates = loader.load('classify-lifecycle', 1);
+
+      expect(templates.examples).toEqual([
+        { input: 'nestjs: x', output: '{"framework":"nestjs"}' },
+      ]);
+    });
+
+    it('should coerce non-string framework/description to empty string', () => {
+      writeTemplate(1, {
+        system: 's',
+        instructions: 'i',
+        examples: JSON.stringify({
+          examples: [{ framework: 123, description: null, output: { framework: 'nestjs' } }],
+        }),
+      });
+
+      const templates = loader.load('classify-lifecycle', 1);
+
+      expect(templates.examples).toEqual([{ input: '', output: '{"framework":"nestjs"}' }]);
+    });
+
+    it('should leave examples null when every entry is malformed', () => {
+      writeTemplate(1, {
+        system: 's',
+        instructions: 'i',
+        examples: JSON.stringify({ examples: [null, 42] }),
+      });
+
+      const templates = loader.load('classify-lifecycle', 1);
+
+      expect(templates.examples).toBeNull();
+    });
   });
 
   describe('filesystem loading at build time (REQ-PM-001)', () => {
